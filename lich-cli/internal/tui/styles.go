@@ -62,6 +62,7 @@ var (
 				Width(4).
 				Height(1).
 				Bold(true).
+				Underline(true).
 				Foreground(secondaryColor).
 				Align(lipgloss.Center)
 

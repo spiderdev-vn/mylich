@@ -83,19 +83,21 @@ func RenderCalendarGrid(year int, month time.Month, selectedDate time.Time, even
 		var dayCells []string
 		for _, day := range week {
 			dayNum := fmt.Sprintf("%2d", day.Date.Day())
-			if day.HasEvents && !day.IsSelected {
-				dayNum = fmt.Sprintf("%d•", day.Date.Day())
-				if day.Date.Day() < 10 {
-					dayNum = fmt.Sprintf(" %d•", day.Date.Day())
-				}
-			}
 
 			var cell string
 			switch {
 			case day.IsSelected:
-				cell = daySelectedStyle.Render(dayNum)
+				if day.HasEvents {
+					cell = daySelectedStyle.Copy().Underline(true).Render(dayNum)
+				} else {
+					cell = daySelectedStyle.Render(dayNum)
+				}
 			case day.IsToday:
-				cell = dayTodayStyle.Render(dayNum)
+				if day.HasEvents {
+					cell = dayTodayStyle.Copy().Underline(true).Render(dayNum)
+				} else {
+					cell = dayTodayStyle.Render(dayNum)
+				}
 			case !day.InMonth:
 				cell = dayOtherMonthStyle.Render(dayNum)
 			case day.HasEvents:
