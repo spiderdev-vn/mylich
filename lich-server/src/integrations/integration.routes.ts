@@ -27,12 +27,20 @@ export const integrationRoutes: FastifyPluginAsync<IntegrationRoutesOptions> = a
     const query = request.query as { code?: string; state?: string; error?: string };
 
     if (query.error) {
-      return reply.type('text/html').send(`
-        <html>
-          <body style="font-family: sans-serif; text-align: center; padding: 40px;">
-            <h2 style="color: #e53e3e;">Xác thực Google Thất Bại</h2>
-            <p>${query.error}</p>
-            <p>Bạn có thể đóng cửa sổ này và thử lại trong terminal.</p>
+      return reply.type('text/html; charset=utf-8').send(`
+        <!DOCTYPE html>
+        <html lang="vi">
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Lich - Xác thực Google Thất bại</title>
+          </head>
+          <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; text-align: center; padding: 60px 20px; background: #0f172a; color: #f8fafc;">
+            <div style="max-width: 480px; margin: 0 auto; background: #1e293b; padding: 32px; border-radius: 16px; border: 1px solid #ef4444; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+              <h2 style="color: #ef4444; margin-top: 0;">⚠ Xác Thực Google Thất Bại</h2>
+              <p style="color: #cbd5e1; line-height: 1.5;">${query.error}</p>
+              <p style="color: #94a3b8; font-size: 14px;">Bạn có thể đóng cửa sổ này và thử lại trong terminal.</p>
+            </div>
           </body>
         </html>
       `);
@@ -47,21 +55,41 @@ export const integrationRoutes: FastifyPluginAsync<IntegrationRoutesOptions> = a
       const userId = stateObj.userId;
       const res = await integrationService.handleCallback(userId, query.code);
 
-      return reply.type('text/html').send(`
-        <html>
-          <body style="font-family: sans-serif; text-align: center; padding: 40px; background: #0f172a; color: #f8fafc;">
-            <h1 style="color: #4ade80;">✓ Kết Nối Google Calendar Thành Công!</h1>
-            <p>Tài khoản: <strong>${res.email || 'Google User'}</strong> đã được liên kết với Lich.</p>
-            <p style="color: #94a3b8;">Bạn có thể đóng trình duyệt này và quay lại giao diện terminal (lich).</p>
+      return reply.type('text/html; charset=utf-8').send(`
+        <!DOCTYPE html>
+        <html lang="vi">
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Lich - Kết Nối Google Calendar Thành Công</title>
+          </head>
+          <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; text-align: center; padding: 60px 20px; background: #0f172a; color: #f8fafc;">
+            <div style="max-width: 480px; margin: 0 auto; background: #1e293b; padding: 32px; border-radius: 16px; border: 1px solid #10b981; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+              <h1 style="color: #10b981; margin-top: 0; font-size: 24px;">✓ Kết Nối Google Calendar Thành Công!</h1>
+              <p style="color: #cbd5e1; font-size: 16px; margin: 16px 0;">
+                Tài khoản: <strong style="color: #38bdf8;">${res.email || 'Google User'}</strong> đã được liên kết với Mỹ Lích.
+              </p>
+              <p style="color: #94a3b8; font-size: 14px; margin-bottom: 0;">
+                Bạn có thể đóng tab trình duyệt này và quay lại giao diện terminal (lich).
+              </p>
+            </div>
           </body>
         </html>
       `);
     } catch (err: any) {
-      return reply.status(500).type('text/html').send(`
-        <html>
-          <body style="font-family: sans-serif; text-align: center; padding: 40px;">
-            <h2 style="color: #e53e3e;">Lỗi Lưu Xác Thực Google</h2>
-            <p>${err.message}</p>
+      return reply.status(500).type('text/html; charset=utf-8').send(`
+        <!DOCTYPE html>
+        <html lang="vi">
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Lich - Lỗi Xác Thực Google</title>
+          </head>
+          <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; text-align: center; padding: 60px 20px; background: #0f172a; color: #f8fafc;">
+            <div style="max-width: 480px; margin: 0 auto; background: #1e293b; padding: 32px; border-radius: 16px; border: 1px solid #ef4444; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+              <h2 style="color: #ef4444; margin-top: 0;">⚠ Lỗi Lưu Xác Thực Google</h2>
+              <p style="color: #cbd5e1;">${err.message}</p>
+            </div>
           </body>
         </html>
       `);
