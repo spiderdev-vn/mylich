@@ -65,6 +65,69 @@ func TestTUI_MonthChange(t *testing.T) {
 	}
 }
 
+func TestTUI_CRUDInteractions(t *testing.T) {
+	model := NewModel(nil, nil)
+	model.SelectedDate = time.Date(2026, time.August, 18, 0, 0, 0, 0, time.UTC)
+	model.CurrentMonth = time.Date(2026, time.August, 1, 0, 0, 0, 0, time.UTC)
+	model.Events["2026-08-18"] = []cache.LocalEvent{
+		{
+			ID:        "ev-1",
+			Title:     "Sprint Planning",
+			StartAt:   "2026-08-18T10:00:00Z",
+			EndAt:     "2026-08-18T11:00:00Z",
+			SyncState: cache.SyncStateSynced,
+		},
+		{
+			ID:        "ev-2",
+			Title:     "Team Lunch",
+			StartAt:   "2026-08-18T12:00:00Z",
+			EndAt:     "2026-08-18T13:00:00Z",
+			SyncState: cache.SyncStateSynced,
+		},
+	}
+
+	// 1. Tab switches focus to Agenda
+	m1, _ := model.Update(tea.KeyMsg{Type: tea.KeyTab})
+	model = m1.(Model)
+	if model.Focus != FocusAgenda {
+		t.Errorf("expected FocusAgenda after Tab, got %v", model.Focus)
+	}
+
+	// 2. Down in Agenda moves to next event
+	m2, _ := model.Update(tea.KeyMsg{Type: tea.KeyDown})
+	model = m2.(Model)
+	if model.SelectedEventIdx != 1 {
+		t.Errorf("expected SelectedEventIdx 1 after KeyDown, got %d", model.SelectedEventIdx)
+	}
+
+	// 3. Up in Agenda moves back to first event
+	m3, _ := model.Update(tea.KeyMsg{Type: tea.KeyUp})
+	model = m3.(Model)
+	if model.SelectedEventIdx != 0 {
+		t.Errorf("expected SelectedEventIdx 0 after KeyUp, got %d", model.SelectedEventIdx)
+	}
+
+	// 4. Enter opens detail modal
+	m4, _ := model.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	model = m4.(Model)
+	if model.ViewingEvent == nil || model.ViewingEvent.ID != "ev-1" {
+		t.Errorf("expected ViewingEvent to be ev-1, got %v", model.ViewingEvent)
+	}
+
+	// View should render modal
+	modalView := model.View()
+	if modalView == "" {
+		t.Errorf("modal view is empty")
+	}
+
+	// 5. Esc closes modal
+	m5, _ := model.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	model = m5.(Model)
+	if model.ViewingEvent != nil {
+		t.Errorf("expected ViewingEvent to be nil after Esc, got %v", model.ViewingEvent)
+	}
+}
+
 func TestTUI_RenderView(t *testing.T) {
 	model := NewModel(nil, nil)
 	model.SelectedDate = time.Date(2026, time.August, 18, 0, 0, 0, 0, time.UTC)

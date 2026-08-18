@@ -67,6 +67,7 @@ Tùy chọn cho 'add':
   %s   %s
   %s  %s
   %s  %s
+  %s  %s
 
 %s
   %s     %s
@@ -82,6 +83,7 @@ Tùy chọn cho 'add':
 		ui.ValueStyle.Render("lich month"), ui.LabelStyle.Render("Xem lịch trình cả tháng"),
 		ui.ValueStyle.Render("lich search"), ui.LabelStyle.Render("Tìm kiếm sự kiện theo từ khóa"),
 		ui.ValueStyle.Render("lich add"), ui.LabelStyle.Render("Tạo sự kiện mới (Interactive form nếu không truyền cờ)"),
+		ui.ValueStyle.Render("lich edit"), ui.LabelStyle.Render("Chỉnh sửa sự kiện (Interactive form hoặc flags)"),
 		ui.ValueStyle.Render("lich delete"), ui.LabelStyle.Render("Xóa sự kiện (Interactive select & confirm)"),
 		ui.ValueStyle.Render("lich help"), ui.LabelStyle.Render("Hiển thị bảng hướng dẫn này"),
 		ui.CardTitle.Render("CỜ TOÀN CỤC:"),
@@ -120,6 +122,8 @@ func Execute(args []string) int {
 		err = RunSearch(subArgs)
 	case "add":
 		err = RunAdd(subArgs)
+	case "edit":
+		err = RunEdit(subArgs)
 	case "delete":
 		err = RunDelete(subArgs)
 	case "version", "-v", "--version":
