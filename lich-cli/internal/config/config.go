@@ -20,7 +20,7 @@ type Config struct {
 	Token      string `json:"token"`
 	Username   string `json:"username,omitempty"`
 	Icons      string `json:"icons,omitempty"`       // unicode | nerd | ascii | emoji
-	AgendaMode string `json:"agenda_mode,omitempty"` // list | gantt | ascii
+	AgendaMode string `json:"agenda_mode,omitempty"` // list | timeline | gantt | ascii
 }
 
 var ValidIconStyles = map[string]bool{
@@ -31,9 +31,10 @@ var ValidIconStyles = map[string]bool{
 }
 
 var ValidAgendaModes = map[string]bool{
-	"list":  true,
-	"gantt": true,
-	"ascii": true,
+	"list":     true,
+	"timeline": true,
+	"gantt":    true,
+	"ascii":    true,
 }
 
 func GetConfigPath() (string, error) {

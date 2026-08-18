@@ -37,7 +37,8 @@ func RunConfig(args []string) error {
 		fmt.Println()
 		fmt.Println("Các chế độ hiển thị Agenda (agenda_mode):")
 		fmt.Println("  list      Danh sách thẻ sự kiện hiện đại (Mặc định, có badge cảnh báo trùng giờ)")
-		fmt.Println("  gantt     Timeline theo trục giờ chia cột song song khi trùng lịch")
+		fmt.Println("  timeline  Trục giờ liên tục kéo dài theo thời lượng (Google Calendar style)")
+		fmt.Println("  gantt     Biểu đồ thanh ngang Gantt Bar trực quan tỉ lệ thời gian")
 		fmt.Println("  ascii     Văn bản ASCII 7-bit tối giản")
 		fmt.Println()
 		fmt.Println("Tùy chọn:")
@@ -157,7 +158,8 @@ func RunConfig(args []string) error {
 				Description("Chọn cách biểu diễn sự kiện và các xung đột trùng giờ").
 				Options(
 					huh.NewOption("List View (Danh sách thẻ gọn gàng, có badge cảnh báo trùng giờ)", "list"),
-					huh.NewOption("Gantt Timeline (Chia cột song song theo trục giờ)", "gantt"),
+					huh.NewOption("Timeline Ruler (Trục giờ liên tục kéo dài theo tiếng)", "timeline"),
+					huh.NewOption("Gantt Bars (Biểu đồ thanh ngang tỉ lệ thời gian trực quan)", "gantt"),
 					huh.NewOption("ASCII Mode (Văn bản 7-bit an toàn, tương thích cao)", "ascii"),
 				).
 				Value(&selectedAgendaMode),
@@ -218,7 +220,7 @@ func printConfigList(cfg *config.Config, configPath string, isJSON, isSimple boo
 
 	icons := ui.CurrentIcons()
 	lines := []string{
-		ui.SectionHeaderStyle.Render("CẤU HÌNH HỆ THỐNG LICH"),
+		ui.SectionHeaderStyle.Render("CẤU HÌNH MY LICH"),
 		fmt.Sprintf(" • %s %s", ui.LabelStyle.Render("Bộ Icon:     "), ui.ValueStyle.Render(cfg.Icons)),
 		fmt.Sprintf(" • %s %s", ui.LabelStyle.Render("Chế độ Lịch: "), ui.ValueStyle.Render(cfg.AgendaMode)),
 		fmt.Sprintf(" • %s %s", ui.LabelStyle.Render("Máy chủ:     "), ui.ValueStyle.Render(cfg.ServerURL)),

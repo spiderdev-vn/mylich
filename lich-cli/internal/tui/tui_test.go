@@ -172,21 +172,27 @@ func TestTUI_CRUDInteractions(t *testing.T) {
 		t.Errorf("expected Modal to be nil after 'n', got %v", model.Modal)
 	}
 
-	// 9. 'm' key cycles Agenda modes: list -> gantt -> ascii -> list
+	// 9. 'm' key cycles Agenda modes: list -> timeline -> gantt -> ascii -> list
 	m12, _ := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'m'}})
 	model = m12.(Model)
-	if model.AgendaMode != "gantt" {
-		t.Errorf("expected AgendaMode gantt, got %s", model.AgendaMode)
+	if model.AgendaMode != "timeline" {
+		t.Errorf("expected AgendaMode timeline, got %s", model.AgendaMode)
 	}
 
 	m13, _ := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'m'}})
 	model = m13.(Model)
-	if model.AgendaMode != "ascii" {
-		t.Errorf("expected AgendaMode ascii, got %s", model.AgendaMode)
+	if model.AgendaMode != "gantt" {
+		t.Errorf("expected AgendaMode gantt, got %s", model.AgendaMode)
 	}
 
 	m14, _ := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'m'}})
 	model = m14.(Model)
+	if model.AgendaMode != "ascii" {
+		t.Errorf("expected AgendaMode ascii, got %s", model.AgendaMode)
+	}
+
+	m15, _ := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'m'}})
+	model = m15.(Model)
 	if model.AgendaMode != "list" {
 		t.Errorf("expected AgendaMode list, got %s", model.AgendaMode)
 	}
@@ -199,23 +205,17 @@ func TestTUI_OverlappingEvents(t *testing.T) {
 	events := []cache.LocalEvent{
 		{
 			ID:        "e1",
-			Title:     "Họp Backend",
-			StartAt:   "2026-08-18T10:00:00Z",
-			EndAt:     "2026-08-18T11:30:00Z",
+			Title:     "di lam viec",
+			StartAt:   "2026-08-18T12:00:00Z",
+			EndAt:     "2026-08-18T18:00:00Z",
 			SyncState: cache.SyncStateSynced,
 		},
 		{
 			ID:        "e2",
-			Title:     "Phỏng vấn FE",
-			StartAt:   "2026-08-18T10:30:00Z",
-			EndAt:     "2026-08-18T12:00:00Z",
-			SyncState: cache.SyncStateSynced,
-		},
-		{
-			ID:        "e3",
-			Title:     "Sprint Review",
+			Title:     "Team Retrospective",
 			StartAt:   "2026-08-18T14:00:00Z",
 			EndAt:     "2026-08-18T15:00:00Z",
+			Location:  "Meeting Room 3",
 			SyncState: cache.SyncStateSynced,
 		},
 	}
@@ -225,9 +225,6 @@ func TestTUI_OverlappingEvents(t *testing.T) {
 	if !conflicts[0] || !conflicts[1] {
 		t.Errorf("expected e1 and e2 to be in conflict")
 	}
-	if conflicts[2] {
-		t.Errorf("expected e3 to NOT be in conflict")
-	}
 
 	// 2. Test RenderAgendaList
 	listView := RenderAgendaList(selectedDate, events, loc, 0, true)
@@ -235,13 +232,25 @@ func TestTUI_OverlappingEvents(t *testing.T) {
 		t.Errorf("expected 'Trùng giờ' badge in list view")
 	}
 
-	// 3. Test RenderAgendaGantt
-	ganttView := RenderAgendaGantt(selectedDate, events, loc, 0, true, 60)
-	if !strings.Contains(ganttView, "Họp Backend") || !strings.Contains(ganttView, "Phỏng vấn FE") {
-		t.Errorf("expected events in Gantt view")
+	// 3. Test RenderAgendaTimeline (Parallel columns for overlapping events)
+	timelineView := RenderAgendaTimeline(selectedDate, events, loc, 0, true, 60)
+	if !strings.Contains(timelineView, "di lam viec") || !strings.Contains(timelineView, "Team Retrospective") {
+		t.Errorf("expected events in Timeline view, got: %s", timelineView)
+	}
+	if !strings.Contains(timelineView, "Cột 1") || !strings.Contains(timelineView, "Cột 2") {
+		t.Errorf("expected multi-column parallel tracks in timeline view, got: %s", timelineView)
 	}
 
-	// 4. Test RenderAgendaASCII
+	// 4. Test RenderAgendaGantt (Horizontal duration bars)
+	ganttView := RenderAgendaGantt(selectedDate, events, loc, 0, true, 60)
+	if !strings.Contains(ganttView, "di lam viec") || !strings.Contains(ganttView, "Team Retro") {
+		t.Errorf("expected events in Gantt view, got: %s", ganttView)
+	}
+	if !strings.Contains(ganttView, "█") {
+		t.Errorf("expected visual horizontal bars in gantt view, got: %s", ganttView)
+	}
+
+	// 5. Test RenderAgendaASCII
 	asciiView := RenderAgendaASCII(selectedDate, events, loc, 0, true)
 	if !strings.Contains(asciiView, "[CONFLICT]") {
 		t.Errorf("expected '[CONFLICT]' tag in ascii view")

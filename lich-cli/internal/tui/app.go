@@ -270,10 +270,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			return m, nil
 
-		// Phím tắt đổi chế độ Agenda (Mode: list -> gantt -> ascii -> list)
+		// Phím tắt đổi chế độ Agenda (Mode: list -> timeline -> gantt -> ascii -> list)
 		case "m":
 			switch m.AgendaMode {
 			case "list":
+				m.AgendaMode = "timeline"
+			case "timeline":
 				m.AgendaMode = "gantt"
 			case "gantt":
 				m.AgendaMode = "ascii"
