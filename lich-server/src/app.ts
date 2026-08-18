@@ -1,0 +1,97 @@
+import Fastify, { type FastifyInstance } from 'fastify';
+import cors from '@fastify/cors';
+import { type AppConfig, loadConfig } from './config/env.ts';
+import { Database } from './db/connection.ts';
+import { Migrator } from './db/migrator.ts';
+import { UserRepository } from './db/repositories/user.repository.ts';
+import { CalendarRepository } from './db/repositories/calendar.repository.ts';
+import { EventRepository } from './db/repositories/event.repository.ts';
+import { AuthService } from './auth/auth.service.ts';
+import { CalendarService } from './calendars/calendar.service.ts';
+import { EventService } from './events/event.service.ts';
+import { createAuthPlugin } from './auth/auth.plugin.ts';
+import { createAuthRoutes } from './auth/auth.routes.ts';
+import { createCalendarRoutes } from './calendars/calendar.routes.ts';
+import { createEventRoutes } from './events/event.routes.ts';
+import { AppError } from './common/errors.ts';
+
+export interface BuildAppOptions {
+  config?: AppConfig;
+  database?: Database;
+}
+
+export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyInstance> {
+  const config = options.config || loadConfig();
+  const db = options.database || new Database(config.databasePath);
+
+  // Run migrations
+  const migrator = new Migrator(db);
+  migrator.run();
+
+  // Instantiate repositories
+  const userRepo = new UserRepository(db);
+  const calendarRepo = new CalendarRepository(db);
+  const eventRepo = new EventRepository(db);
+
+  // Instantiate services
+  const authService = new AuthService(userRepo, calendarRepo, config.jwtSecret);
+  const calendarService = new CalendarService(calendarRepo);
+  const eventService = new EventService(eventRepo, calendarRepo);
+
+  const app = Fastify({
+    logger: {
+      level: config.logLevel,
+    },
+  });
+
+  // CORS
+  await app.register(cors, {
+    origin: true,
+  });
+
+  // Error handler
+  app.setErrorHandler((error, _request, reply) => {
+    if (error instanceof AppError) {
+      reply.status(error.statusCode).send({
+        error: error.code,
+        message: error.message,
+        statusCode: error.statusCode,
+      });
+      return;
+    }
+
+    if (error.validation) {
+      reply.status(400).send({
+        error: 'VALIDATION_ERROR',
+        message: error.message,
+        statusCode: 400,
+      });
+      return;
+    }
+
+    app.log.error(error);
+    reply.status(error.statusCode || 500).send({
+      error: 'INTERNAL_SERVER_ERROR',
+      message: error.message || 'An unexpected error occurred',
+      statusCode: error.statusCode || 500,
+    });
+  });
+
+  // Health check
+  app.get('/health', async () => {
+    return { status: 'ok' };
+  });
+
+  // Auth decorator plugin
+  await app.register(createAuthPlugin(authService));
+
+  // Routes
+  await app.register(createAuthRoutes(authService), { prefix: '/auth' });
+  await app.register(createCalendarRoutes(calendarService), { prefix: '/calendars' });
+  await app.register(createEventRoutes(eventService), { prefix: '/events' });
+
+  // Store db instance on fastify for test cleanup / closing
+  app.decorate('db', db);
+
+  return app;
+}
