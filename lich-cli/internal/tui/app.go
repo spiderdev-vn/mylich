@@ -209,7 +209,7 @@ func (m Model) View() string {
 	var sb strings.Builder
 
 	// Top Title
-	appTitle := titleStyle.Render("⚡ LICH CALENDAR (MỸ LÍCH)")
+	appTitle := titleStyle.Render("LICH CALENDAR (MỸ LÍCH)")
 	sb.WriteString(appTitle)
 	sb.WriteString("\n\n")
 

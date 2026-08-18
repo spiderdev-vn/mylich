@@ -120,7 +120,7 @@ func RunSearch(args []string) error {
 	}
 
 	// Lip Gloss Search Results
-	headerText := fmt.Sprintf(" 🔍 KẾT QUẢ TÌM KIẾM CHO: '%s' — %d KẾT QUẢ ", keyword, len(events))
+	headerText := fmt.Sprintf(" KẾT QUẢ TÌM KIẾM CHO: '%s' — %d KẾT QUẢ ", keyword, len(events))
 	fmt.Println(ui.TitleBanner.Render(headerText))
 
 	if len(events) == 0 {
@@ -146,7 +146,7 @@ func RunSearch(args []string) error {
 		)
 		fmt.Printf("            %s %s\n", ui.LabelStyle.Render("ID:"), ui.LabelStyle.Render(event.ID))
 		if event.Location != "" {
-			fmt.Printf("            %s\n", ui.EventLocationStyle.Render("📍 "+event.Location))
+			fmt.Printf("            %s\n", ui.EventLocationStyle.Render(event.Location))
 		}
 		if event.Description != "" {
 			fmt.Printf("            %s\n", ui.EventDescStyle.Render(event.Description))

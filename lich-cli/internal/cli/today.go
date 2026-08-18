@@ -102,7 +102,7 @@ func RunToday(args []string) error {
 	}
 
 	// Lip Gloss Styled Agenda
-	headerText := fmt.Sprintf(" 📅 LỊCH TRÌNH HÔM NAY — %s ", now.Format("Monday, 02/01/2006"))
+	headerText := fmt.Sprintf(" LỊCH TRÌNH HÔM NAY — %s ", now.Format("Monday, 02/01/2006"))
 	fmt.Println(ui.HeaderDateStyle.Render(headerText))
 	fmt.Println()
 
@@ -125,7 +125,7 @@ func RunToday(args []string) error {
 			syncBadge,
 		)
 		if event.Location != "" {
-			fmt.Printf("            %s\n", ui.EventLocationStyle.Render("📍 "+event.Location))
+			fmt.Printf("            %s\n", ui.EventLocationStyle.Render(event.Location))
 		}
 		if event.Description != "" {
 			fmt.Printf("            %s\n", ui.EventDescStyle.Render(event.Description))

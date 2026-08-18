@@ -49,7 +49,7 @@ Tùy chọn cho 'add':
 		return
 	}
 
-	banner := ui.TitleBanner.Render(fmt.Sprintf(" ⚡ MỸ LÍCH — HỆ THỐNG LỊCH CÁ NHÂN (%s) ", Version))
+	banner := ui.TitleBanner.Render(fmt.Sprintf(" MỸ LÍCH — HỆ THỐNG LỊCH CÁ NHÂN (%s) ", Version))
 	fmt.Println(banner)
 
 	commandsHelp := fmt.Sprintf(`%s

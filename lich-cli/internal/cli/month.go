@@ -110,7 +110,7 @@ func RunMonth(args []string) error {
 	}
 
 	// Lip Gloss Styled Month
-	monthHeader := fmt.Sprintf(" 🗓 LỊCH THÁNG %s — TỔNG CỘNG %d SỰ KIỆN ", now.Format("01/2006"), len(events))
+	monthHeader := fmt.Sprintf(" LỊCH THÁNG %s — TỔNG CỘNG %d SỰ KIỆN ", now.Format("01/2006"), len(events))
 	fmt.Println(ui.TitleBanner.Render(monthHeader))
 
 	if len(events) == 0 {
@@ -130,10 +130,10 @@ func RunMonth(args []string) error {
 		dayTitle := currentDate.Format("Monday, 02/01/2006")
 		isToday := currentDate.Year() == now.Year() && currentDate.YearDay() == now.YearDay()
 		if isToday {
-			dayTitle += " ★ HÔM NAY"
+			dayTitle += " [HÔM NAY]"
 			fmt.Println(ui.HeaderDateStyle.Render(" " + dayTitle + " "))
 		} else {
-			fmt.Println(ui.SubTitleStyle.Render("▶ " + dayTitle))
+			fmt.Println(ui.SubTitleStyle.Render("• " + dayTitle))
 		}
 
 		for _, e := range dayEvents {
@@ -148,7 +148,7 @@ func RunMonth(args []string) error {
 				syncBadge,
 			)
 			if e.Location != "" {
-				fmt.Printf("             %s\n", ui.EventLocationStyle.Render("📍 "+e.Location))
+				fmt.Printf("             %s\n", ui.EventLocationStyle.Render(e.Location))
 			}
 		}
 		fmt.Println()

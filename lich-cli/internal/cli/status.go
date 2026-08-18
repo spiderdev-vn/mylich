@@ -16,13 +16,13 @@ import (
 )
 
 type StatusReport struct {
-	User          string `json:"user"`
-	ServerURL     string `json:"server_url"`
-	ServerOnline  bool   `json:"server_online"`
-	CachePath     string `json:"cache_path"`
-	TotalEvents   int    `json:"total_events"`
-	PendingJobs   int    `json:"pending_jobs"`
-	LastSyncTime  string `json:"last_sync_time,omitempty"`
+	User         string `json:"user"`
+	ServerURL    string `json:"server_url"`
+	ServerOnline bool   `json:"server_online"`
+	CachePath    string `json:"cache_path"`
+	TotalEvents  int    `json:"total_events"`
+	PendingJobs  int    `json:"pending_jobs"`
+	LastSyncTime string `json:"last_sync_time,omitempty"`
 }
 
 func RunStatus(args []string) error {
@@ -101,7 +101,7 @@ func RunStatus(args []string) error {
 		return nil
 	}
 
-	// Giao diện dạng Hàng đơn (Single Column Card) — Bền vững, không vỡ layout
+	// Giao diện dạng Hàng đơn (Single Column Card) — Minimalist, không icon emoji
 	serverStatusBadge := ui.BadgeOffline
 	if report.ServerOnline {
 		serverStatusBadge = ui.BadgeOnline
@@ -120,27 +120,27 @@ func RunStatus(args []string) error {
 	var sb strings.Builder
 
 	// Header banner
-	sb.WriteString(ui.TitleBanner.Render("⚡ MỸ LÍCH — TRẠNG THÁI HỆ THỐNG") + "\n\n")
+	sb.WriteString(ui.TitleBanner.Render("MỸ LÍCH — TRẠNG THÁI HỆ THỐNG") + "\n\n")
 
 	// Section 1: Server & Auth
 	var lines []string
-	lines = append(lines, ui.SectionHeaderStyle.Render("🌐 MÁY CHỦ & TÀI KHOẢN"))
-	lines = append(lines, fmt.Sprintf("  %s %s", ui.LabelStyle.Render("• Tài khoản: "), ui.ValueStyle.Render(report.User)))
-	lines = append(lines, fmt.Sprintf("  %s %s", ui.LabelStyle.Render("• Máy chủ:   "), ui.ValueStyle.Render(report.ServerURL)))
-	lines = append(lines, fmt.Sprintf("  %s %s", ui.LabelStyle.Render("• Trạng thái:"), serverStatusBadge))
+	lines = append(lines, ui.SectionHeaderStyle.Render("MÁY CHỦ & TÀI KHOẢN"))
+	lines = append(lines, fmt.Sprintf("  • %s %s", ui.LabelStyle.Render("Tài khoản: "), ui.ValueStyle.Render(report.User)))
+	lines = append(lines, fmt.Sprintf("  • %s %s", ui.LabelStyle.Render("Máy chủ:   "), ui.ValueStyle.Render(report.ServerURL)))
+	lines = append(lines, fmt.Sprintf("  • %s %s", ui.LabelStyle.Render("Trạng thái:"), serverStatusBadge))
 	lines = append(lines, "")
 
 	// Section 2: Local Cache
-	lines = append(lines, ui.SectionHeaderStyle.Render("💾 BỘ NHỚ ĐỆM CỤC BỘ (SQLITE)"))
-	lines = append(lines, fmt.Sprintf("  %s %s", ui.LabelStyle.Render("• Vị trí:    "), ui.LabelStyle.Render(report.CachePath)))
-	lines = append(lines, fmt.Sprintf("  %s %s", ui.LabelStyle.Render("• Sự kiện:   "), ui.ValueStyle.Render(fmt.Sprintf("%d sự kiện", report.TotalEvents))))
+	lines = append(lines, ui.SectionHeaderStyle.Render("BỘ NHỚ ĐỆM CỤC BỘ (SQLITE)"))
+	lines = append(lines, fmt.Sprintf("  • %s %s", ui.LabelStyle.Render("Vị trí:    "), ui.LabelStyle.Render(report.CachePath)))
+	lines = append(lines, fmt.Sprintf("  • %s %s", ui.LabelStyle.Render("Sự kiện:   "), ui.ValueStyle.Render(fmt.Sprintf("%d sự kiện", report.TotalEvents))))
 	lines = append(lines, "")
 
 	// Section 3: Synchronization
-	lines = append(lines, ui.SectionHeaderStyle.Render("🔄 ĐỒNG BỘ HÓA 2 CHIỀU"))
-	lines = append(lines, fmt.Sprintf("  %s %s", ui.LabelStyle.Render("• Hàng đợi:  "), ui.ValueStyle.Render(fmt.Sprintf("%d thao tác chờ", report.PendingJobs))))
-	lines = append(lines, fmt.Sprintf("  %s %s", ui.LabelStyle.Render("• Sync gần nhất:"), ui.ValueStyle.Render(syncTimeStr)))
-	lines = append(lines, fmt.Sprintf("  %s %s", ui.LabelStyle.Render("• Trạng thái:   "), syncBadge))
+	lines = append(lines, ui.SectionHeaderStyle.Render("ĐỒNG BỘ HÓA 2 CHIỀU"))
+	lines = append(lines, fmt.Sprintf("  • %s %s", ui.LabelStyle.Render("Hàng đợi:  "), ui.ValueStyle.Render(fmt.Sprintf("%d thao tác chờ", report.PendingJobs))))
+	lines = append(lines, fmt.Sprintf("  • %s %s", ui.LabelStyle.Render("Sync gần nhất:"), ui.ValueStyle.Render(syncTimeStr)))
+	lines = append(lines, fmt.Sprintf("  • %s %s", ui.LabelStyle.Render("Trạng thái:   "), syncBadge))
 
 	cardContent := strings.Join(lines, "\n")
 	sb.WriteString(ui.ContainerCard.Render(cardContent))

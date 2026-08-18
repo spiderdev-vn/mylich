@@ -115,7 +115,7 @@ func RunWeek(args []string) error {
 	}
 
 	// Lip Gloss Styled Week
-	weekHeader := fmt.Sprintf(" 🗓 LỊCH TUẦN: %s — %s ", startOfWeek.Format("02/01"), endOfWeek.Format("02/01/2006"))
+	weekHeader := fmt.Sprintf(" LỊCH TUẦN: %s — %s ", startOfWeek.Format("02/01"), endOfWeek.Format("02/01/2006"))
 	fmt.Println(ui.TitleBanner.Render(weekHeader))
 
 	for i := 0; i < 7; i++ {
@@ -126,10 +126,10 @@ func RunWeek(args []string) error {
 		dayTitle := currentDay.Format("Monday, 02/01")
 		isToday := currentDay.Year() == now.Year() && currentDay.YearDay() == now.YearDay()
 		if isToday {
-			dayTitle += " ★ HÔM NAY"
+			dayTitle += " [HÔM NAY]"
 			fmt.Println(ui.HeaderDateStyle.Render(" " + dayTitle + " "))
 		} else {
-			fmt.Println(ui.SubTitleStyle.Render("▶ " + dayTitle))
+			fmt.Println(ui.SubTitleStyle.Render("• " + dayTitle))
 		}
 
 		if len(dayEvents) == 0 {
@@ -147,7 +147,7 @@ func RunWeek(args []string) error {
 					syncBadge,
 				)
 				if event.Location != "" {
-					fmt.Printf("             %s\n", ui.EventLocationStyle.Render("📍 "+event.Location))
+					fmt.Printf("             %s\n", ui.EventLocationStyle.Render(event.Location))
 				}
 			}
 		}
