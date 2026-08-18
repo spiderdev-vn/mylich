@@ -1,7 +1,62 @@
+# ==============================================================================
+# Lich Project Git Ignore
+# ==============================================================================
+
 # Phases & Planning documents
 phases/
 
-# Node.js & Dependencies
+# ------------------------------------------------------------------------------
+# Go (Golang) Build & Runtime Artifacts
+# ------------------------------------------------------------------------------
+bin/
+**/bin/
+lich-cli/bin/
+dist/
+**/dist/
+build/
+**/build/
+tmp/
+**/tmp/
+.air/
+
+# Executables & Shared Libraries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test & Profiling outputs
+*.test
+*.out
+*.prof
+pprof.*
+coverage.txt
+coverage.html
+coverage.out
+profile.out
+_test/
+_testmain.go
+
+# Go Workspaces & Vendor (uncomment if vendor is not committed)
+go.work
+go.work.sum
+# vendor/
+# **/vendor/
+
+# Cgo generated files
+*.cgo1.go
+*.cgo2.c
+_cgo_defun.c
+_cgo_gotypes.go
+_cgo_export.*
+
+# Debugging binaries
+__debug_bin*
+
+# ------------------------------------------------------------------------------
+# Node.js & Server Dependencies
+# ------------------------------------------------------------------------------
 node_modules/
 **/node_modules/
 npm-debug.log*
@@ -9,13 +64,14 @@ yarn-debug.log*
 yarn-error.log*
 package-lock.json.backup
 
-# Environment & Secrets
+# ------------------------------------------------------------------------------
+# Environment, Secrets & Local Data
+# ------------------------------------------------------------------------------
 .env
 .env.*
 !.env.example
 lich-server/.env
 
-# Database & SQLite files
 data/
 **/data/
 *.db
@@ -23,22 +79,14 @@ data/
 *.db-wal
 *.db-shm
 
-# Go & Build Artifacts
-bin/
-**/bin/
-lich-cli/bin/
-*.exe
-*.exe~
-*.dll
-*.so
-*.dylib
-*.test
-*.out
-
-# Operating System & IDE
+# ------------------------------------------------------------------------------
+# Operating System & IDE Editor Caches
+# ------------------------------------------------------------------------------
 .DS_Store
 Thumbs.db
 .idea/
 .vscode/
 *.swp
 *.swo
+*.bak
+*~
