@@ -1,18 +1,32 @@
-# Node.js / Server
+# Phases & Planning documents
+phases/
+
+# Node.js & Dependencies
 node_modules/
+**/node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+package-lock.json.backup
+
+# Environment & Secrets
+.env
+.env.*
+!.env.example
 lich-server/.env
-lich-server/data/
+
+# Database & SQLite files
+data/
+**/data/
 *.db
 *.db-journal
 *.db-wal
 *.db-shm
 
-# Go / CLI
-lich-cli/bin/
+# Go & Build Artifacts
 bin/
+**/bin/
+lich-cli/bin/
 *.exe
 *.exe~
 *.dll
@@ -21,7 +35,7 @@ bin/
 *.test
 *.out
 
-# OS & IDE
+# Operating System & IDE
 .DS_Store
 Thumbs.db
 .idea/
