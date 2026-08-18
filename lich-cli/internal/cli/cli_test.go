@@ -1,8 +1,14 @@
 package cli
 
 import (
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
+
+	"lich-cli/internal/api"
+	"lich-cli/internal/config"
 )
 
 func TestCLI_FormatTimeRange(t *testing.T) {
@@ -296,5 +302,79 @@ func TestCLI_ExecuteVersionAndHelp(t *testing.T) {
 	}
 	if code := Execute([]string{"unknown-cmd"}); code != 1 {
 		t.Errorf("expected exit code 1 for unknown command, got %d", code)
+	}
+}
+
+func TestCLI_GoogleIntegrationCommands(t *testing.T) {
+	// 1. Google help
+	if err := RunGoogle([]string{"help"}); err != nil {
+		t.Fatalf("RunGoogle help failed: %v", err)
+	}
+
+	// 2. Mock server for google endpoints
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch {
+		case r.Method == http.MethodGet && r.URL.Path == "/integrations/google/auth-url":
+			_ = json.NewEncoder(w).Encode(api.GoogleAuthURLResponse{AuthURL: "http://127.0.0.1:3000/auth/google/callback?code=mock"})
+		case r.Method == http.MethodGet && r.URL.Path == "/integrations/google/status":
+			_ = json.NewEncoder(w).Encode(api.GoogleStatusResponse{
+				Connected: true,
+				Provider:  "google",
+				Status:    "connected",
+				Email:     "user@gmail.com",
+				MappedCalendars: []api.GoogleMappedCalendar{
+					{CalendarID: "cal-1", CalendarName: "Personal", ExternalCalendarID: "primary", SyncDirection: "bidirectional"},
+				},
+			})
+		case r.Method == http.MethodGet && r.URL.Path == "/integrations/google/calendars":
+			_ = json.NewEncoder(w).Encode(api.GoogleCalendarsResponse{
+				Calendars: []api.GoogleExternalCalendar{
+					{ID: "primary", Name: "Personal", IsPrimary: true, TimeZone: "UTC"},
+				},
+			})
+		case r.Method == http.MethodPost && r.URL.Path == "/integrations/google/sync":
+			_ = json.NewEncoder(w).Encode(api.GoogleSyncResponse{Success: true, Pushed: 2, Pulled: 3})
+		case r.Method == http.MethodDelete && r.URL.Path == "/integrations/google":
+			_ = json.NewEncoder(w).Encode(map[string]any{"success": true})
+		default:
+			w.WriteHeader(http.StatusOK)
+		}
+	}))
+	defer server.Close()
+
+	tempDir := t.TempDir()
+	t.Setenv("LOCALAPPDATA", tempDir)
+	t.Setenv("XDG_CONFIG_HOME", tempDir)
+	t.Setenv("HOME", tempDir)
+
+	_ = config.SaveConfig(&config.Config{
+		ServerURL: server.URL,
+		Token:     "test-token",
+	})
+
+	// Test google connect (with --no-browser and --simple)
+	if err := RunGoogle([]string{"connect", "--no-browser", "--simple"}); err != nil {
+		t.Fatalf("RunGoogle connect failed: %v", err)
+	}
+
+	// Test google status
+	if err := RunGoogle([]string{"status", "--simple"}); err != nil {
+		t.Fatalf("RunGoogle status failed: %v", err)
+	}
+
+	// Test google calendars
+	if err := RunGoogle([]string{"calendars", "--simple"}); err != nil {
+		t.Fatalf("RunGoogle calendars failed: %v", err)
+	}
+
+	// Test google sync
+	if err := RunGoogle([]string{"sync", "-d", "both", "--simple"}); err != nil {
+		t.Fatalf("RunGoogle sync failed: %v", err)
+	}
+
+	// Test google disconnect
+	if err := RunGoogle([]string{"disconnect"}); err != nil {
+		t.Fatalf("RunGoogle disconnect failed: %v", err)
 	}
 }

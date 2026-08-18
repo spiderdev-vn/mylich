@@ -30,7 +30,10 @@ Sử dụng:
   lich month [options]          Xem lịch trình cả tháng
   lich search <keyword>         Tìm kiếm sự kiện theo từ khóa
   lich add <title> [options]    Tạo sự kiện mới (Form tương tác nếu không truyền tham số)
+  lich edit <id> [options]      Chỉnh sửa sự kiện
   lich delete <id> [options]    Xóa sự kiện (Hỏi xác nhận hoặc chọn từ danh sách)
+  lich google <action>          Tích hợp Google Calendar (connect, status, sync, calendars)
+  lich nuke-database            Xóa sạch toàn bộ SQLite cache cục bộ
   lich version                  Xem phiên bản hiện tại
   lich help                     Hiển thị trợ giúp này
 
@@ -65,6 +68,7 @@ Tùy chọn cho 'add':
   %s   %s
   %s      %s
   %s   %s
+  %s %s
   %s  %s
   %s  %s
   %s  %s
@@ -84,6 +88,7 @@ Tùy chọn cho 'add':
 		ui.ValueStyle.Render("lich search"), ui.LabelStyle.Render("Tìm kiếm sự kiện theo từ khóa"),
 		ui.ValueStyle.Render("lich add"), ui.LabelStyle.Render("Tạo sự kiện mới (Interactive form nếu không truyền cờ)"),
 		ui.ValueStyle.Render("lich edit"), ui.LabelStyle.Render("Chỉnh sửa sự kiện (Interactive form hoặc flags)"),
+		ui.ValueStyle.Render("lich google"), ui.LabelStyle.Render("Tích hợp Google Calendar (connect, status, sync, calendars)"),
 		ui.ValueStyle.Render("lich delete"), ui.LabelStyle.Render("Xóa sự kiện (Interactive select & confirm)"),
 		ui.ValueStyle.Render("lich help"), ui.LabelStyle.Render("Hiển thị bảng hướng dẫn này"),
 		ui.CardTitle.Render("CỜ TOÀN CỤC:"),
@@ -126,6 +131,8 @@ func Execute(args []string) int {
 		err = RunEdit(subArgs)
 	case "delete":
 		err = RunDelete(subArgs)
+	case "google":
+		err = RunGoogle(subArgs)
 	case "nuke-database", "nuke":
 		err = RunNuke(subArgs)
 	case "version", "-v", "--version":

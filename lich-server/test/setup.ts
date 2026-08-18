@@ -11,6 +11,7 @@ export async function createTestApp(): Promise<FastifyInstance> {
     databasePath: ':memory:',
     jwtSecret: 'test-jwt-secret-key-32-characters-minimum-for-hs256',
     logLevel: 'silent',
+    useFakeGoogleProvider: true,
   };
 
   return buildApp({ config: testConfig, database: db });

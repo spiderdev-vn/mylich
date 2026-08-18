@@ -120,6 +120,15 @@ export class EventRepository {
     return stmt.all(...args) as Event[];
   }
 
+  public findByCalendarId(calendarId: string): Event[] {
+    const stmt = this.db.prepare(`
+      SELECT * FROM events
+      WHERE calendar_id = ? AND deleted_at IS NULL
+      ORDER BY start_at ASC
+    `);
+    return stmt.all(calendarId) as Event[];
+  }
+
   public update(
     id: string,
     fields: Partial<
