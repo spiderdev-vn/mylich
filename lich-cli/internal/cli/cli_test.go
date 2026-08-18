@@ -276,6 +276,11 @@ func TestCLI_ParseFlexibleTimeRange_EdgeCases(t *testing.T) {
 }
 
 func TestCLI_NukeDatabaseForce(t *testing.T) {
+	tempDir := t.TempDir()
+	t.Setenv("LOCALAPPDATA", tempDir)
+	t.Setenv("XDG_CACHE_HOME", tempDir)
+	t.Setenv("HOME", tempDir)
+
 	err := RunNuke([]string{"--force", "--simple"})
 	if err != nil {
 		t.Fatalf("RunNuke --force failed: %v", err)
