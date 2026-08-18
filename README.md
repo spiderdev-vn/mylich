@@ -19,8 +19,8 @@ Không có lý do gì cả. Đừng hỏi.
                             │
               ┌─────────────┴─────────────┐
               │                           │
-         lich-cli                   lich-server
-         Go + Charm                 Node.js + Fastify
+          lich-cli                   lich-server
+          Go + Charm                 Node.js + Fastify
               │                           │
        ┌──────┴──────┐                    │
        │             │                    │
@@ -40,29 +40,28 @@ Không có lý do gì cả. Đừng hỏi.
                     ...
 ```
 
-### `lich`
+### `lich-cli`
 
-CLI + TUI viết bằng Go, dùng [Charm](https://charm.sh/).
+CLI + TUI viết bằng Go, dùng [Bubble Tea & Lip Gloss](https://charm.sh/).
 
 ```bash
 lich add "Họp nhóm" --at 10:00
 lich today
 lich week
-lich sync
+lich sync -w
+lich google status
 ```
 
 ### `lich-server`
 
-Backend tự host, viết bằng Node.js + Fastify + TypeScript.
+Backend tự host, viết bằng Node.js + Fastify + TypeScript + SQLite.
 
-Nó chịu trách nhiệm:
-
-- Lưu trữ lịch và sự kiện
-- Authentication
-- Đồng bộ dữ liệu
-- Notifications
-- Integrations
-- Webhooks
+Chịu trách nhiệm:
+- Lưu trữ calendars và events
+- Authentication (JWT, Multi-tenant)
+- Incremental sync engine & changelog cursor
+- Tích hợp 2 chiều Google Calendar
+- Webhooks & Notifications
 
 ---
 
@@ -94,191 +93,230 @@ Bạn
  ▼
 lich
  │
- ├── Lưu local       ✓
- ├── Hiển thị        ✓
- └── Sync background ↻
+ ├── Lưu local cache (SQLite) ✓ (Phản hồi tức thì)
+ ├── Hiển thị giao diện      ✓
+ └── Sync ngầm với Server    ↻ (Tự động retry khi có mạng)
 ```
 
-Mất mạng vẫn dùng được.
-
-Mạng quay lại thì tự sync.
+Mất mạng vẫn dùng được. Mạng quay lại thì tự sync.
 
 ---
 
 # Bắt đầu nhanh
 
-## 1. Chạy `lich-server`
+## 1. Khởi động `lich-server`
 
 ```bash
 cd lich-server
-npm install
-npm run dev
+yarn install
+yarn dev
 ```
 
-Server mặc định chạy tại:
+Server mặc định chạy tại `http://127.0.0.1:3000`.
 
-```text
-http://127.0.0.1:3000
-```
-
-Kiểm tra:
-
+Kiểm tra trạng thái:
 ```bash
 curl http://127.0.0.1:3000/health
 ```
 
-Nếu thấy server trả lời thì mọi thứ đang ổn.
-
-Nếu không thì... server đang không ổn.
-
 ---
 
-## 2. Chạy `lich`
+## 2. Cài đặt và chạy `lich-cli`
 
-Trong lúc development:
+Build và ký Authenticode (Windows):
+```powershell
+.\build-and-sign.cmd
+```
 
+Chạy binary đã build:
+```powershell
+.\bin\lich.exe
+```
+
+Hoặc chạy trực tiếp qua Go:
 ```bash
 cd lich-cli
 go run ./cmd/lich
 ```
 
-Hoặc chạy một command:
+---
 
+# Hướng dẫn sử dụng CLI
+
+## Đăng nhập & Tài khoản
+
+Đăng ký hoặc đăng nhập tương tác:
 ```bash
-go run ./cmd/lich today
+lich login
+```
+
+Đăng nhập qua cờ CLI:
+```bash
+lich login --username alice --password password123
+```
+
+Kiểm tra trạng thái máy chủ, local database & sync queue:
+```bash
+lich status
+lich status --simple
 ```
 
 ---
 
-# Sử dụng
+## Quản lý cấu hình (`config`)
 
-## Đăng ký / đăng nhập
-
-Đăng ký:
-
+Xem và chỉnh sửa cấu hình client:
 ```bash
-lich login --register \
-  --username alice \
-  --password password123
-```
-
-Đăng nhập:
-
-```bash
-lich login \
-  --username alice \
-  --password password123
-```
-
-Kiểm tra tài khoản:
-
-```bash
-lich auth status
+lich config
+lich config icons nerd       # unicode | nerd | ascii | emoji
+lich config agenda gantt     # gantt | list
 ```
 
 ---
 
-## Thêm sự kiện
+## Thêm sự kiện (`add`)
 
-Cách đơn giản:
-
+Mở form tương tác TUI (nếu không truyền tham số):
 ```bash
+lich add
+```
+
+Thêm nhanh bằng tham số dòng lệnh:
+```bash
+# Giờ bắt đầu mặc định thời lượng 1 tiếng
 lich add "Họp nhóm" --at 10:00
-```
 
-Chỉ định giờ bắt đầu và kết thúc (`--at` và `--to`):
+# Chỉ định cả giờ bắt đầu và kết thúc
+lich add "Làm việc tại quán cafe" --at 10:00 --to 12:30
 
-```bash
-lich add "Đi chơi với bạn" --at 10:00 --to 22:33
-```
+# Sự kiện qua đêm (tự động tính sang ngày hôm sau)
+lich add "Trực ca đêm" --at 22:00 --to 03:00
 
-Sự kiện qua đêm (tự động cộng sang ngày hôm sau):
+# Chỉ định thời lượng
+lich add "Tập gym" --at 17:30 --duration 1h30m
 
-```bash
-lich add "Đi quẩy đêm" --at 11:30pm --to 3:00am
-```
+# Ngày tương đối (today, tomorrow) hoặc YYYY-MM-DD
+lich add "Khám nha khoa" --date tomorrow --at 2:30pm --to 3:15pm
 
-Dùng thời lượng (`--duration`):
-
-```bash
-lich add "Họp nhóm" \
-  --at 10:00 \
-  --duration 1h
-```
-
-Chỉ định ngày tương đối (`today`, `tomorrow`) hoặc `YYYY-MM-DD`:
-
-```bash
-lich add "Khám nha khoa" \
-  --date tomorrow \
-  --at 2:30pm \
-  --to 3:15pm
-```
-
-Có địa điểm và ghi chú:
-
-```bash
-lich add "Họp nhóm" \
-  --at 10am \
-  --to 11:30am \
-  --location "Phòng 101" \
-  --desc "Thảo luận kế hoạch sprint mới"
+# Đầy đủ địa điểm và mô tả
+lich add "Gặp đối tác" --at 14:00 --to 15:30 --location "Quận 1" --desc "Ký kết hợp đồng"
 ```
 
 ---
 
-# Xem lịch
-
-Hôm nay:
+## Xem lịch trình (`today`, `week`, `month`, `search`)
 
 ```bash
-lich today
-```
+lich today             # Lịch hôm nay (Gantt chart hoặc List)
+lich week              # Lịch 7 ngày trong tuần
+lich month             # Lịch toàn bộ tháng hiện tại
+lich search "nha khoa" # Tìm kiếm sự kiện theo từ khóa
 
-Ngày mai:
-
-```bash
-lich tomorrow
-```
-
-Tuần này:
-
-```bash
-lich week
-```
-
-Tháng này:
-
-```bash
-lich month
-```
-
-Tìm kiếm:
-
-```bash
-lich search "nha khoa"
-```
-
-JSON cho script:
-
-```bash
-lich today --json
+# Xuất dữ liệu cho scripts / CI
+lich today --simple    # ASCII plain text
+lich today --json      # JSON output
 ```
 
 ---
 
-# TUI
+## Chỉnh sửa & Xóa sự kiện (`edit`, `delete`, `nuke`)
 
-Chạy:
+```bash
+# Chỉnh sửa sự kiện (chọn từ danh sách hoặc truyền ID)
+lich edit
+lich edit <event_id> --title "Tiêu đề mới" --at 14:00 --to 16:00
 
+# Xóa sự kiện
+lich delete
+lich delete <event_id> --force
+
+# Xóa sạch toàn bộ dữ liệu SQLite cache cục bộ (yêu cầu xác nhận an toàn)
+lich nuke-database
+```
+
+---
+
+## Đồng bộ hóa (`sync`)
+
+Hỗ trợ đồng bộ hóa 2 chiều hoặc có định hướng:
+
+```bash
+# Đồng bộ 2 chiều (Push & Pull)
+lich sync
+
+# Đồng bộ có live progress bar và chi tiết từng thao tác
+lich sync -w
+
+# Chỉ đẩy thay đổi cục bộ lên server
+lich sync push -w
+
+# Chỉ kéo thay đổi mới từ server về local cache
+lich sync pull -w
+```
+
+---
+
+# Tích hợp Google Calendar (`google`)
+
+Google Calendar hoạt động như một integration vệ tinh, dữ liệu Lich là **Source of Truth**.
+
+```text
+                 Mỹ Lích (Source of Truth)
+                            │
+               ┌────────────┴────────────┐
+               ▼                         ▼
+         Local SQLite               lich-server
+                                         │
+                                         ▼
+                                  Google Calendar
+```
+
+### Các lệnh Google Calendar:
+
+1. **Kết nối tài khoản**:
+   ```bash
+   lich google connect
+   ```
+   *Mở trình duyệt để bạn đăng nhập tài khoản Google và cấp quyền OAuth2.*
+
+2. **Kiểm tra trạng thái kết nối**:
+   ```bash
+   lich google status
+   ```
+
+3. **Xem danh sách lịch Google Calendar**:
+   ```bash
+   lich google calendars
+   ```
+
+4. **Ánh xạ lịch Lich với Google Calendar**:
+   ```bash
+   lich google map <lich_calendar_id> <google_calendar_id> [sync_direction]
+   ```
+
+5. **Đồng bộ hóa tức thì với Google**:
+   ```bash
+   lich google sync                    # Đồng bộ 2 chiều
+   lich google sync -d push            # Đẩy sự kiện Lich lên Google
+   lich google sync -d pull            # Kéo sự kiện Google về Lich
+   ```
+
+6. **Hủy liên kết**:
+   ```bash
+   lich google disconnect
+   ```
+
+---
+
+# Giao diện TUI tương tác
+
+Chạy lệnh không có tham số:
 ```bash
 lich
 ```
 
-Mở giao diện lịch ngay trong terminal.
-
 ```text
-        August 2026
+        Tháng 8 2026
 
  Mo   Tu   We   Th   Fr   Sa   Su
              1    2    3    4
@@ -287,349 +325,82 @@ Mở giao diện lịch ngay trong terminal.
                          ↑
                        hôm nay
 
- 19:00  Ăn tối
- 21:00  Về nhà
+ 10:00 - 11:30  Họp nhóm
+ 19:00 - 21:00  Ăn tối với người yêu
 ```
 
-Điều hướng:
-
-```text
-← ↓ ↑ → / h j k l    Di chuyển
-p / n                 Tháng trước / sau
-t                     Về hôm nay
-r                     Reload
-q                     Thoát
-Ctrl+C                Thoát
-```
-
-TUI được xây dựng bằng:
-
-- Go
-- Bubble Tea
-- Bubbles
-- Lip Gloss
+### Phím tắt điều khiển:
+| Phím | Chức năng |
+| ---- | --------- |
+| `← ↓ ↑ →` / `h j k l` | Di chuyển ngày / ô lịch |
+| `p` / `n` | Tháng trước / Tháng sau |
+| `t` | Trở về ngày hôm nay |
+| `a` | Mở modal thêm sự kiện mới |
+| `e` | Mở modal chỉnh sửa sự kiện đã chọn |
+| `d` | Xóa sự kiện đã chọn |
+| `Enter` | Xem chi tiết sự kiện |
+| `s` | Kích hoạt đồng bộ hóa ngầm |
+| `g` | Chuyển đổi chế độ xem Gantt chart / Danh sách |
+| `r` | Tải lại dữ liệu từ cache |
+| `?` | Bật / tắt bảng trợ giúp |
+| `q` / `Ctrl+C` | Thoát ứng dụng |
 
 ---
 
-# Đồng bộ
+# Kiểm thử & Development
 
-Lich được thiết kế để **không phụ thuộc vào mạng trong lúc sử dụng**.
-
-```bash
-lich sync
-```
-
-Muốn chờ sync hoàn thành:
-
-```bash
-lich sync --wait
-```
-
-Kiểm tra:
-
-```bash
-lich sync status
-```
-
-Ví dụ:
-
-```text
-Lich
-
-Server       ✓ synced
-Google       ✓ synced
-
-Pending      2
-Conflicts    0
-
-Last sync    10:42:13
-```
-
----
-
-# Google Calendar
-
-Google Calendar chỉ là **integration**.
-
-Không phải database chính của Mỹ Lích.
-
-```text
-                 Mỹ Lích
-                    │
-              Source of Truth
-                    │
-                    ▼
-             Sync Engine
-                    │
-                    ▼
-             Google Calendar
-```
-
-Mục tiêu:
-
-```bash
-lich sync google
-```
-
-để:
-
-- Pull event từ Google
-- Push event từ Mỹ Lích
-- Update
-- Delete
-- Calendar mapping
-- Timezone
-- Recurring events
-
----
-
-# Notifications
-
-Mỹ Lích có thể thông báo khi có chuyện xảy ra.
-
-Ví dụ:
-
-```text
-19:00
-   ↓
-"Ăn tối với người yêu"
-   ↓
-18:45
-   ↓
-Gotify:
-"Ăn tối với người yêu bắt đầu sau 15 phút."
-```
-
-Các integration dự kiến:
-
-```text
-Gotify
-Webhooks
-...
-```
-
-Cấu trúc:
-
-```text
-Calendar Event
-      │
-      ▼
- Notification System
-      │
- ┌────┴────┐
- ▼         ▼
-Gotify   Webhook
-```
-
-Calendar không cần biết notification được gửi bằng cách nào.
-
----
-
-# Self-hosting
-
-`lich-server` được thiết kế để tự host.
-
-Hiện tại:
-
-```text
-Node.js
-Fastify
-TypeScript
-SQLite
-```
-
-Database mặc định là SQLite vì:
-
-> Đây là app lịch, không phải ngân hàng.
-
-PostgreSQL có thể được hỗ trợ khi hệ thống cần scale hơn.
-
----
-
-# Kiến trúc
-
-```text
-Mỹ Lích
-│
-├── lich-cli
-│   │
-│   ├── CLI
-│   ├── TUI
-│   ├── Local SQLite
-│   ├── Sync Engine
-│   └── Google Calendar integration
-│
-└── lich-server
-    │
-    ├── Authentication
-    ├── Calendar
-    ├── Events
-    ├── Sync
-    ├── Notifications
-    ├── Webhooks
-    └── SQLite
-```
-
-### Local-first flow
-
-```text
-lich add
-   │
-   ▼
-Local SQLite
-   │
-   ├── show result immediately
-   │
-   └── queue sync
-           │
-           ▼
-      lich-server
-           │
-           ▼
-       integrations
-```
-
----
-
-# Development
-
-## Server
-
+### 1. Backend (`lich-server`)
 ```bash
 cd lich-server
-
-npm install
-npm run dev
+yarn test
 ```
+*Chạy 22 test suites gồm: Auth, Calendars, Events, Multi-tenant Isolation, Sync Engine, Google Calendar Integration.*
 
-Tests:
-
-```bash
-npm test
-```
-
----
-
-## CLI
-
+### 2. Frontend CLI (`lich-cli`)
 ```bash
 cd lich-cli
-
-go run ./cmd/lich
+go test -v -count=1 ./...
 ```
-
-Tests:
-
-```bash
-go test ./...
-```
-
-Build:
-
-```bash
-go build -o bin/lich ./cmd/lich
-```
-
-Windows:
-
-```powershell
-go build -o bin/lich.exe ./cmd/lich
-```
+*Kiểm thử toàn bộ unit tests của API client, Local cache, Syncer engine, CLI parsing, Time edge cases, TUI components.*
 
 ---
 
-# Windows
+# API Endpoints (`lich-server`)
 
-Nếu Windows Smart App Control không thích binary tự build:
-
-```text
-Smart App Control:
-"Không biết thằng này là ai."
-
-Mỹ Lích:
-"Thật ra tôi cũng không biết."
-```
-
-Trong development, sử dụng:
-
-```powershell
-go run ./cmd/lich
-```
-
-hoặc cài vào Go bin:
-
-```powershell
-go install ./cmd/lich
-```
-
-Binary có thể được build và ký bằng script:
-
-```powershell
-.\build-and-sign.cmd
-```
-
----
-
-# API
-
-| Method   | Endpoint         | Mô tả              | Auth  |
-| -------- | ---------------- | ------------------ | ----- |
-| `GET`    | `/health`        | Health check       | Không |
-| `POST`   | `/auth/register` | Đăng ký            | Không |
-| `POST`   | `/auth/login`    | Đăng nhập          | Không |
-| `GET`    | `/auth/me`       | Tài khoản hiện tại | Có    |
-| `GET`    | `/calendars`     | Danh sách lịch     | Có    |
-| `POST`   | `/calendars`     | Tạo lịch           | Có    |
-| `GET`    | `/calendars/:id` | Chi tiết lịch      | Có    |
-| `PATCH`  | `/calendars/:id` | Cập nhật lịch      | Có    |
-| `DELETE` | `/calendars/:id` | Xóa lịch           | Có    |
-| `GET`    | `/events`        | Danh sách sự kiện  | Có    |
-| `POST`   | `/events`        | Tạo sự kiện        | Có    |
-| `GET`    | `/events/:id`    | Chi tiết sự kiện   | Có    |
-| `PATCH`  | `/events/:id`    | Cập nhật sự kiện   | Có    |
-| `DELETE` | `/events/:id`    | Xóa sự kiện        | Có    |
+| Phương thức | Đường dẫn | Mô tả | Yêu cầu Auth |
+| ----------- | --------- | ----- | ------------ |
+| `GET` | `/health` | Kiểm tra server | Không |
+| `POST` | `/auth/register` | Đăng ký tài khoản | Không |
+| `POST` | `/auth/login` | Đăng nhập lấy JWT | Không |
+| `GET` | `/auth/me` | Thông tin tài khoản | Có |
+| `GET` | `/calendars` | Danh sách lịch | Có |
+| `POST` | `/calendars` | Tạo lịch mới | Có |
+| `GET` | `/events` | Lấy danh sách sự kiện theo khoảng thời gian | Có |
+| `POST` | `/events` | Tạo sự kiện mới | Có |
+| `PATCH` | `/events/:id` | Cập nhật sự kiện | Có |
+| `DELETE` | `/events/:id` | Xóa sự kiện (soft-delete) | Có |
+| `GET` | `/sync` | Lấy changelog gia tăng theo cursor | Có |
+| `GET` | `/integrations/google/auth-url` | Lấy URL OAuth Google | Có |
+| `GET` | `/auth/google/callback` | OAuth redirect callback | Không |
+| `GET` | `/integrations/google/status` | Trạng thái Google Calendar | Có |
+| `GET` | `/integrations/google/calendars` | Danh sách lịch Google | Có |
+| `POST` | `/integrations/google/map` | Ánh xạ lịch Lich sang Google | Có |
+| `POST` | `/integrations/google/sync` | Đồng bộ 2 chiều với Google | Có |
+| `DELETE` | `/integrations/google` | Hủy liên kết Google | Có |
 
 ---
 
 # Roadmap
 
-```text
-Phase 1   Foundation
-    ↓
-Phase 2   CLI
-    ↓
-Phase 3   TUI
-    ↓
-Phase 4   Local-first Sync
-    ↓
-Phase 5   Authentication
-    ↓
-Phase 6   Google Calendar
-    ↓
-Phase 7   Notifications
-    ↓
-Phase 8   CLI Polish
-    ↓
-Phase 9   Self-hosting / Production
-```
-
-Mục tiêu cuối cùng:
-
-```text
-┌──────────────────────────────────────────┐
-│                 MỸ LÍCH                  │
-│                                          │
-│  Lịch của bạn.                           │
-│  Chạy trong terminal.                    │
-│  Dữ liệu của bạn.                        │
-│  Mạng có thì sync.                       │
-│  Mạng không có thì... kệ mạng.           │
-│                                          │
-└──────────────────────────────────────────┘
-```
+- [x] **Phase 1**: Nền tảng Core API, SQLite Migrations, Multi-tenant, REST Endpoints
+- [x] **Phase 2**: CLI Client (CRUD, Time Parsing, Gantt, Config, Directional Sync)
+- [x] **Phase 3**: Tích hợp Google Calendar (OAuth2, Incremental syncToken, Event Mapping)
+- [ ] **Phase 4**: Notification System (Gotify, Desktop push alerts)
+- [ ] **Phase 5**: Webhooks & Automation Actions
 
 ---
 
 # Bản quyền
 
 MIT License
+
