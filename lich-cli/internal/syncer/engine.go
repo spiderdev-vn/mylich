@@ -16,6 +16,27 @@ type SyncEngine struct {
 	client *api.Client
 }
 
+// ProgressKind phân loại từng bước sync
+type ProgressKind string
+
+const (
+	ProgressStart   ProgressKind = "start"
+	ProgressPush    ProgressKind = "push"
+	ProgressPull    ProgressKind = "pull"
+	ProgressDone    ProgressKind = "done"
+	ProgressError   ProgressKind = "error"
+	ProgressSkip    ProgressKind = "skip"
+)
+
+// ProgressEvent là một bước trong quá trình sync
+type ProgressEvent struct {
+	Kind    ProgressKind
+	Total   int    // Tổng số jobs (nếu biết)
+	Current int    // Job hiện tại
+	Message string // Mô tả ngắn
+	Err     error
+}
+
 func NewSyncEngine(db *sql.DB, client *api.Client) *SyncEngine {
 	return &SyncEngine{
 		db:     db,
@@ -207,6 +228,63 @@ func (e *SyncEngine) Sync(ctx context.Context) (int, int, error) {
 		return pushed, pulled, pullErr
 	}
 
+	return pushed, pulled, nil
+}
+
+// SyncWithProgress chạy sync và gọi onProgress sau mỗi bước
+func (e *SyncEngine) SyncWithProgress(ctx context.Context, onProgress func(ProgressEvent)) (int, int, error) {
+	if e.client == nil {
+		return 0, 0, fmt.Errorf("client is nil, not authenticated")
+	}
+
+	// Đếm trước số pending jobs
+	jobs, err := cache.GetPendingJobs(e.db, 50)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	onProgress(ProgressEvent{Kind: ProgressStart, Total: len(jobs), Message: fmt.Sprintf("%d thao tác chờ đẩy lên", len(jobs))})
+
+	// PUSH từng job
+	pushed := 0
+	for idx, job := range jobs {
+		if job.EntityType != "event" {
+			onProgress(ProgressEvent{Kind: ProgressSkip, Total: len(jobs), Current: idx + 1, Message: fmt.Sprintf("Bỏ qua job %s (không phải event)", job.ID[:8])})
+			continue
+		}
+
+		opName := string(job.Operation)
+		onProgress(ProgressEvent{Kind: ProgressPush, Total: len(jobs), Current: idx + 1, Message: fmt.Sprintf("[%d/%d] %s %s...", idx+1, len(jobs), opName, job.EntityID[:12])})
+
+		var jobErr error
+		switch job.Operation {
+		case cache.SyncOpCreate:
+			jobErr = e.pushCreate(ctx, job)
+		case cache.SyncOpUpdate:
+			jobErr = e.pushUpdate(ctx, job)
+		case cache.SyncOpDelete:
+			jobErr = e.pushDelete(ctx, job)
+		}
+
+		if jobErr != nil {
+			_ = cache.RecordJobFailure(e.db, job.ID, jobErr.Error(), job.Attempts)
+			_ = cache.UpdateEventSyncState(e.db, job.EntityID, cache.SyncStateFailed)
+			onProgress(ProgressEvent{Kind: ProgressError, Total: len(jobs), Current: idx + 1, Message: fmt.Sprintf("✗ Lỗi: %v", jobErr), Err: jobErr})
+		} else {
+			_ = cache.DeleteJob(e.db, job.ID)
+			pushed++
+		}
+	}
+
+	// PULL từ server
+	onProgress(ProgressEvent{Kind: ProgressPull, Message: "Nhận dữ liệu mới từ máy chủ..."})
+	pulled, pullErr := e.Pull(ctx)
+	if pullErr != nil {
+		onProgress(ProgressEvent{Kind: ProgressError, Message: fmt.Sprintf("✗ Lỗi kết nối: %v", pullErr), Err: pullErr})
+		return pushed, 0, pullErr
+	}
+
+	onProgress(ProgressEvent{Kind: ProgressDone, Message: fmt.Sprintf("✓ Hoàn tất: ↑%d đẩy lên  ↓%d nhận về", pushed, pulled)})
 	return pushed, pulled, nil
 }
 
