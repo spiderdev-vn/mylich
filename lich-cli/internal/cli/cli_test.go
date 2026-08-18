@@ -307,6 +307,7 @@ func TestCLI_NukeDatabaseRemote(t *testing.T) {
 	defer server.Close()
 
 	tempDir := t.TempDir()
+	t.Setenv("APPDATA", tempDir)
 	t.Setenv("LOCALAPPDATA", tempDir)
 	t.Setenv("XDG_CONFIG_HOME", tempDir)
 	t.Setenv("HOME", tempDir)
@@ -377,6 +378,7 @@ func TestCLI_GoogleIntegrationCommands(t *testing.T) {
 	defer server.Close()
 
 	tempDir := t.TempDir()
+	t.Setenv("APPDATA", tempDir)
 	t.Setenv("LOCALAPPDATA", tempDir)
 	t.Setenv("XDG_CONFIG_HOME", tempDir)
 	t.Setenv("HOME", tempDir)

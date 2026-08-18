@@ -39,16 +39,19 @@ var (
 
 	// Single unified container box that adapts cleanly to terminal width
 	ContainerCard = lipgloss.NewStyle().
+			Width(72).
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(ColorBorder).
 			Padding(0, 1)
 
 	CardBoxSuccess = lipgloss.NewStyle().
+			Width(72).
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(ColorSuccess).
 			Padding(0, 1)
 
 	CardBoxError = lipgloss.NewStyle().
+			Width(72).
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(ColorError).
 			Padding(0, 1)

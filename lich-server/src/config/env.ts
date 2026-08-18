@@ -23,8 +23,9 @@ export function loadConfig(): AppConfig {
   const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET || '';
   const googleRedirectUri =
     process.env.GOOGLE_REDIRECT_URI || `http://${host}:${port}/auth/google/callback`;
+  const fakeEnv = (process.env.USE_FAKE_GOOGLE || '').toLowerCase();
   const useFakeGoogleProvider =
-    process.env.USE_FAKE_GOOGLE === 'true' || !googleClientId || !googleClientSecret;
+    fakeEnv === 'true' || fakeEnv === 't' || fakeEnv === '1' || fakeEnv === 'yes' || !googleClientId || !googleClientSecret;
 
   return {
     host,
