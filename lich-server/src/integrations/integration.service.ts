@@ -78,6 +78,17 @@ export class IntegrationService {
     // Auto-map default primary calendar if available
     const defaultCal = this.calendarRepo.findDefaultByUserId(userId);
     if (defaultCal) {
+      let primaryExtCalId = 'primary';
+      try {
+        const extCals = await this.provider.listCalendars(tokenResult.accessToken);
+        const found = extCals.find((c) => c.isPrimary) || extCals[0];
+        if (found) {
+          primaryExtCalId = found.id;
+        }
+      } catch {
+        // Fallback to 'primary'
+      }
+
       const existingMapping = this.calendarIntegrationRepo.findByCalendarAndIntegration(
         defaultCal.id,
         integration.id,
@@ -87,7 +98,7 @@ export class IntegrationService {
           id: crypto.randomUUID(),
           calendar_id: defaultCal.id,
           integration_id: integration.id,
-          external_calendar_id: 'primary',
+          external_calendar_id: primaryExtCalId,
           sync_direction: 'bidirectional',
           enabled: true,
         });
@@ -99,7 +110,7 @@ export class IntegrationService {
 
   public async getStatus(userId: string): Promise<IntegrationStatusResponse> {
     const integration = this.integrationRepo.findByUserAndProvider(userId, this.provider.name);
-    if (!integration || integration.status === 'disconnected') {
+    if (!integration) {
       return {
         connected: false,
         provider: this.provider.name,
@@ -114,17 +125,12 @@ export class IntegrationService {
 
     const mappedCalendars = mappings.map((m) => {
       const cal = this.calendarRepo.findById(m.calendar_id);
-      const syncState = this.calendarIntegrationRepo.getSyncState(
-        integration.id,
-        `calendar:${m.external_calendar_id}`,
-      );
-
       return {
         calendarId: m.calendar_id,
-        calendarName: cal?.name || m.calendar_id,
+        calendarName: cal?.name || 'Unknown Calendar',
         externalCalendarId: m.external_calendar_id,
         syncDirection: m.sync_direction,
-        lastSyncedAt: syncState?.last_synced_at,
+        lastSyncedAt: m.updated_at,
       };
     });
 
@@ -232,30 +238,34 @@ export class IntegrationService {
         (direction === 'pull' || direction === 'both') &&
         (mapping.sync_direction === 'pull' || mapping.sync_direction === 'bidirectional');
 
-      // 1. PUSH Lich -> Google
+      // 1. PUSH Lich -> Google (Last-Write-Wins)
       if (shouldPush) {
         const events = this.eventRepo.findByCalendarId(mapping.calendar_id);
         for (const evt of events) {
           const extMapping = this.eventIntegrationRepo.findByEventAndIntegration(evt.id, integration.id);
           if (extMapping) {
-            // Update existing event on Google
-            try {
-              const updatedExt = await this.provider.updateEvent(
-                accessToken,
-                mapping.external_calendar_id,
-                extMapping.external_id,
-                evt,
-              );
-              this.eventIntegrationRepo.upsert({
-                id: extMapping.id,
-                event_id: evt.id,
-                integration_id: integration.id,
-                external_id: updatedExt.id,
-                external_updated_at: updatedExt.updated,
-              });
-              totalPushed++;
-            } catch (err: any) {
-              // Non-fatal per event
+            const localUpdated = new Date(evt.updated_at).getTime();
+            const remoteUpdated = extMapping.external_updated_at ? new Date(extMapping.external_updated_at).getTime() : 0;
+
+            if (localUpdated >= remoteUpdated) {
+              try {
+                const updatedExt = await this.provider.updateEvent(
+                  accessToken,
+                  mapping.external_calendar_id,
+                  extMapping.external_id,
+                  evt,
+                );
+                this.eventIntegrationRepo.upsert({
+                  id: extMapping.id,
+                  event_id: evt.id,
+                  integration_id: integration.id,
+                  external_id: updatedExt.id,
+                  external_updated_at: updatedExt.updated,
+                });
+                totalPushed++;
+              } catch (err: any) {
+                // Non-fatal per event
+              }
             }
           } else {
             // Create on Google
@@ -280,7 +290,7 @@ export class IntegrationService {
         }
       }
 
-      // 2. PULL Google -> Lich
+      // 2. PULL Google -> Lich (Last-Write-Wins)
       if (shouldPull) {
         const syncResource = `calendar:${mapping.external_calendar_id}`;
         const syncState = this.calendarIntegrationRepo.getSyncState(integration.id, syncResource);
@@ -309,15 +319,20 @@ export class IntegrationService {
             // Update local event
             const existingLocal = this.eventRepo.findById(extMapping.event_id);
             if (existingLocal) {
-              this.eventRepo.update(existingLocal.id, lichFields);
-              this.eventIntegrationRepo.upsert({
-                id: extMapping.id,
-                event_id: existingLocal.id,
-                integration_id: integration.id,
-                external_id: gEvent.id,
-                external_updated_at: gEvent.updated,
-              });
-              totalPulled++;
+              const localUpdated = new Date(existingLocal.updated_at).getTime();
+              const remoteUpdated = gEvent.updated ? new Date(gEvent.updated).getTime() : 0;
+
+              if (remoteUpdated >= localUpdated) {
+                this.eventRepo.update(existingLocal.id, lichFields);
+                this.eventIntegrationRepo.upsert({
+                  id: extMapping.id,
+                  event_id: existingLocal.id,
+                  integration_id: integration.id,
+                  external_id: gEvent.id,
+                  external_updated_at: gEvent.updated,
+                });
+                totalPulled++;
+              }
             }
           } else {
             // Create new local event

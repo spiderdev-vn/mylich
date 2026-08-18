@@ -294,6 +294,9 @@ func runGoogleSync(ctx context.Context, client *api.Client, args []string) error
 	directionFlag := fs.String("direction", "both", "Hướng đồng bộ (push, pull, both)")
 	fs.StringVar(directionFlag, "d", "both", "Hướng đồng bộ (viết tắt)")
 	calFlag := fs.String("calendar", "", "ID lịch cụ thể")
+	verboseFlag := fs.Bool("verbose", false, "Hiển thị chi tiết các bước đồng bộ")
+	fs.BoolVar(verboseFlag, "v", false, "Hiển thị chi tiết các bước đồng bộ (viết tắt)")
+	fs.BoolVar(verboseFlag, "w", false, "Hiển thị chi tiết các bước đồng bộ (viết tắt)")
 	simpleFlag := fs.Bool("simple", false, "Hiển thị ASCII đơn giản")
 	fs.BoolVar(simpleFlag, "s", false, "Hiển thị ASCII đơn giản (viết tắt)")
 
@@ -304,8 +307,14 @@ func runGoogleSync(ctx context.Context, client *api.Client, args []string) error
 		return err
 	}
 
-	if ui.IsSimpleMode(*simpleFlag) {
-		fmt.Printf("↻ Đang đồng bộ với Google Calendar (%s)...\n", *directionFlag)
+	if *verboseFlag {
+		if ui.IsSimpleMode(*simpleFlag) {
+			fmt.Println("[1/3] Đang kết nối máy chủ và xác thực Google...")
+			fmt.Printf("[2/3] Bắt đầu đồng bộ 2 chiều (hướng: %s, Last-Write-Wins)...\n", *directionFlag)
+		} else {
+			fmt.Println(ui.LabelStyle.Render("↻ [1/3] Đang kết nối máy chủ và xác thực Google..."))
+			fmt.Println(ui.LabelStyle.Render(fmt.Sprintf("↻ [2/3] Bắt đầu đồng bộ 2 chiều (hướng: %s, Last-Write-Wins)...", *directionFlag)))
+		}
 	}
 
 	res, err := client.SyncGoogle(ctx, *calFlag, *directionFlag)
@@ -313,19 +322,25 @@ func runGoogleSync(ctx context.Context, client *api.Client, args []string) error
 		return fmt.Errorf("lỗi đồng bộ Google Calendar: %w", err)
 	}
 
+	if *verboseFlag {
+		if ui.IsSimpleMode(*simpleFlag) {
+			fmt.Printf("[3/3] Hoàn tất: Đẩy lên %d sự kiện, Kéo về %d sự kiện\n", res.Pushed, res.Pulled)
+		} else {
+			fmt.Println(ui.LabelStyle.Render(fmt.Sprintf("✓ [3/3] Hoàn tất: Đẩy lên %d sự kiện, Kéo về %d sự kiện", res.Pushed, res.Pulled)))
+		}
+	}
+
 	if ui.IsSimpleMode(*simpleFlag) {
-		fmt.Println("✓ Hoàn tất đồng bộ Google Calendar:")
-		fmt.Printf("  - Đẩy lên Google: %d sự kiện\n", res.Pushed)
-		fmt.Printf("  - Nhận từ Google: %d sự kiện\n", res.Pulled)
+		fmt.Printf("✓ Đã đồng bộ Google Calendar: %d đẩy lên, %d kéo về\n", res.Pushed, res.Pulled)
 		return nil
 	}
 
 	fmt.Println(ui.CardBoxSuccess.Render(fmt.Sprintf(
 		"%s\n\n%s %s\n%s %s\n%s %s\n%s %s",
-		ui.CardTitle.Render("✓ HOÀN TẤT ĐỒNG BỘ GOOGLE CALENDAR"),
+		ui.CardTitle.Render("✓ ĐỒNG BỘ GOOGLE CALENDAR THÀNH CÔNG"),
 		ui.LabelStyle.Render("Chế độ:         "), ui.ValueStyle.Render(strings.ToUpper(*directionFlag)),
 		ui.LabelStyle.Render("Đẩy lên Google: "), ui.ValueStyle.Render(fmt.Sprintf("%d sự kiện", res.Pushed)),
-		ui.LabelStyle.Render("Nhận từ Google: "), ui.ValueStyle.Render(fmt.Sprintf("%d sự kiện", res.Pulled)),
+		ui.LabelStyle.Render("Kéo về Lich:    "), ui.ValueStyle.Render(fmt.Sprintf("%d sự kiện", res.Pulled)),
 		ui.LabelStyle.Render("Trạng thái:     "), ui.BadgeSynced,
 	)))
 	return nil
