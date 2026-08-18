@@ -225,3 +225,8 @@ func (c *Client) Sync(ctx context.Context, since string, limit int) (*SyncRespon
 	return &res, nil
 }
 
+func (c *Client) NukeRemote(ctx context.Context) error {
+	var res map[string]any
+	return c.doRequest(ctx, http.MethodPost, "/nuke", nil, &res)
+}
+

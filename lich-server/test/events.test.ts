@@ -157,4 +157,58 @@ describe('Event Endpoints', () => {
     assert.equal(events[0].title, 'Event Aug 18 Morning');
     assert.equal(events[1].title, 'Event Aug 18 Evening');
   });
+
+  test('POST /nuke wipes all user events and calendars and resets default Personal calendar', async () => {
+    const app = await createTestApp();
+    const regRes = await app.inject({
+      method: 'POST',
+      url: '/auth/register',
+      payload: { username: 'nukeuser', password: 'password123' },
+    });
+    const { token } = JSON.parse(regRes.body);
+    const authHeaders = { authorization: `Bearer ${token}` };
+
+    // Create an event
+    await app.inject({
+      method: 'POST',
+      url: '/events',
+      headers: authHeaders,
+      payload: {
+        title: 'To Be Nuked',
+        start_at: '2026-08-18T10:00:00Z',
+        end_at: '2026-08-18T11:00:00Z',
+      },
+    });
+
+    // Call POST /nuke
+    const nukeRes = await app.inject({
+      method: 'POST',
+      url: '/nuke',
+      headers: authHeaders,
+    });
+    assert.equal(nukeRes.statusCode, 200);
+    assert.equal(JSON.parse(nukeRes.payload).success, true);
+
+    // Verify events are empty
+    const listRes = await app.inject({
+      method: 'GET',
+      url: '/events',
+      headers: authHeaders,
+    });
+    assert.equal(listRes.statusCode, 200);
+    assert.equal(JSON.parse(listRes.payload).length, 0);
+
+    // Verify default calendar is recreated
+    const calsRes = await app.inject({
+      method: 'GET',
+      url: '/calendars',
+      headers: authHeaders,
+    });
+    assert.equal(calsRes.statusCode, 200);
+    const cals = JSON.parse(calsRes.payload);
+    assert.equal(cals.length, 1);
+    assert.equal(cals[0].name, 'Personal');
+    assert.equal(cals[0].is_default, true);
+  });
 });
+

@@ -293,6 +293,39 @@ func TestCLI_NukeDatabaseForce(t *testing.T) {
 	}
 }
 
+func TestCLI_NukeDatabaseRemote(t *testing.T) {
+	remoteNuked := false
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if r.Method == http.MethodPost && r.URL.Path == "/nuke" {
+			remoteNuked = true
+			_ = json.NewEncoder(w).Encode(map[string]any{"success": true})
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	tempDir := t.TempDir()
+	t.Setenv("LOCALAPPDATA", tempDir)
+	t.Setenv("XDG_CONFIG_HOME", tempDir)
+	t.Setenv("HOME", tempDir)
+
+	_ = config.SaveConfig(&config.Config{
+		ServerURL: server.URL,
+		Token:     "mock-token-123",
+	})
+
+	err := RunNuke([]string{"--remote", "--force", "--simple"})
+	if err != nil {
+		t.Fatalf("RunNuke --remote failed: %v", err)
+	}
+
+	if !remoteNuked {
+		t.Errorf("expected remote server /nuke endpoint to be called")
+	}
+}
+
 func TestCLI_ExecuteVersionAndHelp(t *testing.T) {
 	if code := Execute([]string{"version"}); code != 0 {
 		t.Errorf("expected exit code 0 for version, got %d", code)

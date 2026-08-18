@@ -232,6 +232,9 @@ lich delete <event_id> --force
 
 # Xóa sạch toàn bộ dữ liệu SQLite cache cục bộ (yêu cầu xác nhận an toàn)
 lich nuke-database
+
+# Xóa sạch toàn bộ dữ liệu cả trên MÁY CHỦ và CỤC BỘ (yêu cầu xác nhận an toàn)
+lich nuke-database --remote
 ```
 
 ---

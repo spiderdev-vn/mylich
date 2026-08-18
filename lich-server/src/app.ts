@@ -124,6 +124,36 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
   await app.register(syncRoutes, { syncService });
   await app.register(integrationRoutes, { integrationService });
 
+  // Remote nuke endpoint for resetting user data
+  app.post('/nuke', { preHandler: [app.authenticate] }, async (request) => {
+    const user = request.user as { id: string };
+    const userId = user.id;
+
+    db.exec('BEGIN TRANSACTION;');
+    try {
+      db.prepare('DELETE FROM conflicts WHERE user_id = ?').run(userId);
+      db.prepare('DELETE FROM integrations WHERE user_id = ?').run(userId);
+      db.prepare('DELETE FROM change_logs WHERE user_id = ?').run(userId);
+      db.prepare('DELETE FROM calendars WHERE user_id = ?').run(userId);
+
+      // Recreate default Personal calendar
+      calendarRepo.create({
+        id: crypto.randomUUID(),
+        user_id: userId,
+        name: 'Personal',
+        timezone: 'UTC',
+        is_default: true,
+        color: '#4285F4',
+      });
+
+      db.exec('COMMIT;');
+      return { success: true, message: 'Remote user data nuked successfully' };
+    } catch (err) {
+      db.exec('ROLLBACK;');
+      throw err;
+    }
+  });
+
   // Store db instance on fastify for test cleanup / closing
   app.decorate('db', db);
 
