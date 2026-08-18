@@ -348,17 +348,41 @@ func (m Model) View() string {
 	sb.WriteString("\n\n")
 
 	// Left: Calendar Grid
+	calStyle := calendarBoxStyle
+	if m.Focus == FocusCalendar {
+		calStyle = calStyle.BorderForeground(primaryColor)
+	} else {
+		calStyle = calStyle.BorderForeground(lipgloss.Color("#44475A"))
+	}
 	calView := RenderCalendarGrid(m.CurrentMonth.Year(), m.CurrentMonth.Month(), m.SelectedDate, m.Events, m.Location)
-	calBox := calendarBoxStyle.Render(calView)
+	calBox := calStyle.Render(calView)
 
-	// Right: Agenda for Selected Date
+	// Right: Agenda for Selected Date (Mở rộng chiều dài linh hoạt)
+	agendaWidth := 56
+	if m.Width > 95 {
+		agendaWidth = m.Width - 36 - 6
+		if agendaWidth > 75 {
+			agendaWidth = 75
+		}
+	}
+	if agendaWidth < 50 {
+		agendaWidth = 50
+	}
+
+	agendaStyle := agendaBoxStyle.Width(agendaWidth)
+	if m.Focus == FocusAgenda {
+		agendaStyle = agendaStyle.BorderForeground(lipgloss.Color("#74C0FC"))
+	} else {
+		agendaStyle = agendaStyle.BorderForeground(lipgloss.Color("#44475A"))
+	}
+
 	selectedEvents := m.getSelectedDayEvents()
 	agendaView := RenderAgenda(m.SelectedDate, selectedEvents, m.Location, m.SelectedEventIdx, m.Focus == FocusAgenda)
-	agendaBox := agendaBoxStyle.Render(agendaView)
+	agendaBox := agendaStyle.Render(agendaView)
 
 	// Join side-by-side or stacked based on width
 	var mainLayout string
-	if m.Width > 75 {
+	if m.Width > 85 {
 		mainLayout = lipgloss.JoinHorizontal(lipgloss.Top, calBox, "  ", agendaBox)
 	} else {
 		mainLayout = lipgloss.JoinVertical(lipgloss.Left, calBox, "\n", agendaBox)

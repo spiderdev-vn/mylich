@@ -74,7 +74,7 @@ var (
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(lipgloss.Color("#44475A")).
 			Padding(1, 2).
-			Width(40)
+			Width(52)
 
 	agendaHeaderStyle = lipgloss.NewStyle().
 				Bold(true).
