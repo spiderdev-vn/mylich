@@ -124,7 +124,8 @@ func runCalendarList(args []string) error {
 	}
 
 	var sb strings.Builder
-	sb.WriteString(ui.CardTitle.Render("DANH SÁCH LỊCH TRONG MỸ LÍCH") + "\n\n")
+	sb.WriteString(ui.CardTitle.Render("DANH SÁCH LỊCH TRONG MỸ LÍCH"))
+	sb.WriteString("\n\n")
 
 	for i, cal := range calendars {
 		defBadge := ""
@@ -214,7 +215,8 @@ func runCalendarAdd(args []string) error {
 	}
 
 	var sb strings.Builder
-	sb.WriteString(ui.CardTitle.Render("✓ ĐÃ TẠO LỊCH THÀNH CÔNG") + "\n\n")
+	sb.WriteString(ui.CardTitle.Render("✓ ĐÃ TẠO LỊCH THÀNH CÔNG"))
+	sb.WriteString("\n\n")
 	sb.WriteString(fmt.Sprintf("%s %s\n", ui.LabelStyle.Render("Tên lịch:"), ui.ValueStyle.Render(cal.Name)))
 	sb.WriteString(fmt.Sprintf("%s %s\n", ui.LabelStyle.Render("ID lịch:"), cal.ID))
 	sb.WriteString(fmt.Sprintf("%s %s\n", ui.LabelStyle.Render("Múi giờ:"), cal.Timezone))

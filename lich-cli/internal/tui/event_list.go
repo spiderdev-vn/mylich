@@ -518,8 +518,9 @@ func RenderAgendaGantt(selectedDate time.Time, events []cache.LocalEvent, loc *t
 func RenderAgendaASCII(selectedDate time.Time, events []cache.LocalEvent, loc *time.Location, selectedIdx int, isFocused bool) string {
 	var sb strings.Builder
 
-	sb.WriteString(fmt.Sprintf("AGENDA: %s (%d events) [ASCII MODE]\n", selectedDate.Format("2006-01-02"), len(events)))
-	sb.WriteString(strings.Repeat("-", 50) + "\n")
+	fmt.Fprintf(&sb, "AGENDA: %s (%d events) [ASCII MODE]\n", selectedDate.Format("2006-01-02"), len(events))
+	sb.WriteString(strings.Repeat("-", 50))
+	sb.WriteString("\n")
 
 	if len(events) == 0 {
 		sb.WriteString("No events scheduled for this day.\n")

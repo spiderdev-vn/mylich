@@ -68,7 +68,7 @@ export class EventRepository {
     const stmt = this.db.prepare(`
       SELECT * FROM events WHERE id = ? AND deleted_at IS NULL
     `);
-    const row = stmt.get(id) as Event | undefined;
+    const row = stmt.get(id) as unknown as Event | undefined;
     return row || null;
   }
 
@@ -79,7 +79,7 @@ export class EventRepository {
       INNER JOIN calendars c ON e.calendar_id = c.id
       WHERE e.id = ? AND e.deleted_at IS NULL
     `);
-    const row = stmt.get(id) as (Event & { user_id: string }) | undefined;
+    const row = stmt.get(id) as unknown as (Event & { user_id: string }) | undefined;
     return row || null;
   }
 
@@ -117,7 +117,7 @@ export class EventRepository {
     `;
 
     const stmt = this.db.prepare(sql);
-    return stmt.all(...args) as Event[];
+    return stmt.all(...args) as unknown as Event[];
   }
 
   public findByCalendarId(calendarId: string): Event[] {
@@ -126,7 +126,7 @@ export class EventRepository {
       WHERE calendar_id = ? AND deleted_at IS NULL
       ORDER BY start_at ASC
     `);
-    return stmt.all(calendarId) as Event[];
+    return stmt.all(calendarId) as unknown as Event[];
   }
 
   public update(

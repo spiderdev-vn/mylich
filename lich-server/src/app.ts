@@ -82,7 +82,7 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
   });
 
   // Error handler
-  app.setErrorHandler((error, _request, reply) => {
+  app.setErrorHandler((error: any, _request, reply) => {
     if (error instanceof AppError) {
       reply.status(error.statusCode).send({
         error: error.code,
@@ -92,7 +92,7 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
       return;
     }
 
-    if (error.validation) {
+    if (error?.validation) {
       reply.status(400).send({
         error: 'VALIDATION_ERROR',
         message: error.message,
@@ -102,10 +102,12 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
     }
 
     app.log.error(error);
-    reply.status(error.statusCode || 500).send({
+    const statusCode = typeof error?.statusCode === 'number' ? error.statusCode : 500;
+    const message = typeof error?.message === 'string' ? error.message : 'An unexpected error occurred';
+    reply.status(statusCode).send({
       error: 'INTERNAL_SERVER_ERROR',
-      message: error.message || 'An unexpected error occurred',
-      statusCode: error.statusCode || 500,
+      message,
+      statusCode,
     });
   });
 

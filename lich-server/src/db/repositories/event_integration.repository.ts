@@ -35,7 +35,7 @@ export class EventIntegrationRepository {
     const stmt = this.db.prepare(
       'SELECT * FROM event_integrations WHERE event_id = ? AND integration_id = ?',
     );
-    const row = stmt.get(eventId, integrationId) as EventIntegration | undefined;
+    const row = stmt.get(eventId, integrationId) as unknown as EventIntegration | undefined;
     return row || null;
   }
 
@@ -43,7 +43,7 @@ export class EventIntegrationRepository {
     const stmt = this.db.prepare(
       'SELECT * FROM event_integrations WHERE integration_id = ? AND external_id = ?',
     );
-    const row = stmt.get(integrationId, externalId) as EventIntegration | undefined;
+    const row = stmt.get(integrationId, externalId) as unknown as EventIntegration | undefined;
     return row || null;
   }
 
@@ -118,7 +118,7 @@ export class EventIntegrationRepository {
 
   public getConflict(id: string): ConflictRecord | null {
     const stmt = this.db.prepare('SELECT * FROM conflicts WHERE id = ?');
-    const row = stmt.get(id) as ConflictRecord | undefined;
+    const row = stmt.get(id) as unknown as ConflictRecord | undefined;
     return row || null;
   }
 
@@ -126,7 +126,7 @@ export class EventIntegrationRepository {
     const stmt = this.db.prepare(
       "SELECT * FROM conflicts WHERE user_id = ? AND status = 'unresolved' ORDER BY detected_at DESC",
     );
-    return stmt.all(userId) as ConflictRecord[];
+    return stmt.all(userId) as unknown as ConflictRecord[];
   }
 
   public resolveConflict(id: string, status: 'resolved_local' | 'resolved_remote'): void {

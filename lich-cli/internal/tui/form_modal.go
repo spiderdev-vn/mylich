@@ -456,7 +456,7 @@ func (f EventFormModal) Render(width, height int) string {
 		lines := []string{
 			deleteTitle,
 			"",
-			fmt.Sprintf("Bạn có chắc chắn muốn xóa sự kiện:"),
+			"Bạn có chắc chắn muốn xóa sự kiện:",
 			lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#FFFFFF")).Render("  \"" + evTitle + "\""),
 			"",
 			fmt.Sprintf("%s    %s",

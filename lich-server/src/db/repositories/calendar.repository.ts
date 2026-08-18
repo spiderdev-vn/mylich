@@ -57,7 +57,7 @@ export class CalendarRepository {
 
   public findById(id: string): Calendar | null {
     const stmt = this.db.prepare('SELECT * FROM calendars WHERE id = ?');
-    const row = stmt.get(id) as Calendar | undefined;
+    const row = stmt.get(id) as unknown as Calendar | undefined;
     return row || null;
   }
 
@@ -65,14 +65,14 @@ export class CalendarRepository {
     const stmt = this.db.prepare(
       'SELECT * FROM calendars WHERE user_id = ? ORDER BY is_default DESC, name ASC',
     );
-    return stmt.all(userId) as Calendar[];
+    return stmt.all(userId) as unknown as Calendar[];
   }
 
   public findDefaultByUserId(userId: string): Calendar | null {
     const stmt = this.db.prepare(
       'SELECT * FROM calendars WHERE user_id = ? AND is_default = 1 LIMIT 1',
     );
-    const row = stmt.get(userId) as Calendar | undefined;
+    const row = stmt.get(userId) as unknown as Calendar | undefined;
     return row || null;
   }
 

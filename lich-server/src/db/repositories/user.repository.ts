@@ -34,13 +34,13 @@ export class UserRepository {
 
   public findById(id: string): User | null {
     const stmt = this.db.prepare('SELECT * FROM users WHERE id = ?');
-    const row = stmt.get(id) as User | undefined;
+    const row = stmt.get(id) as unknown as User | undefined;
     return row || null;
   }
 
   public findByUsername(username: string): User | null {
     const stmt = this.db.prepare('SELECT * FROM users WHERE username = ? COLLATE NOCASE');
-    const row = stmt.get(username) as User | undefined;
+    const row = stmt.get(username) as unknown as User | undefined;
     return row || null;
   }
 }

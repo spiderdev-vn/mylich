@@ -28,14 +28,14 @@ export class CalendarIntegrationRepository {
 
   public listByIntegrationId(integrationId: string): CalendarIntegration[] {
     const stmt = this.db.prepare('SELECT * FROM calendar_integrations WHERE integration_id = ?');
-    return stmt.all(integrationId) as CalendarIntegration[];
+    return stmt.all(integrationId) as unknown as CalendarIntegration[];
   }
 
   public findByCalendarAndIntegration(calendarId: string, integrationId: string): CalendarIntegration | null {
     const stmt = this.db.prepare(
       'SELECT * FROM calendar_integrations WHERE calendar_id = ? AND integration_id = ?',
     );
-    const row = stmt.get(calendarId, integrationId) as CalendarIntegration | undefined;
+    const row = stmt.get(calendarId, integrationId) as unknown as CalendarIntegration | undefined;
     return row || null;
   }
 
@@ -43,7 +43,7 @@ export class CalendarIntegrationRepository {
     const stmt = this.db.prepare(
       'SELECT * FROM calendar_integrations WHERE integration_id = ? AND external_calendar_id = ?',
     );
-    const row = stmt.get(integrationId, externalCalId) as CalendarIntegration | undefined;
+    const row = stmt.get(integrationId, externalCalId) as unknown as CalendarIntegration | undefined;
     return row || null;
   }
 
@@ -92,7 +92,7 @@ export class CalendarIntegrationRepository {
     const stmt = this.db.prepare(
       'SELECT * FROM integration_sync_state WHERE integration_id = ? AND resource = ?',
     );
-    const row = stmt.get(integrationId, resource) as IntegrationSyncState | undefined;
+    const row = stmt.get(integrationId, resource) as unknown as IntegrationSyncState | undefined;
     return row || null;
   }
 

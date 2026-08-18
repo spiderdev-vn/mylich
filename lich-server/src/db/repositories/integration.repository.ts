@@ -29,13 +29,13 @@ export class IntegrationRepository {
 
   public findByUserAndProvider(userId: string, provider: string): Integration | null {
     const stmt = this.db.prepare('SELECT * FROM integrations WHERE user_id = ? AND provider = ?');
-    const row = stmt.get(userId, provider) as Integration | undefined;
+    const row = stmt.get(userId, provider) as unknown as Integration | undefined;
     return row || null;
   }
 
   public findById(id: string): Integration | null {
     const stmt = this.db.prepare('SELECT * FROM integrations WHERE id = ?');
-    const row = stmt.get(id) as Integration | undefined;
+    const row = stmt.get(id) as unknown as Integration | undefined;
     return row || null;
   }
 
@@ -94,7 +94,7 @@ export class IntegrationRepository {
 
   public getCredentials(integrationId: string): IntegrationCredentials | null {
     const stmt = this.db.prepare('SELECT * FROM integration_credentials WHERE integration_id = ?');
-    const row = stmt.get(integrationId) as IntegrationCredentials | undefined;
+    const row = stmt.get(integrationId) as unknown as IntegrationCredentials | undefined;
     return row || null;
   }
 
