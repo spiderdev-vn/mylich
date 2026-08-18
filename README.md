@@ -261,7 +261,7 @@ lich sync pull -w
 
 # Tích hợp Google Calendar (`google`)
 
-Google Calendar hoạt động như một integration vệ tinh, dữ liệu Lich là **Source of Truth**.
+Google Calendar hoạt động như một integration vệ tinh kết nối với `lich-server`, trong đó dữ liệu của Mỹ Lích là **Source of Truth** (nguồn chân lý).
 
 ```text
                  Mỹ Lích (Source of Truth)
@@ -274,40 +274,98 @@ Google Calendar hoạt động như một integration vệ tinh, dữ liệu Lic
                                   Google Calendar
 ```
 
-### Các lệnh Google Calendar:
+---
 
-1. **Kết nối tài khoản**:
-   ```bash
-   lich google connect
-   ```
-   *Mở trình duyệt để bạn đăng nhập tài khoản Google và cấp quyền OAuth2.*
+## 🛠 Hướng dẫn thiết lập Google Cloud OAuth 2.0
 
-2. **Kiểm tra trạng thái kết nối**:
-   ```bash
-   lich google status
-   ```
+Để kết nối với tài khoản Google thật, bạn cần tạo OAuth 2.0 Credentials trên Google Cloud Console:
 
-3. **Xem danh sách lịch Google Calendar**:
-   ```bash
-   lich google calendars
-   ```
+### Bước 1: Tạo Project & Bật Google Calendar API
+1. Truy cập [Google Cloud Console](https://console.cloud.google.com/) và tạo một Project mới.
+2. Vào **APIs & Services** $\rightarrow$ **Library**, tìm kiếm **Google Calendar API** và nhấn **Enable** (Bật).
 
-4. **Ánh xạ lịch Lich với Google Calendar**:
-   ```bash
-   lich google map <lich_calendar_id> <google_calendar_id> [sync_direction]
-   ```
+### Bước 2: Cấu hình OAuth Consent Screen
+1. Vào **APIs & Services** $\rightarrow$ **OAuth consent screen**.
+2. Chọn loại **External** (hoặc Internal nếu dùng Google Workspace).
+3. Nhập tên ứng dụng (ví dụ: `My Lich Calendar`) và email hỗ trợ.
+4. Ở mục **Scopes**, thêm scope:
+   - `https://www.googleapis.com/auth/calendar.events` (Đọc/ghi sự kiện)
+   - `https://www.googleapis.com/auth/calendar.readonly` (Xem danh sách lịch)
+   - `https://www.googleapis.com/auth/userinfo.email` (Nhận diện email)
+5. Ở mục **Test users**, thêm địa chỉ Gmail của bạn để cho phép đăng nhập thử nghiệm.
 
-5. **Đồng bộ hóa tức thì với Google**:
-   ```bash
-   lich google sync                    # Đồng bộ 2 chiều
-   lich google sync -d push            # Đẩy sự kiện Lich lên Google
-   lich google sync -d pull            # Kéo sự kiện Google về Lich
+### Bước 3: Tạo OAuth Client ID
+1. Vào **APIs & Services** $\rightarrow$ **Credentials** $\rightarrow$ **Create Credentials** $\rightarrow$ **OAuth client ID**.
+2. Chọn **Application type**: `Web application`.
+3. Tên: `Lich Server Client`.
+4. Tại mục **Authorized redirect URIs**, thêm chính xác URL sau:
+   ```text
+   http://127.0.0.1:3000/auth/google/callback
    ```
+5. Nhấn **Create** và sao chép **Client ID** cùng **Client Secret**.
 
-6. **Hủy liên kết**:
-   ```bash
-   lich google disconnect
-   ```
+### Bước 4: Cấu hình biến môi trường trên `lich-server`
+Mở terminal hoặc tạo file `.env` trong thư mục `lich-server/`:
+
+```bash
+GOOGLE_CLIENT_ID="123456789-xxxxxxxx.apps.googleusercontent.com"
+GOOGLE_CLIENT_SECRET="GOCSPX-xxxxxxxxxxxxxxxx"
+GOOGLE_REDIRECT_URI="http://127.0.0.1:3000/auth/google/callback"
+```
+
+> **Ghi chú**: Nếu bạn không thiết lập các biến môi trường trên, `lich-server` sẽ tự động chuyển sang chế độ **FakeGoogleProvider** để bạn thử nghiệm toàn bộ luồng OAuth, map lịch và sync hoàn toàn offline mà không cần tài khoản Google thật.
+
+---
+
+## 💻 Các lệnh CLI điều khiển Google Calendar
+
+### 1. Kết nối tài khoản Google (`connect`)
+```bash
+lich google connect
+```
+*Lệnh sẽ tự động mở trình duyệt web đến trang đăng nhập Google. Sau khi cấp quyền thành công, trình duyệt sẽ thông báo xác thực hoàn tất.*
+
+### 2. Kiểm tra trạng thái liên kết (`status`)
+```bash
+lich google status
+```
+*Hiển thị trạng thái kết nối, email tài khoản Google và danh sách các lịch đang được liên kết.*
+
+### 3. Xem danh sách lịch Google Calendar (`calendars`)
+```bash
+lich google calendars
+```
+*Liệt kê tất cả các lịch Google của bạn (kèm ID và múi giờ) để bạn chọn ánh xạ.*
+
+### 4. Ánh xạ lịch Lich với Google Calendar (`map`)
+```bash
+# Cú pháp: lich google map <lich_calendar_id> <google_calendar_id> [sync_direction]
+lich google map cal-default primary bidirectional
+```
+- `<lich_calendar_id>`: ID lịch trong Lich (lấy qua `lich status` hoặc `lich google status`).
+- `<google_calendar_id>`: ID lịch Google (ví dụ: `primary` hoặc `ten_lich@group.calendar.google.com`).
+- `[sync_direction]`: Hướng đồng bộ: `bidirectional` (2 chiều), `push` (chỉ đẩy lên), hoặc `pull` (chỉ kéo về).
+
+### 5. Đồng bộ hóa với Google Calendar (`sync`)
+```bash
+# Đồng bộ hóa 2 chiều theo thiết lập ánh xạ
+lich google sync
+
+# Chỉ đẩy sự kiện từ Lich lên Google
+lich google sync -d push
+
+# Chỉ kéo sự kiện mới từ Google về Lich
+lich google sync -d pull
+
+# Chỉ định ID lịch cụ thể cần đồng bộ
+lich google sync --calendar cal-default -d both
+```
+
+### 6. Hủy liên kết Google Calendar (`disconnect`)
+```bash
+lich google disconnect
+```
+*Xóa credentials và thu hồi token của Google trên server.*
 
 ---
 
