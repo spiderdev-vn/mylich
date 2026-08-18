@@ -537,7 +537,21 @@ func (m Model) renderEventDetailModal(ev cache.LocalEvent) string {
 	lines = append(lines, titleStyle.Render("CHI TIẾT SỰ KIỆN"))
 	lines = append(lines, "")
 	lines = append(lines, fmt.Sprintf("%s %s", labelStyle.Render("Tiêu đề:    "), valStyle.Render(ev.Title)))
-	lines = append(lines, fmt.Sprintf("%s %s (%s)", labelStyle.Render("Thời gian:  "), valStyle.Render(timeStr), ev.StartAt[:10]))
+	tStartDet, _ := time.Parse(time.RFC3339, ev.StartAt)
+	tEndDet, _ := time.Parse(time.RFC3339, ev.EndAt)
+	startDetLocal := tStartDet.In(m.Location)
+	endDetLocal := tEndDet.In(m.Location)
+
+	startDateStr := startDetLocal.Format("02/01/2006")
+	endDateStr := endDetLocal.Format("02/01/2006")
+
+	if startDateStr == endDateStr {
+		// cùng ngày: "10:00 - 11:30 (20/08/2026)"
+		lines = append(lines, fmt.Sprintf("%s %s", labelStyle.Render("Thời gian:  "), valStyle.Render(timeStr+" ("+startDateStr+")")))
+	} else {
+		// qua ngày: timeStr đã có ngày trong đó "22:00 20/08 - 03:00 21/08"
+		lines = append(lines, fmt.Sprintf("%s %s", labelStyle.Render("Thời gian:  "), valStyle.Render(timeStr)))
+	}
 	if ev.Location != "" {
 		lines = append(lines, fmt.Sprintf("%s %s", labelStyle.Render("Địa điểm:   "), valStyle.Render(ev.Location)))
 	}
