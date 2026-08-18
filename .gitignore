@@ -2,7 +2,10 @@
 # Lich Project Git Ignore
 # ==============================================================================
 
-# Phases & Planning documents
+# Agent & Planning configurations
+.agents/
+.gemini/
+.claude/
 phases/
 
 # ------------------------------------------------------------------------------
