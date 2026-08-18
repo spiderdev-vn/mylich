@@ -5,8 +5,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/lipgloss"
 	"lich-cli/internal/cache"
+
+	"github.com/charmbracelet/lipgloss"
 )
 
 var (
@@ -82,9 +83,5 @@ func RenderAgenda(selectedDate time.Time, events []cache.LocalEvent, loc *time.L
 			sb.WriteString("\n")
 		}
 	}
-
-	sb.WriteString("\n\n")
-	sb.WriteString(crudHintStyle.Render("Phím tắt: [a] Thêm • [e] Sửa • [d] Xóa • [v/Enter] Chi tiết • [Tab] Chuyển"))
-
 	return sb.String()
 }

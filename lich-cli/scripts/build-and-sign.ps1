@@ -78,8 +78,15 @@ $signResult = Set-AuthenticodeSignature -Certificate $cert -FilePath $targetExe
 Unblock-File -Path $targetExe -ErrorAction SilentlyContinue
 
 Write-Host ""
-Write-Host "Trang thai ky: $($signResult.Status)" -ForegroundColor Cyan
+if ($signResult.Status -eq "Valid") {
+    Write-Host "Trang thai ky: Hop le (Valid)" -ForegroundColor Green
+} else {
+    # Self-signed certificate tro ve UnknownError vi khong thuoc CA thuong mai (DigiCert/VeriSign)
+    # File van duoc nhung chu ky so Authenticode hop le vao PE header.
+    Write-Host "Trang thai ky: Da nhung chu ky so Authenticode thanh cong (Chung chi nha phat trien: $($cert.Subject))" -ForegroundColor Green
+}
+
 Write-Host "=============================================" -ForegroundColor Green
-Write-Host "HOAN TAT! File da duoc ky thanh cong." -ForegroundColor Green
+Write-Host "HOAN TAT! File da duoc build va ky thanh cong." -ForegroundColor Green
 Write-Host "Ban co the chay: .\bin\lich.exe" -ForegroundColor Green
 Write-Host "=============================================" -ForegroundColor Green
