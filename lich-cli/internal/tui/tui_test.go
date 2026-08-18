@@ -129,6 +129,48 @@ func TestTUI_CRUDInteractions(t *testing.T) {
 	if model.ViewingEvent != nil {
 		t.Errorf("expected ViewingEvent to be nil after Esc, got %v", model.ViewingEvent)
 	}
+
+	// 6. Press 'a' opens Native Add Modal
+	m6, _ := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'a'}})
+	model = m6.(Model)
+	if model.Modal == nil || model.Modal.Mode != FormModeAdd {
+		t.Errorf("expected FormModeAdd modal, got %v", model.Modal)
+	}
+
+	// Ctrl+C cancels Add Modal
+	m7, _ := model.Update(tea.KeyMsg{Type: tea.KeyCtrlC})
+	model = m7.(Model)
+	if model.Modal != nil {
+		t.Errorf("expected Modal to be nil after Ctrl+C, got %v", model.Modal)
+	}
+
+	// 7. Press 'e' opens Native Edit Modal
+	m8, _ := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'e'}})
+	model = m8.(Model)
+	if model.Modal == nil || model.Modal.Mode != FormModeEdit || model.Modal.EventID != "ev-1" {
+		t.Errorf("expected FormModeEdit modal for ev-1, got %v", model.Modal)
+	}
+
+	// Esc cancels Edit Modal
+	m9, _ := model.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	model = m9.(Model)
+	if model.Modal != nil {
+		t.Errorf("expected Modal to be nil after Esc, got %v", model.Modal)
+	}
+
+	// 8. Press 'd' opens Native Delete Confirm Modal
+	m10, _ := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}})
+	model = m10.(Model)
+	if model.Modal == nil || model.Modal.Mode != FormModeDelete || model.Modal.EventID != "ev-1" {
+		t.Errorf("expected FormModeDelete modal for ev-1, got %v", model.Modal)
+	}
+
+	// 'n' cancels Delete Modal
+	m11, _ := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'n'}})
+	model = m11.(Model)
+	if model.Modal != nil {
+		t.Errorf("expected Modal to be nil after 'n', got %v", model.Modal)
+	}
 }
 
 func TestTUI_TerminalTooSmall(t *testing.T) {

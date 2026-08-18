@@ -4,17 +4,14 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"os"
-	"os/exec"
 	"strings"
 	"time"
 
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"lich-cli/internal/api"
 	"lich-cli/internal/cache"
 	"lich-cli/internal/syncer"
-
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 )
 
 type FocusArea int
@@ -37,10 +34,6 @@ type syncFinishedMsg struct {
 	Err    error
 }
 
-type crudFinishedMsg struct {
-	Err error
-}
-
 type errMsg struct {
 	err error
 }
@@ -57,6 +50,7 @@ type Model struct {
 	SelectedEventIdx int
 	Focus            FocusArea
 	ViewingEvent     *cache.LocalEvent
+	Modal            *EventFormModal
 	Events           map[string][]cache.LocalEvent
 	Loading          bool
 	Syncing          bool
@@ -80,6 +74,7 @@ func NewModel(client *api.Client, db *sql.DB) Model {
 		SelectedEventIdx: 0,
 		Focus:            FocusCalendar,
 		ViewingEvent:     nil,
+		Modal:            nil,
 		Events:           make(map[string][]cache.LocalEvent),
 		Loading:          true,
 		Syncing:          false,
@@ -171,10 +166,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 
-	case crudFinishedMsg:
-		// Reload local events after interactive CRUD form closes
-		return m, tea.Batch(m.loadLocalEventsCmd(), m.syncCmd())
-
 	case syncFinishedMsg:
 		m.Syncing = false
 		if msg.Err != nil {
@@ -188,18 +179,71 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.Loading = false
 		m.Err = msg.err
 		return m, nil
+	}
 
-	case tea.KeyMsg:
-		// Nếu đang mở Modal chi tiết sự kiện
-		if m.ViewingEvent != nil {
-			switch msg.String() {
-			case "esc", "enter", "q", "v", "space":
-				m.ViewingEvent = nil
-				return m, nil
+	// 1. Xử lý khi đang mở Modal Form tương tác nội bộ (Add / Edit / Delete)
+	if m.Modal != nil {
+		if m.Modal.Mode == FormModeDelete {
+			switch msg := msg.(type) {
+			case tea.KeyMsg:
+				switch msg.String() {
+				case "y", "enter":
+					if m.DB != nil {
+						_ = m.Modal.DeleteFromDB(m.DB)
+					}
+					m.Modal = nil
+					return m, tea.Batch(m.loadLocalEventsCmd(), m.syncCmd())
+				case "n", "esc", "ctrl+c", "q":
+					m.Modal = nil
+					return m, nil
+				}
 			}
 			return m, nil
 		}
 
+		// Add & Edit Form
+		switch msg := msg.(type) {
+		case tea.KeyMsg:
+			if msg.String() == "ctrl+c" || msg.String() == "esc" {
+				m.Modal = nil
+				return m, nil
+			}
+		}
+
+		modal, isSubmit, _ := m.Modal.Update(msg)
+		if modal == nil {
+			m.Modal = nil
+			return m, nil
+		}
+		if isSubmit {
+			if m.DB != nil {
+				if err := m.Modal.SubmitToDB(m.DB, m.Location); err != nil {
+					m.Modal.ErrorMsg = err.Error()
+					return m, nil
+				}
+			}
+			m.Modal = nil
+			return m, tea.Batch(m.loadLocalEventsCmd(), m.syncCmd())
+		}
+		return m, nil
+	}
+
+	// 2. Xử lý khi đang mở Modal xem chi tiết sự kiện
+	if m.ViewingEvent != nil {
+		switch msg := msg.(type) {
+		case tea.KeyMsg:
+			switch msg.String() {
+			case "esc", "enter", "q", "v", "space", "ctrl+c":
+				m.ViewingEvent = nil
+				return m, nil
+			}
+		}
+		return m, nil
+	}
+
+	// 3. Xử lý phím tắt trên giao diện chính của Lịch
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
 		dayEvents := m.getSelectedDayEvents()
 
 		switch msg.String() {
@@ -217,45 +261,29 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			return m, nil
 
-		// Phím tắt tạo sự kiện mới (Create)
+		// Phím tắt tạo sự kiện mới (Create) - Dùng Native Bubble Tea Form Modal
 		case "a", "c", "+":
-			exePath, err := os.Executable()
-			if err != nil {
-				exePath = "lich"
-			}
-			dateArg := m.SelectedDate.Format("2006-01-02")
-			c := exec.Command(exePath, "add", "--date", dateArg)
-			return m, tea.ExecProcess(c, func(err error) tea.Msg {
-				return crudFinishedMsg{Err: err}
-			})
+			modal := NewAddFormModal(m.SelectedDate)
+			m.Modal = &modal
+			return m, nil
 
-		// Phím tắt chỉnh sửa sự kiện (Update)
+		// Phím tắt chỉnh sửa sự kiện (Update) - Dùng Native Bubble Tea Form Modal
 		case "e":
 			if len(dayEvents) > 0 && m.SelectedEventIdx < len(dayEvents) {
 				selectedEv := dayEvents[m.SelectedEventIdx]
-				exePath, err := os.Executable()
-				if err != nil {
-					exePath = "lich"
-				}
-				c := exec.Command(exePath, "edit", selectedEv.ID)
-				return m, tea.ExecProcess(c, func(err error) tea.Msg {
-					return crudFinishedMsg{Err: err}
-				})
+				modal := NewEditFormModal(selectedEv, m.Location)
+				m.Modal = &modal
 			}
+			return m, nil
 
-		// Phím tắt xóa sự kiện (Delete)
+		// Phím tắt xóa sự kiện (Delete) - Dùng Native Bubble Tea Confirm Modal
 		case "d", "x":
 			if len(dayEvents) > 0 && m.SelectedEventIdx < len(dayEvents) {
 				selectedEv := dayEvents[m.SelectedEventIdx]
-				exePath, err := os.Executable()
-				if err != nil {
-					exePath = "lich"
-				}
-				c := exec.Command(exePath, "delete", selectedEv.ID)
-				return m, tea.ExecProcess(c, func(err error) tea.Msg {
-					return crudFinishedMsg{Err: err}
-				})
+				modal := NewDeleteConfirmModal(selectedEv)
+				m.Modal = &modal
 			}
+			return m, nil
 
 		// Xem chi tiết sự kiện (Read Details Modal)
 		case "enter", "v":
@@ -339,12 +367,17 @@ func (m Model) syncMonthAndFetchIfNeeded() (Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
-	// Nếu kích thước terminal quá nhỏ không đủ hiển thị
+	// 1. Nếu kích thước terminal quá nhỏ không đủ hiển thị
 	if m.Width > 0 && m.Height > 0 && (m.Width < MinTerminalWidth || m.Height < MinTerminalHeight) {
 		return m.renderTerminalTooSmall()
 	}
 
-	// Nếu đang mở Modal xem chi tiết sự kiện
+	// 2. Nếu đang mở Modal Form tương tác nội bộ (Add / Edit / Delete)
+	if m.Modal != nil {
+		return m.Modal.Render(m.Width, m.Height)
+	}
+
+	// 3. Nếu đang mở Modal xem chi tiết sự kiện
 	if m.ViewingEvent != nil {
 		return m.renderEventDetailModal(*m.ViewingEvent)
 	}

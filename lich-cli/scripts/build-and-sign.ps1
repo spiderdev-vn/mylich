@@ -26,7 +26,7 @@ Write-Host "Da tao file bin/lich.exe thanh cong." -ForegroundColor Green
 
 # 2. Tim hoac tao chung chi ky so ca nhan qua .NET X509Store
 Write-Host "[2/3] Dang kiem tra chung chi ky so..." -ForegroundColor Yellow
-$certSubject = "CN=LichDev"
+$certSubject = "CN=MyLichDev"
 
 $myStore = New-Object System.Security.Cryptography.X509Certificates.X509Store("My", "CurrentUser")
 $myStore.Open("ReadWrite")
