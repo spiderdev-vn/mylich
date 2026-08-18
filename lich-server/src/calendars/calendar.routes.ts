@@ -29,7 +29,6 @@ export function createCalendarRoutes(calendarService: CalendarService): FastifyP
     fastify.delete<{ Params: { id: string } }>('/:id', async (request, reply) => {
       calendarService.delete(request.params.id, request.user.id);
       reply.status(204);
-      return;
     });
   };
 }

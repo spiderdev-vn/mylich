@@ -26,9 +26,10 @@ Usage:
   lich help                     Show this help message
 
 Options for 'add':
-  --date <YYYY-MM-DD>           Event date (default: today)
-  --at <HH:MM>                  Event start time (default: next hour)
-  --duration <duration>         Event duration (default: 1h, e.g. 30m, 2h)
+  --date <date>                 Event date (YYYY-MM-DD, today, tomorrow, default: today)
+  --at <time>                   Event start time (e.g. 10:00, 23:30, 11:30pm, 10am)
+  --to <time>                   Event end time (e.g. 22:33, 03:00, 3am)
+  --duration <duration>         Event duration (e.g. 30m, 1h, 2h30m, default: 1h)
   --calendar <id>               Target calendar ID
   --desc <text>                 Event description
   --location <text>             Event location

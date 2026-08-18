@@ -152,7 +152,7 @@ export class EventRepository {
   }
 
   public delete(id: string): boolean {
-    const stmt = this.db.prepare(`DELETE FROM events WHERE id = ?`);
+    const stmt = this.db.prepare('DELETE FROM events WHERE id = ?');
     const result = stmt.run(id);
     return (result.changes ?? 0) > 0;
   }

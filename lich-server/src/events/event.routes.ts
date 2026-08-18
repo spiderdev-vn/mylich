@@ -29,7 +29,6 @@ export function createEventRoutes(eventService: EventService): FastifyPluginAsyn
     fastify.delete<{ Params: { id: string } }>('/:id', async (request, reply) => {
       eventService.delete(request.params.id, request.user.id);
       reply.status(204);
-      return;
     });
   };
 }

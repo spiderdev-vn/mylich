@@ -56,18 +56,18 @@ export class CalendarRepository {
   }
 
   public findById(id: string): Calendar | null {
-    const stmt = this.db.prepare(`SELECT * FROM calendars WHERE id = ?`);
+    const stmt = this.db.prepare('SELECT * FROM calendars WHERE id = ?');
     const row = stmt.get(id) as Calendar | undefined;
     return row || null;
   }
 
   public findByUserId(userId: string): Calendar[] {
-    const stmt = this.db.prepare(`SELECT * FROM calendars WHERE user_id = ? ORDER BY is_default DESC, name ASC`);
+    const stmt = this.db.prepare('SELECT * FROM calendars WHERE user_id = ? ORDER BY is_default DESC, name ASC');
     return stmt.all(userId) as Calendar[];
   }
 
   public findDefaultByUserId(userId: string): Calendar | null {
-    const stmt = this.db.prepare(`SELECT * FROM calendars WHERE user_id = ? AND is_default = 1 LIMIT 1`);
+    const stmt = this.db.prepare('SELECT * FROM calendars WHERE user_id = ? AND is_default = 1 LIMIT 1');
     const row = stmt.get(userId) as Calendar | undefined;
     return row || null;
   }
@@ -98,7 +98,7 @@ export class CalendarRepository {
   }
 
   public delete(id: string): boolean {
-    const stmt = this.db.prepare(`DELETE FROM calendars WHERE id = ?`);
+    const stmt = this.db.prepare('DELETE FROM calendars WHERE id = ?');
     const result = stmt.run(id);
     return (result.changes ?? 0) > 0;
   }
