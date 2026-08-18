@@ -145,7 +145,6 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
         name: 'Personal',
         timezone: 'UTC',
         is_default: true,
-        color: '#4285F4',
       });
 
       db.exec('COMMIT;');
