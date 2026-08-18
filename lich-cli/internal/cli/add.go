@@ -141,12 +141,12 @@ func RunAdd(args []string) error {
 					Value(&dateVal),
 
 				huh.NewInput().
-					Title(fmt.Sprintf("Giờ bắt đầu (--at) %s", reqStar)).
+					Title(fmt.Sprintf("Bắt đầu (--at) %s", reqStar)).
 					Placeholder("10:00 / 11:30pm / 9am").
 					Value(&atVal),
 
 				huh.NewInput().
-					Title(fmt.Sprintf("Giờ kết thúc (--to) %s", reqStar)).
+					Title(fmt.Sprintf("Kết thúc (--to) %s", reqStar)).
 					Placeholder("11:30 / 3am / 22:33").
 					Value(&toVal),
 

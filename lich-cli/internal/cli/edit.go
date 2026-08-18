@@ -7,12 +7,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/huh"
 	"lich-cli/internal/api"
 	"lich-cli/internal/cache"
 	"lich-cli/internal/config"
 	"lich-cli/internal/syncer"
 	"lich-cli/internal/ui"
+
+	"github.com/charmbracelet/huh"
 )
 
 func RunEdit(args []string) error {
@@ -189,15 +190,15 @@ func RunEdit(args []string) error {
 					}),
 
 				huh.NewInput().
-					Title(fmt.Sprintf("Ngày diễn ra %s", reqStar)).
+					Title(fmt.Sprintf("Ngày %s", reqStar)).
 					Value(&dateVal),
 
 				huh.NewInput().
-					Title(fmt.Sprintf("Giờ bắt đầu (--at) %s", reqStar)).
+					Title(fmt.Sprintf("Bắt đầu (--at) %s", reqStar)).
 					Value(&atVal),
 
 				huh.NewInput().
-					Title(fmt.Sprintf("Giờ kết thúc (--to) %s", reqStar)).
+					Title(fmt.Sprintf("Kết thúc (--to) %s", reqStar)).
 					Value(&toVal),
 
 				huh.NewInput().

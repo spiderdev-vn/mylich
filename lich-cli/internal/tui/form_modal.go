@@ -465,8 +465,8 @@ func (f EventFormModal) Render(width, height int) string {
 	plainLabels := []string{
 		"Tiêu đề",
 		"Ngày (dd/mm)",
-		"Giờ bắt đầu",
-		"Giờ kết thúc",
+		"Bắt đầu",
+		"Kết thúc",
 		"Địa điểm",
 		"Ghi chú",
 	}
@@ -482,16 +482,18 @@ func (f EventFormModal) Render(width, height int) string {
 	}
 
 	for i := 0; i < len(f.Inputs); i++ {
-		// Pad plain text đến labelWidth, sau đó thêm dấu : (và * nếu bắt buộc)
+		// Pad plain text đến labelWidth để colon thẳng hàng
 		padded := fmt.Sprintf("%-*s", labelWidth, plainLabels[i])
-		var lbl string
+		// Dành slot cố định cho asterisk: " * " (3 visible chars) hoặc "   " (3 spaces)
+		// => tất cả input bắt đầu tại cùng cột
+		var prefix string
 		if required[i] {
-			lbl = labelStyle.Render(padded+":") + " " + reqStar
+			prefix = labelStyle.Render(padded+":") + " " + reqStar + " "
 		} else {
-			lbl = labelStyle.Render(padded+":")
+			prefix = labelStyle.Render(padded+":") + "   "
 		}
 		inputView := f.Inputs[i].View()
-		lines = append(lines, lbl+"  "+inputView)
+		lines = append(lines, prefix+inputView)
 	}
 
 	lines = append(lines, "")
