@@ -1,23 +1,27 @@
 package cli
 
 import (
-	"bufio"
 	"context"
 	"flag"
 	"fmt"
-	"os"
 	"strings"
 
+	"github.com/charmbracelet/huh"
 	"lich-cli/internal/api"
 	"lich-cli/internal/config"
+	"lich-cli/internal/ui"
 )
 
 func RunLogin(args []string) error {
 	fs := flag.NewFlagSet("login", flag.ContinueOnError)
-	serverFlag := fs.String("server", "", "Lich server URL (default from config or http://127.0.0.1:3000)")
-	userFlag := fs.String("username", "", "Username")
-	passFlag := fs.String("password", "", "Password")
-	registerFlag := fs.Bool("register", false, "Register a new user instead of logging in")
+	serverFlag := fs.String("server", "", "URL máy chủ Lich (mặc định: http://127.0.0.1:3000)")
+	userFlag := fs.String("username", "", "Tên đăng nhập")
+	fs.StringVar(userFlag, "u", "", "Tên đăng nhập (viết tắt)")
+	passFlag := fs.String("password", "", "Mật khẩu")
+	fs.StringVar(passFlag, "p", "", "Mật khẩu (viết tắt)")
+	registerFlag := fs.Bool("register", false, "Đăng ký tài khoản mới thay vì đăng nhập")
+	simpleFlag := fs.Bool("simple", false, "Hiển thị dạng text ASCII đơn giản")
+	fs.BoolVar(simpleFlag, "s", false, "Hiển thị dạng text ASCII đơn giản (viết tắt)")
 
 	if err := fs.Parse(args); err != nil {
 		return err
@@ -36,38 +40,76 @@ func RunLogin(args []string) error {
 		serverURL = config.DefaultServerURL
 	}
 
-	reader := bufio.NewReader(os.Stdin)
-
 	username := *userFlag
-	if username == "" {
-		fmt.Printf("Username: ")
-		input, _ := reader.ReadString('\n')
-		username = strings.TrimSpace(input)
-	}
-
 	password := *passFlag
-	if password == "" {
-		fmt.Printf("Password: ")
-		input, _ := reader.ReadString('\n')
-		password = strings.TrimSpace(input)
+	isRegister := *registerFlag
+
+	// Nếu chưa truyền username/password qua CLI và ở chế độ Interactive, mở form Huh
+	if (username == "" || password == "") && !ui.IsSimpleMode(*simpleFlag) {
+		action := "login"
+		if isRegister {
+			action = "register"
+		}
+
+		form := huh.NewForm(
+			huh.NewGroup(
+				huh.NewSelect[string]().
+					Title("Chọn thao tác xác thực").
+					Options(
+						huh.NewOption("Đăng nhập tài khoản có sẵn", "login"),
+						huh.NewOption("Đăng ký tài khoản mới", "register"),
+					).
+					Value(&action),
+
+				huh.NewInput().
+					Title("Địa chỉ Máy chủ (Server URL)").
+					Value(&serverURL),
+
+				huh.NewInput().
+					Title("Tên đăng nhập (Username)").
+					Placeholder("alice").
+					Validate(func(s string) error {
+						if strings.TrimSpace(s) == "" {
+							return fmt.Errorf("tên đăng nhập không được để trống")
+						}
+						return nil
+					}).
+					Value(&username),
+
+				huh.NewInput().
+					Title("Mật khẩu (Password)").
+					EchoMode(huh.EchoModePassword).
+					Validate(func(s string) error {
+						if len(s) < 6 {
+							return fmt.Errorf("mật khẩu phải có ít nhất 6 ký tự")
+						}
+						return nil
+					}).
+					Value(&password),
+			),
+		)
+
+		if err := form.Run(); err != nil {
+			return err
+		}
+
+		isRegister = (action == "register")
 	}
 
 	if username == "" || password == "" {
-		return fmt.Errorf("username and password cannot be empty")
+		return fmt.Errorf("tên đăng nhập và mật khẩu không được để trống")
 	}
 
 	client := api.NewClient(serverURL, "")
 	ctx := context.Background()
 
 	var authRes *api.AuthResponse
-	if *registerFlag {
-		fmt.Printf("Registering user '%s' on %s...\n", username, serverURL)
+	if isRegister {
 		authRes, err = client.Register(ctx, api.RegisterRequest{
 			Username: username,
 			Password: password,
 		})
 	} else {
-		fmt.Printf("Logging in as '%s' to %s...\n", username, serverURL)
 		authRes, err = client.Login(ctx, api.LoginRequest{
 			Username: username,
 			Password: password,
@@ -75,7 +117,7 @@ func RunLogin(args []string) error {
 	}
 
 	if err != nil {
-		return fmt.Errorf("authentication failed: %w", err)
+		return fmt.Errorf("xác thực thất bại: %w", err)
 	}
 
 	cfg.ServerURL = serverURL
@@ -83,9 +125,21 @@ func RunLogin(args []string) error {
 	cfg.Username = authRes.User.Username
 
 	if err := config.SaveConfig(cfg); err != nil {
-		return fmt.Errorf("failed to save config: %w", err)
+		return fmt.Errorf("lỗi lưu file cấu hình: %w", err)
 	}
 
-	fmt.Printf("✓ Successfully authenticated as '%s'\n", authRes.User.Username)
+	if ui.IsSimpleMode(*simpleFlag) {
+		fmt.Printf("✓ Đăng nhập thành công với tài khoản '%s' trên máy chủ %s\n", authRes.User.Username, serverURL)
+	} else {
+		successCard := ui.CardBoxSuccess.Render(fmt.Sprintf(
+			"%s\n\n%s %s\n%s %s\n%s %s",
+			ui.CardTitle.Render("✓ XÁC THỰC THÀNH CÔNG"),
+			ui.LabelStyle.Render("Tài khoản:"), ui.ValueStyle.Render(authRes.User.Username),
+			ui.LabelStyle.Render("Máy chủ:  "), ui.ValueStyle.Render(serverURL),
+			ui.LabelStyle.Render("Trạng thái:"), ui.BadgeOnline,
+		))
+		fmt.Println(successCard)
+	}
+
 	return nil
 }

@@ -2,74 +2,153 @@ package cli
 
 import (
 	"context"
+	"encoding/json"
+	"flag"
 	"fmt"
+	"os"
 	"time"
 
+	"github.com/charmbracelet/lipgloss"
 	"lich-cli/internal/api"
 	"lich-cli/internal/cache"
 	"lich-cli/internal/config"
+	"lich-cli/internal/ui"
 )
 
-func RunStatus(_ []string) error {
-	fmt.Println("Lich System Status")
-	fmt.Println("==================")
+type StatusReport struct {
+	User          string `json:"user"`
+	ServerURL     string `json:"server_url"`
+	ServerOnline  bool   `json:"server_online"`
+	CachePath     string `json:"cache_path"`
+	TotalEvents   int    `json:"total_events"`
+	PendingJobs   int    `json:"pending_jobs"`
+	LastSyncTime  string `json:"last_sync_time,omitempty"`
+}
+
+func RunStatus(args []string) error {
+	fs := flag.NewFlagSet("status", flag.ContinueOnError)
+	simpleFlag := fs.Bool("simple", false, "Hiển thị dạng văn bản ASCII đơn giản")
+	fs.BoolVar(simpleFlag, "s", false, "Hiển thị dạng văn bản ASCII đơn giản (viết tắt)")
+	jsonFlag := fs.Bool("json", false, "Xuất kết quả dưới định dạng JSON")
+
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+
+	report := StatusReport{
+		User:      "(Chưa đăng nhập)",
+		ServerURL: "-",
+	}
 
 	// 1. Kiểm tra cấu hình & Auth
 	cfg, err := config.LoadConfig()
-	if err != nil || cfg.Token == "" {
-		fmt.Println("Tài khoản:     ⚠ Chưa đăng nhập (chạy 'lich login')")
-		fmt.Println("Máy chủ:       -")
-	} else {
-		fmt.Printf("Tài khoản:     ✓ %s\n", cfg.Username)
-		fmt.Printf("Máy chủ:       %s\n", cfg.ServerURL)
+	if err == nil && cfg.Token != "" {
+		report.User = cfg.Username
+		report.ServerURL = cfg.ServerURL
 
-		// 2. Ping Server Health
 		client := api.NewClient(cfg.ServerURL, cfg.Token)
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
 
-		if err := client.Health(ctx); err != nil {
-			fmt.Printf("Kết nối:       ⚠ Không thể kết nối tới server (%v)\n", err)
-		} else {
-			fmt.Println("Kết nối:       ✓ Trực tuyến (Online)")
+		if err := client.Health(ctx); err == nil {
+			report.ServerOnline = true
 		}
 	}
 
-	// 3. Kiểm tra Local Cache
+	// 2. Kiểm tra Local Cache
 	cachePath, err := cache.GetCachePath()
-	if err != nil {
-		fmt.Printf("Cache cục bộ:  ⚠ Lỗi đường dẫn: %v\n", err)
+	if err == nil {
+		report.CachePath = cachePath
+		if db, err := cache.OpenDatabase(cachePath); err == nil {
+			events, _ := cache.GetEventsInRange(db, "", "", "")
+			report.TotalEvents = len(events)
+
+			report.PendingJobs, _ = cache.GetPendingJobCount(db)
+
+			if lastSync, _ := cache.GetLastSyncTime(db); lastSync != nil {
+				report.LastSyncTime = lastSync.In(time.Local).Format("15:04:05 02/01/2006")
+			}
+			db.Close()
+		}
+	}
+
+	// Xuất JSON nếu được yêu cầu
+	if *jsonFlag {
+		enc := json.NewEncoder(os.Stdout)
+		enc.SetIndent("", "  ")
+		return enc.Encode(report)
+	}
+
+	// Xuất ASCII đơn giản nếu dùng cờ --simple
+	if ui.IsSimpleMode(*simpleFlag) {
+		fmt.Println("Lich System Status")
+		fmt.Println("==================")
+		fmt.Printf("Tài khoản:     %s\n", report.User)
+		fmt.Printf("Máy chủ:       %s\n", report.ServerURL)
+		if report.ServerOnline {
+			fmt.Println("Kết nối:       [ONLINE] Trực tuyến")
+		} else {
+			fmt.Println("Kết nối:       [OFFLINE] Ngoại tuyến")
+		}
+		fmt.Printf("Cache file:    %s\n", report.CachePath)
+		fmt.Printf("Tổng sự kiện:  %d sự kiện cục bộ\n", report.TotalEvents)
+		fmt.Printf("Hàng đợi sync: %d thao tác đang chờ\n", report.PendingJobs)
+		if report.LastSyncTime != "" {
+			fmt.Printf("Sync gần nhất: %s\n", report.LastSyncTime)
+		} else {
+			fmt.Println("Sync gần nhất: Chưa đồng bộ")
+		}
 		return nil
 	}
 
-	db, err := cache.OpenDatabase(cachePath)
-	if err != nil {
-		fmt.Printf("Cache cục bộ:  ⚠ Lỗi database: %v\n", err)
-		return nil
+	// Giao diện Dashboard Lip Gloss đẹp mắt
+	banner := ui.TitleBanner.Render(" ⚡ MỸ LÍCH — TRẠNG THÁI HỆ THỐNG ")
+
+	// Card 1: Server & Auth
+	serverStatusBadge := ui.BadgeOffline
+	if report.ServerOnline {
+		serverStatusBadge = ui.BadgeOnline
 	}
-	defer db.Close()
+	serverCardContent := fmt.Sprintf(
+		"%s\n\n%s %s\n%s %s\n%s %s",
+		ui.CardTitle.Render("🌐 MÁY CHỦ & TÀI KHOẢN"),
+		ui.LabelStyle.Render("Tài khoản: "), ui.ValueStyle.Render(report.User),
+		ui.LabelStyle.Render("Máy chủ:   "), ui.ValueStyle.Render(report.ServerURL),
+		ui.LabelStyle.Render("Trạng thái:"), serverStatusBadge,
+	)
+	serverCard := ui.CardBox.Width(38).Render(serverCardContent)
 
-	fmt.Printf("Cache file:    %s\n", cachePath)
+	// Card 2: Cache & Storage
+	cacheCardContent := fmt.Sprintf(
+		"%s\n\n%s %s\n%s %s\n%s %s",
+		ui.CardTitle.Render("💾 BỘ NHỚ ĐỆM CỤC BỘ"),
+		ui.LabelStyle.Render("Trạng thái:"), ui.BadgeOnline,
+		ui.LabelStyle.Render("Sự kiện:   "), ui.ValueStyle.Render(fmt.Sprintf("%d sự kiện", report.TotalEvents)),
+		ui.LabelStyle.Render("Vị trí:    "), ui.ValueStyle.Render("cache.db (SQLite)"),
+	)
+	cacheCard := ui.CardBoxSecondary.Width(38).Render(cacheCardContent)
 
-	// Đếm tổng số sự kiện trong cache
-	events, _ := cache.GetEventsInRange(db, "", "", "")
-	fmt.Printf("Tổng sự kiện:  %d sự kiện cục bộ\n", len(events))
-
-	// 4. Kiểm tra hàng đợi đồng bộ
-	pendingCount, _ := cache.GetPendingJobCount(db)
-	if pendingCount > 0 {
-		fmt.Printf("Hàng đợi sync: ↻ %d thao tác đang chờ đẩy lên server\n", pendingCount)
-	} else {
-		fmt.Println("Hàng đợi sync: ✓ Đã đồng bộ toàn bộ (0 pending)")
+	// Card 3: Synchronization Queue
+	syncBadge := ui.BadgeSynced
+	if report.PendingJobs > 0 {
+		syncBadge = ui.BadgePending
 	}
-
-	// 5. Thời điểm đồng bộ gần nhất
-	lastSync, _ := cache.GetLastSyncTime(db)
-	if lastSync != nil {
-		fmt.Printf("Sync gần nhất: %s\n", lastSync.In(time.Local).Format("15:04:05 02/01/2006"))
-	} else {
-		fmt.Println("Sync gần nhất: Chưa thực hiện đồng bộ")
+	syncTimeStr := report.LastSyncTime
+	if syncTimeStr == "" {
+		syncTimeStr = "Chưa thực hiện"
 	}
+	syncCardContent := fmt.Sprintf(
+		"%s\n\n%s %s\n%s %s\n%s %s",
+		ui.CardTitle.Render("🔄 ĐỒNG BỘ HÓA BẤT ĐỒNG BỘ"),
+		ui.LabelStyle.Render("Hàng đợi:  "), ui.ValueStyle.Render(fmt.Sprintf("%d thao tác chờ", report.PendingJobs)),
+		ui.LabelStyle.Render("Sync gần nhất:"), ui.ValueStyle.Render(syncTimeStr),
+		ui.LabelStyle.Render("Trạng thái:   "), syncBadge,
+	)
+	syncCard := ui.CardBoxSuccess.Width(78).Render(syncCardContent)
 
+	topRow := lipgloss.JoinHorizontal(lipgloss.Top, serverCard, cacheCard)
+	fullDashboard := lipgloss.JoinVertical(lipgloss.Left, banner, topRow, syncCard)
+
+	fmt.Println(fullDashboard)
 	return nil
 }

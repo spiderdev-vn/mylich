@@ -12,12 +12,15 @@ import (
 	"lich-cli/internal/cache"
 	"lich-cli/internal/config"
 	"lich-cli/internal/syncer"
+	"lich-cli/internal/ui"
 )
 
 func RunWeek(args []string) error {
 	fs := flag.NewFlagSet("week", flag.ContinueOnError)
 	calendarFlag := fs.String("calendar", "", "Lọc theo calendar ID")
 	jsonFlag := fs.Bool("json", false, "Xuất kết quả dưới định dạng JSON")
+	simpleFlag := fs.Bool("simple", false, "Hiển thị dạng văn bản ASCII đơn giản")
+	fs.BoolVar(simpleFlag, "s", false, "Hiển thị dạng văn bản ASCII đơn giản (viết tắt)")
 
 	if err := fs.Parse(args); err != nil {
 		return err
@@ -37,7 +40,6 @@ func RunWeek(args []string) error {
 	now := time.Now()
 	loc := now.Location()
 
-	// Tính thứ Hai của tuần hiện tại
 	weekday := int(now.Weekday())
 	daysSinceMonday := (weekday + 6) % 7
 	monday := now.AddDate(0, 0, -daysSinceMonday)
@@ -50,7 +52,6 @@ func RunWeek(args []string) error {
 		return fmt.Errorf("lỗi đọc sự kiện tuần từ cache: %w", err)
 	}
 
-	// Kích hoạt đồng bộ hóa ngầm
 	cfg, err := config.LoadConfig()
 	if err == nil && cfg.Token != "" {
 		client := api.NewClient(cfg.ServerURL, cfg.Token)
@@ -64,7 +65,6 @@ func RunWeek(args []string) error {
 		return encoder.Encode(events)
 	}
 
-	// Gom nhóm sự kiện theo ngày (YYYY-MM-DD)
 	eventsByDay := make(map[string][]cache.LocalEvent)
 	for _, event := range events {
 		t, err := time.Parse(time.RFC3339, event.StartAt)
@@ -74,38 +74,81 @@ func RunWeek(args []string) error {
 		}
 	}
 
-	weekHeader := fmt.Sprintf("Tuần từ %s đến %s", startOfWeek.Format("02/01"), endOfWeek.Format("02/01/2006"))
-	fmt.Println(weekHeader)
-	fmt.Println(strings.Repeat("=", len(weekHeader)))
-	fmt.Println()
+	if ui.IsSimpleMode(*simpleFlag) {
+		weekHeader := fmt.Sprintf("Tuần từ %s đến %s", startOfWeek.Format("02/01"), endOfWeek.Format("02/01/2006"))
+		fmt.Println(weekHeader)
+		fmt.Println(strings.Repeat("=", len(weekHeader)))
+		fmt.Println()
+
+		for i := 0; i < 7; i++ {
+			currentDay := startOfWeek.AddDate(0, 0, i)
+			dayKey := currentDay.Format("2006-01-02")
+			dayEvents := eventsByDay[dayKey]
+
+			dayHeader := currentDay.Format("Monday, 02/01")
+			if currentDay.Year() == now.Year() && currentDay.YearDay() == now.YearDay() {
+				dayHeader += " (Hôm nay)"
+			}
+
+			fmt.Println(dayHeader)
+			fmt.Println(strings.Repeat("-", len(dayHeader)))
+
+			if len(dayEvents) == 0 {
+				fmt.Println("  (Không có sự kiện)")
+			} else {
+				for _, event := range dayEvents {
+					timeStr := formatTimeRange(event.StartAt, event.EndAt, loc)
+					locStr := ""
+					if event.Location != "" {
+						locStr = fmt.Sprintf(" (%s)", event.Location)
+					}
+					syncBadge := ""
+					if event.SyncState != cache.SyncStateSynced {
+						syncBadge = " [↻ pending]"
+					}
+					fmt.Printf("  %s  %s%s%s\n", timeStr, event.Title, locStr, syncBadge)
+				}
+			}
+			fmt.Println()
+		}
+		return nil
+	}
+
+	// Lip Gloss Styled Week
+	weekHeader := fmt.Sprintf(" 🗓 LỊCH TUẦN: %s — %s ", startOfWeek.Format("02/01"), endOfWeek.Format("02/01/2006"))
+	fmt.Println(ui.TitleBanner.Render(weekHeader))
 
 	for i := 0; i < 7; i++ {
 		currentDay := startOfWeek.AddDate(0, 0, i)
 		dayKey := currentDay.Format("2006-01-02")
 		dayEvents := eventsByDay[dayKey]
 
-		dayHeader := currentDay.Format("Monday, 02/01")
-		if currentDay.Year() == now.Year() && currentDay.YearDay() == now.YearDay() {
-			dayHeader += " (Hôm nay)"
+		dayTitle := currentDay.Format("Monday, 02/01")
+		isToday := currentDay.Year() == now.Year() && currentDay.YearDay() == now.YearDay()
+		if isToday {
+			dayTitle += " ★ HÔM NAY"
+			fmt.Println(ui.HeaderDateStyle.Render(" " + dayTitle + " "))
+		} else {
+			fmt.Println(ui.SubTitleStyle.Render("▶ " + dayTitle))
 		}
 
-		fmt.Println(dayHeader)
-		fmt.Println(strings.Repeat("-", len(dayHeader)))
-
 		if len(dayEvents) == 0 {
-			fmt.Println("  (Không có sự kiện)")
+			fmt.Println(ui.EventDescStyle.Render("   (Không có sự kiện)"))
 		} else {
 			for _, event := range dayEvents {
 				timeStr := formatTimeRange(event.StartAt, event.EndAt, loc)
-				locStr := ""
-				if event.Location != "" {
-					locStr = fmt.Sprintf(" (%s)", event.Location)
-				}
 				syncBadge := ""
 				if event.SyncState != cache.SyncStateSynced {
-					syncBadge = " [↻ pending]"
+					syncBadge = " " + ui.BadgePending
 				}
-				fmt.Printf("  %s  %s%s%s\n", timeStr, event.Title, locStr, syncBadge)
+				fmt.Printf("   %s  %s%s\n",
+					ui.TimePill.Render(timeStr),
+					ui.EventTitleStyle.Render(event.Title),
+					syncBadge,
+				)
+				if event.Location != "" {
+					fmt.Printf("             %s\n", ui.EventLocationStyle.Render("📍 "+event.Location))
+				}
 			}
 		}
 		fmt.Println()
