@@ -1,7 +1,12 @@
 import crypto from 'node:crypto';
 import type { EventRepository, Event } from '../db/repositories/event.repository.ts';
 import type { CalendarRepository } from '../db/repositories/calendar.repository.ts';
-import type { CreateEventDto, UpdateEventDto, EventQueryDto, EventResponse } from './event.types.ts';
+import type {
+  CreateEventDto,
+  UpdateEventDto,
+  EventQueryDto,
+  EventResponse,
+} from './event.types.ts';
 import { BadRequestError, NotFoundError } from '../common/errors.ts';
 import { validateTimezone, validateEventDates, isValidIsoDate } from '../common/timezone.ts';
 
@@ -9,10 +14,7 @@ export class EventService {
   private eventRepo: EventRepository;
   private calendarRepo: CalendarRepository;
 
-  constructor(
-    eventRepo: EventRepository,
-    calendarRepo: CalendarRepository
-  ) {
+  constructor(eventRepo: EventRepository, calendarRepo: CalendarRepository) {
     this.eventRepo = eventRepo;
     this.calendarRepo = calendarRepo;
   }

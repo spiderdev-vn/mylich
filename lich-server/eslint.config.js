@@ -1,4 +1,5 @@
 import neostandard from 'neostandard';
+import prettierConfig from 'eslint-config-prettier';
 
 export default [
   ...neostandard({
@@ -6,25 +7,14 @@ export default [
     semi: true,
   }),
   {
-    ignores: [
-      'dist/**',
-      'data/**',
-      'coverage/**',
-      'node_modules/**',
-      '*.config.js',
-    ],
+    ignores: ['dist/**', 'data/**', 'coverage/**', 'node_modules/**', '*.config.js'],
   },
   {
     rules: {
-      'camelcase': 'off',
+      camelcase: 'off',
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
-      '@stylistic/semi': ['error', 'always'],
-      '@stylistic/space-before-function-paren': ['error', {
-        anonymous: 'always',
-        named: 'never',
-        asyncArrow: 'always',
-      }],
     },
   },
+  prettierConfig,
 ];

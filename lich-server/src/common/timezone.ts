@@ -28,10 +28,14 @@ export function isValidIsoDate(dateString: string): boolean {
 
 export function validateEventDates(startAt: string, endAt: string): { start: Date; end: Date } {
   if (!isValidIsoDate(startAt)) {
-    throw new BadRequestError(`Invalid start_at date-time format: '${startAt}'. Expected ISO 8601 string.`);
+    throw new BadRequestError(
+      `Invalid start_at date-time format: '${startAt}'. Expected ISO 8601 string.`,
+    );
   }
   if (!isValidIsoDate(endAt)) {
-    throw new BadRequestError(`Invalid end_at date-time format: '${endAt}'. Expected ISO 8601 string.`);
+    throw new BadRequestError(
+      `Invalid end_at date-time format: '${endAt}'. Expected ISO 8601 string.`,
+    );
   }
 
   const start = new Date(startAt);

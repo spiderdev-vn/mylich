@@ -17,26 +17,23 @@ declare module 'fastify' {
 
 export function createAuthPlugin(authService: AuthService): FastifyPluginAsync {
   const plugin: FastifyPluginAsync = async (fastify) => {
-    fastify.decorate(
-      'authenticate',
-      async (request: FastifyRequest, _reply: FastifyReply) => {
-        const authHeader = request.headers.authorization;
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
-          throw new UnauthorizedError('Missing or invalid Authorization header');
-        }
-
-        const token = authHeader.substring('Bearer '.length).trim();
-        if (!token) {
-          throw new UnauthorizedError('Token is missing');
-        }
-
-        const payload = await authService.verifyToken(token);
-        request.user = {
-          id: payload.userId,
-          username: payload.username,
-        };
+    fastify.decorate('authenticate', async (request: FastifyRequest, _reply: FastifyReply) => {
+      const authHeader = request.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        throw new UnauthorizedError('Missing or invalid Authorization header');
       }
-    );
+
+      const token = authHeader.substring('Bearer '.length).trim();
+      if (!token) {
+        throw new UnauthorizedError('Token is missing');
+      }
+
+      const payload = await authService.verifyToken(token);
+      request.user = {
+        id: payload.userId,
+        username: payload.username,
+      };
+    });
   };
 
   return fp(plugin, {

@@ -46,7 +46,7 @@ export class EventRepository {
       event.timezone,
       event.location || null,
       now,
-      now
+      now,
     );
 
     return {
@@ -89,10 +89,7 @@ export class EventRepository {
     from?: string;
     to?: string;
   }): Event[] {
-    const conditions: string[] = [
-      'c.user_id = ?',
-      'e.deleted_at IS NULL',
-    ];
+    const conditions: string[] = ['c.user_id = ?', 'e.deleted_at IS NULL'];
     const args: any[] = [params.userId];
 
     if (params.calendarId) {
@@ -125,7 +122,12 @@ export class EventRepository {
 
   public update(
     id: string,
-    fields: Partial<Pick<Event, 'title' | 'description' | 'start_at' | 'end_at' | 'timezone' | 'location' | 'calendar_id'>>
+    fields: Partial<
+      Pick<
+        Event,
+        'title' | 'description' | 'start_at' | 'end_at' | 'timezone' | 'location' | 'calendar_id'
+      >
+    >,
   ): Event | null {
     const existing = this.findById(id);
     if (!existing) {
@@ -133,12 +135,14 @@ export class EventRepository {
     }
 
     const title = fields.title !== undefined ? fields.title : existing.title;
-    const description = fields.description !== undefined ? fields.description : existing.description;
+    const description =
+      fields.description !== undefined ? fields.description : existing.description;
     const start_at = fields.start_at !== undefined ? fields.start_at : existing.start_at;
     const end_at = fields.end_at !== undefined ? fields.end_at : existing.end_at;
     const timezone = fields.timezone !== undefined ? fields.timezone : existing.timezone;
     const location = fields.location !== undefined ? fields.location : existing.location;
-    const calendar_id = fields.calendar_id !== undefined ? fields.calendar_id : existing.calendar_id;
+    const calendar_id =
+      fields.calendar_id !== undefined ? fields.calendar_id : existing.calendar_id;
     const now = new Date().toISOString();
 
     const stmt = this.db.prepare(`

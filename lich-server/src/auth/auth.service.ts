@@ -9,11 +9,7 @@ export class AuthService {
   private calendarRepo: CalendarRepository;
   private secretKey: Uint8Array;
 
-  constructor(
-    userRepo: UserRepository,
-    calendarRepo: CalendarRepository,
-    jwtSecret: string
-  ) {
+  constructor(userRepo: UserRepository, calendarRepo: CalendarRepository, jwtSecret: string) {
     this.userRepo = userRepo;
     this.calendarRepo = calendarRepo;
     this.secretKey = new TextEncoder().encode(jwtSecret);
@@ -34,7 +30,7 @@ export class AuthService {
     try {
       return crypto.timingSafeEqual(
         Buffer.from(storedHash, 'hex'),
-        Buffer.from(computedHash, 'hex')
+        Buffer.from(computedHash, 'hex'),
       );
     } catch {
       return false;
@@ -61,7 +57,11 @@ export class AuthService {
     }
   }
 
-  public async register(username: string, password: string, timezone = 'UTC'): Promise<{ token: string; user: { id: string; username: string } }> {
+  public async register(
+    username: string,
+    password: string,
+    timezone = 'UTC',
+  ): Promise<{ token: string; user: { id: string; username: string } }> {
     if (!username || typeof username !== 'string' || username.trim().length < 2) {
       throw new BadRequestError('Username must be at least 2 characters long');
     }
@@ -104,7 +104,10 @@ export class AuthService {
     };
   }
 
-  public async login(username: string, password: string): Promise<{ token: string; user: { id: string; username: string } }> {
+  public async login(
+    username: string,
+    password: string,
+  ): Promise<{ token: string; user: { id: string; username: string } }> {
     if (!username || !password) {
       throw new BadRequestError('Username and password are required');
     }

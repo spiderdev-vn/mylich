@@ -40,7 +40,7 @@ export class CalendarRepository {
       calendar.timezone,
       isDefaultInt,
       now,
-      now
+      now,
     );
 
     return {
@@ -62,19 +62,23 @@ export class CalendarRepository {
   }
 
   public findByUserId(userId: string): Calendar[] {
-    const stmt = this.db.prepare('SELECT * FROM calendars WHERE user_id = ? ORDER BY is_default DESC, name ASC');
+    const stmt = this.db.prepare(
+      'SELECT * FROM calendars WHERE user_id = ? ORDER BY is_default DESC, name ASC',
+    );
     return stmt.all(userId) as Calendar[];
   }
 
   public findDefaultByUserId(userId: string): Calendar | null {
-    const stmt = this.db.prepare('SELECT * FROM calendars WHERE user_id = ? AND is_default = 1 LIMIT 1');
+    const stmt = this.db.prepare(
+      'SELECT * FROM calendars WHERE user_id = ? AND is_default = 1 LIMIT 1',
+    );
     const row = stmt.get(userId) as Calendar | undefined;
     return row || null;
   }
 
   public update(
     id: string,
-    fields: Partial<Pick<Calendar, 'name' | 'description' | 'timezone' | 'is_default'>>
+    fields: Partial<Pick<Calendar, 'name' | 'description' | 'timezone' | 'is_default'>>,
   ): Calendar | null {
     const existing = this.findById(id);
     if (!existing) {
@@ -82,7 +86,8 @@ export class CalendarRepository {
     }
 
     const name = fields.name !== undefined ? fields.name : existing.name;
-    const description = fields.description !== undefined ? fields.description : existing.description;
+    const description =
+      fields.description !== undefined ? fields.description : existing.description;
     const timezone = fields.timezone !== undefined ? fields.timezone : existing.timezone;
     const isDefault = fields.is_default !== undefined ? fields.is_default : existing.is_default;
     const now = new Date().toISOString();

@@ -50,7 +50,7 @@ export class Migrator {
         try {
           this.db.exec(sql);
           const insertStmt = this.db.prepare(
-            'INSERT INTO _migrations (name, applied_at) VALUES (?, ?);'
+            'INSERT INTO _migrations (name, applied_at) VALUES (?, ?);',
           );
           insertStmt.run(file, new Date().toISOString());
           this.db.exec('COMMIT;');
