@@ -125,4 +125,26 @@ func TestSyncer_PushAndPull(t *testing.T) {
 	if cursor != "new-cursor-123" {
 		t.Errorf("expected cursor 'new-cursor-123', got '%s'", cursor)
 	}
+
+	// 4. Test PushWithProgress and PullWithProgress
+	var eventsRecorded []ProgressEvent
+	callback := func(ev ProgressEvent) {
+		eventsRecorded = append(eventsRecorded, ev)
+	}
+
+	pushedProg, err := engine.PushWithProgress(ctx, callback)
+	if err != nil {
+		t.Fatalf("PushWithProgress failed: %v", err)
+	}
+	if pushedProg != 0 {
+		t.Errorf("expected 0 pushed (empty queue), got %d", pushedProg)
+	}
+
+	pulledProg, err := engine.PullWithProgress(ctx, callback)
+	if err != nil {
+		t.Fatalf("PullWithProgress failed: %v", err)
+	}
+	if pulledProg != 1 {
+		t.Errorf("expected 1 pulled, got %d", pulledProg)
+	}
 }

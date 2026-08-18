@@ -231,21 +231,19 @@ func (e *SyncEngine) Sync(ctx context.Context) (int, int, error) {
 	return pushed, pulled, nil
 }
 
-// SyncWithProgress chạy sync và gọi onProgress sau mỗi bước
-func (e *SyncEngine) SyncWithProgress(ctx context.Context, onProgress func(ProgressEvent)) (int, int, error) {
+// PushWithProgress đẩy dữ liệu lên máy chủ và gọi callback sau mỗi bước
+func (e *SyncEngine) PushWithProgress(ctx context.Context, onProgress func(ProgressEvent)) (int, error) {
 	if e.client == nil {
-		return 0, 0, fmt.Errorf("client is nil, not authenticated")
+		return 0, fmt.Errorf("client is nil, not authenticated")
 	}
 
-	// Đếm trước số pending jobs
 	jobs, err := cache.GetPendingJobs(e.db, 50)
 	if err != nil {
-		return 0, 0, err
+		return 0, err
 	}
 
 	onProgress(ProgressEvent{Kind: ProgressStart, Total: len(jobs), Message: fmt.Sprintf("%d thao tác chờ đẩy lên", len(jobs))})
 
-	// PUSH từng job
 	pushed := 0
 	for idx, job := range jobs {
 		if job.EntityType != "event" {
@@ -276,12 +274,35 @@ func (e *SyncEngine) SyncWithProgress(ctx context.Context, onProgress func(Progr
 		}
 	}
 
-	// PULL từ server
+	return pushed, nil
+}
+
+// PullWithProgress kéo dữ liệu mới từ máy chủ và gọi callback sau mỗi bước
+func (e *SyncEngine) PullWithProgress(ctx context.Context, onProgress func(ProgressEvent)) (int, error) {
+	if e.client == nil {
+		return 0, fmt.Errorf("client is nil, not authenticated")
+	}
+
 	onProgress(ProgressEvent{Kind: ProgressPull, Message: "Nhận dữ liệu mới từ máy chủ..."})
 	pulled, pullErr := e.Pull(ctx)
 	if pullErr != nil {
 		onProgress(ProgressEvent{Kind: ProgressError, Message: fmt.Sprintf("✗ Lỗi kết nối: %v", pullErr), Err: pullErr})
-		return pushed, 0, pullErr
+		return 0, pullErr
+	}
+
+	return pulled, nil
+}
+
+// SyncWithProgress chạy sync cả 2 chiều và gọi onProgress sau mỗi bước
+func (e *SyncEngine) SyncWithProgress(ctx context.Context, onProgress func(ProgressEvent)) (int, int, error) {
+	pushed, pushErr := e.PushWithProgress(ctx, onProgress)
+	if pushErr != nil {
+		return pushed, 0, pushErr
+	}
+
+	pulled, pullErr := e.PullWithProgress(ctx, onProgress)
+	if pullErr != nil {
+		return pushed, pulled, pullErr
 	}
 
 	onProgress(ProgressEvent{Kind: ProgressDone, Message: fmt.Sprintf("✓ Hoàn tất: ↑%d đẩy lên  ↓%d nhận về", pushed, pulled)})

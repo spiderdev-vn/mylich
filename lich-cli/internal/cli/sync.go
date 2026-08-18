@@ -17,28 +17,63 @@ import (
 )
 
 func RunSync(args []string) error {
+	var flagArgs []string
+	var positionalArgs []string
+
+	for _, arg := range args {
+		if strings.HasPrefix(arg, "-") {
+			flagArgs = append(flagArgs, arg)
+		} else {
+			positionalArgs = append(positionalArgs, arg)
+		}
+	}
+
 	fs := flag.NewFlagSet("sync", flag.ContinueOnError)
-	waitFlag := fs.Bool("wait", false, "Chờ quá trình đồng bộ hoàn tất")
+	directionFlag := fs.String("direction", "", "Hướng đồng bộ: push, pull, hoặc both (mặc định: both)")
+	fs.StringVar(directionFlag, "d", "", "Hướng đồng bộ (viết tắt)")
+	waitFlag := fs.Bool("wait", false, "Chờ quá trình đồng bộ hoàn tất và hiển thị chi tiết")
 	fs.BoolVar(waitFlag, "w", false, "Chờ quá trình đồng bộ hoàn tất (viết tắt)")
 	simpleFlag := fs.Bool("simple", false, "Hiển thị dạng văn bản ASCII đơn giản")
 	fs.BoolVar(simpleFlag, "s", false, "Hiển thị dạng văn bản ASCII đơn giản (viết tắt)")
 
 	fs.Usage = func() {
-		fmt.Println("Sử dụng: lich sync [flags]")
+		fmt.Println("Sử dụng: lich sync [push|pull|both] [flags]")
 		fmt.Println()
 		fmt.Println("Mô tả:")
-		fmt.Println("  Đồng bộ hóa 2 chiều (Push & Pull) giữa Local SQLite Cache và Máy chủ Lich.")
+		fmt.Println("  Đồng bộ hóa dữ liệu giữa Local SQLite Cache và Máy chủ Lich.")
+		fmt.Println("  - 'lich sync' hoặc 'lich sync both': Đồng bộ 2 chiều (Push & Pull).")
+		fmt.Println("  - 'lich sync push':                  Chỉ đẩy thay đổi cục bộ lên server.")
+		fmt.Println("  - 'lich sync pull':                  Chỉ kéo dữ liệu mới từ server về local.")
 		fmt.Println()
 		fmt.Println("Tùy chọn:")
-		fmt.Println("  --wait, -w     Chờ quá trình đồng bộ hoàn tất và hiển thị chi tiết")
-		fmt.Println("  --simple, -s   Hiển thị dạng văn bản ASCII đơn giản")
+		fmt.Println("  --direction, -d <dir>   Hướng đồng bộ: 'push', 'pull', hoặc 'both'")
+		fmt.Println("  --wait, -w              Chờ quá trình đồng bộ hoàn tất và hiển thị chi tiết")
+		fmt.Println("  --simple, -s            Hiển thị dạng văn bản ASCII đơn giản")
 	}
 
-	if err := fs.Parse(args); err != nil {
+	if err := fs.Parse(flagArgs); err != nil {
 		if errors.Is(err, flag.ErrHelp) {
 			return nil
 		}
 		return err
+	}
+
+	// Xác định direction: ưu tiên positional command ("push", "pull", "both"), sau đó đến --direction flag
+	direction := "both"
+	if len(positionalArgs) > 0 {
+		cmd := strings.ToLower(positionalArgs[0])
+		if cmd == "push" || cmd == "pull" || cmd == "both" {
+			direction = cmd
+		} else {
+			return fmt.Errorf("hướng đồng bộ không hợp lệ '%s'. Chọn 'push', 'pull', hoặc 'both'", positionalArgs[0])
+		}
+	} else if *directionFlag != "" {
+		cmd := strings.ToLower(*directionFlag)
+		if cmd == "push" || cmd == "pull" || cmd == "both" {
+			direction = cmd
+		} else {
+			return fmt.Errorf("hướng đồng bộ '--direction' không hợp lệ '%s'. Chọn 'push', 'pull', hoặc 'both'", *directionFlag)
+		}
 	}
 
 	cfg, err := config.LoadConfig()
@@ -60,16 +95,35 @@ func RunSync(args []string) error {
 	client := api.NewClient(cfg.ServerURL, cfg.Token)
 	engine := syncer.NewSyncEngine(db, client)
 
+	// Chế độ chạy nhanh (không -w)
 	if !*waitFlag {
-		// Chạy sync nhanh (timeout 10s), không chờ kết quả chi tiết
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
-		pushed, pulled, syncErr := engine.Sync(ctx)
+
+		var pushed, pulled int
+		var syncErr error
+
+		switch direction {
+		case "push":
+			pushed, syncErr = engine.Push(ctx)
+		case "pull":
+			pulled, syncErr = engine.Pull(ctx)
+		default:
+			pushed, pulled, syncErr = engine.Sync(ctx)
+		}
+
 		if ui.IsSimpleMode(*simpleFlag) {
 			if syncErr != nil {
 				fmt.Printf("⚠ Đồng bộ thất bại: %v\n", syncErr)
 			} else {
-				fmt.Printf("✓ Đã đồng bộ (↑%d ↓%d)\n", pushed, pulled)
+				switch direction {
+				case "push":
+					fmt.Printf("✓ Đã đẩy lên máy chủ: %d thao tác\n", pushed)
+				case "pull":
+					fmt.Printf("✓ Đã nhận từ máy chủ: %d thay đổi\n", pulled)
+				default:
+					fmt.Printf("✓ Đã đồng bộ 2 chiều (↑%d ↓%d)\n", pushed, pulled)
+				}
 			}
 		} else {
 			statusLabel := ui.BadgeSynced
@@ -80,23 +134,42 @@ func RunSync(args []string) error {
 				cardStyle = ui.CardBoxError
 				title = "⚠ ĐỒNG BỘ THẤT BẠI"
 			}
+
+			resultText := ""
+			switch direction {
+			case "push":
+				resultText = fmt.Sprintf("↑%d thao tác đẩy lên server", pushed)
+			case "pull":
+				resultText = fmt.Sprintf("↓%d thay đổi nhận từ server", pulled)
+			default:
+				resultText = fmt.Sprintf("↑%d đẩy lên  ↓%d nhận về", pushed, pulled)
+			}
+
 			fmt.Println(cardStyle.Render(fmt.Sprintf(
-				"%s\n\n%s %s\n%s %s\n%s %s",
+				"%s\n\n%s %s\n%s %s\n%s %s\n%s %s",
 				ui.CardTitle.Render(title),
 				ui.LabelStyle.Render("Máy chủ:   "), ui.ValueStyle.Render(cfg.ServerURL),
-				ui.LabelStyle.Render("Kết quả:   "), ui.ValueStyle.Render(fmt.Sprintf("↑%d đẩy lên  ↓%d nhận về", pushed, pulled)),
+				ui.LabelStyle.Render("Chế độ:    "), ui.ValueStyle.Render(strings.ToUpper(direction)),
+				ui.LabelStyle.Render("Kết quả:   "), ui.ValueStyle.Render(resultText),
 				ui.LabelStyle.Render("Trạng thái:"), statusLabel,
 			)))
 		}
 		return nil
 	}
 
-	// -w: chạy sync với live progress
+	// Chế độ chờ hiển thị Live Progress (-w)
+	modeTitle := "ĐỒNG BỘ HÓA 2 CHIỀU"
+	if direction == "push" {
+		modeTitle = "ĐẨY DỮ LIỆU LÊN MÁY CHỦ (PUSH)"
+	} else if direction == "pull" {
+		modeTitle = "KÉO DỮ LIỆU TỪ MÁY CHỦ (PULL)"
+	}
+
 	if ui.IsSimpleMode(*simpleFlag) {
-		fmt.Printf("↻ Đang đồng bộ hóa với %s...\n", cfg.ServerURL)
+		fmt.Printf("↻ %s với %s...\n", modeTitle, cfg.ServerURL)
 	} else {
 		fmt.Printf("%s  %s\n\n",
-			lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#74C0FC")).Render("↻ ĐỒNG BỘ HÓA"),
+			lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#74C0FC")).Render("↻ "+modeTitle),
 			lipgloss.NewStyle().Foreground(lipgloss.Color("#6C7086")).Render(cfg.ServerURL),
 		)
 	}
@@ -111,7 +184,7 @@ func RunSync(args []string) error {
 	pushStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#89DCEB"))
 	pullStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#CBA6F7"))
 
-	pushed, pulled, syncErr := engine.SyncWithProgress(ctx, func(ev syncer.ProgressEvent) {
+	progressHandler := func(ev syncer.ProgressEvent) {
 		if ui.IsSimpleMode(*simpleFlag) {
 			fmt.Printf("  %s\n", ev.Message)
 			return
@@ -135,7 +208,19 @@ func RunSync(args []string) error {
 		case syncer.ProgressDone:
 			fmt.Printf("\n  %s\n", okStyle.Render(ev.Message))
 		}
-	})
+	}
+
+	var pushed, pulled int
+	var syncErr error
+
+	switch direction {
+	case "push":
+		pushed, syncErr = engine.PushWithProgress(ctx, progressHandler)
+	case "pull":
+		pulled, syncErr = engine.PullWithProgress(ctx, progressHandler)
+	default:
+		pushed, pulled, syncErr = engine.SyncWithProgress(ctx, progressHandler)
+	}
 
 	if syncErr != nil {
 		if ui.IsSimpleMode(*simpleFlag) {
@@ -147,20 +232,34 @@ func RunSync(args []string) error {
 
 	if !ui.IsSimpleMode(*simpleFlag) {
 		fmt.Println()
+		var cardText string
+		switch direction {
+		case "push":
+			cardText = fmt.Sprintf("%s    %s", okStyle.Render("✓ Hoàn tất"), pushStyle.Render(fmt.Sprintf("↑ %d đẩy lên", pushed)))
+		case "pull":
+			cardText = fmt.Sprintf("%s    %s", okStyle.Render("✓ Hoàn tất"), pullStyle.Render(fmt.Sprintf("↓ %d nhận về", pulled)))
+		default:
+			cardText = fmt.Sprintf("%s    %s    %s",
+				okStyle.Render("✓ Hoàn tất"),
+				pushStyle.Render(fmt.Sprintf("↑ %d đẩy lên", pushed)),
+				pullStyle.Render(fmt.Sprintf("↓ %d nhận về", pulled)),
+			)
+		}
+
 		summaryCard := lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(lipgloss.Color("#A6E3A1")).
 			Padding(0, 2).
-			Render(fmt.Sprintf("%s    %s    %s",
-				okStyle.Render("✓ Hoàn tất"),
-				pushStyle.Render(fmt.Sprintf("↑ %d đẩy lên", pushed)),
-				pullStyle.Render(fmt.Sprintf("↓ %d nhận về", pulled)),
-			))
+			Render(cardText)
 		fmt.Println(summaryCard)
 	} else {
 		fmt.Println("✓ Hoàn tất đồng bộ hóa:")
-		fmt.Printf("  - Đã đẩy lên server:   %d thao tác\n", pushed)
-		fmt.Printf("  - Nhận mới từ server:  %d thay đổi\n", pulled)
+		if direction == "push" || direction == "both" {
+			fmt.Printf("  - Đã đẩy lên server:   %d thao tác\n", pushed)
+		}
+		if direction == "pull" || direction == "both" {
+			fmt.Printf("  - Nhận mới từ server:  %d thay đổi\n", pulled)
+		}
 		fmt.Println("  - Trạng thái:          ✓ Synced")
 	}
 
