@@ -90,6 +90,30 @@ func (c *Client) MapGoogleCalendar(ctx context.Context, calendarID, externalCale
 	return c.doRequest(ctx, http.MethodPost, "/integrations/google/map", req, &res)
 }
 
+type GoogleCreateCalendarRequest struct {
+	CalendarID    string `json:"calendar_id"`
+	Name          string `json:"name,omitempty"`
+	SyncDirection string `json:"sync_direction,omitempty"`
+}
+
+type GoogleCreateCalendarResponse struct {
+	Success          bool                   `json:"success"`
+	ExternalCalendar GoogleExternalCalendar `json:"external_calendar"`
+}
+
+func (c *Client) CreateGoogleCalendar(ctx context.Context, calendarID, name, syncDirection string) (*GoogleExternalCalendar, error) {
+	req := GoogleCreateCalendarRequest{
+		CalendarID:    calendarID,
+		Name:          name,
+		SyncDirection: syncDirection,
+	}
+	var res GoogleCreateCalendarResponse
+	if err := c.doRequest(ctx, http.MethodPost, "/integrations/google/create-calendar", req, &res); err != nil {
+		return nil, err
+	}
+	return &res.ExternalCalendar, nil
+}
+
 func (c *Client) SyncGoogle(ctx context.Context, calendarID, direction string) (*GoogleSyncResponse, error) {
 	req := GoogleSyncRequest{
 		CalendarID: calendarID,
@@ -106,3 +130,4 @@ func (c *Client) DisconnectGoogle(ctx context.Context) error {
 	var res map[string]any
 	return c.doRequest(ctx, http.MethodDelete, "/integrations/google", nil, &res)
 }
+

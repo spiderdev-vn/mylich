@@ -289,8 +289,7 @@ Google Calendar hoạt động như một integration vệ tinh kết nối vớ
 2. Chọn loại **External** (hoặc Internal nếu dùng Google Workspace).
 3. Nhập tên ứng dụng (ví dụ: `My Lich Calendar`) và email hỗ trợ.
 4. Ở mục **Scopes**, thêm scope:
-   - `https://www.googleapis.com/auth/calendar.events` (Đọc/ghi sự kiện)
-   - `https://www.googleapis.com/auth/calendar.readonly` (Xem danh sách lịch)
+   - `https://www.googleapis.com/auth/calendar` (Toàn quyền đọc/ghi/tạo Lịch và Sự kiện)
    - `https://www.googleapis.com/auth/userinfo.email` (Nhận diện email)
 5. Ở mục **Test users**, thêm địa chỉ Gmail của bạn để cho phép đăng nhập thử nghiệm.
 
@@ -314,6 +313,29 @@ GOOGLE_REDIRECT_URI="http://127.0.0.1:3000/auth/google/callback"
 ```
 
 > **Ghi chú**: Nếu bạn không thiết lập các biến môi trường trên, `lich-server` sẽ tự động chuyển sang chế độ **FakeGoogleProvider** để bạn thử nghiệm toàn bộ luồng OAuth, map lịch và sync hoàn toàn offline mà không cần tài khoản Google thật.
+
+---
+
+## 📅 Quản lý Lịch & Tự động tạo trên Google Calendar (`calendar`)
+
+Bạn có thể tạo các lịch riêng biệt (ví dụ: Công việc, Cá nhân, Thể thao) trực tiếp từ CLI và đồng bộ lên Google:
+
+```bash
+# 1. Xem danh sách tất cả các lịch và trạng thái map Google
+lich calendar list
+
+# 2. Tạo lịch mới và TỰ ĐỘNG TẠO LỊCH MỚI TRÊN GOOGLE CALENDAR + map 2 chiều:
+lich calendar add "Công Việc" --timezone Asia/Ho_Chi_Minh --sync-google
+
+# 3. Tạo lịch chỉ trong Lich (không tạo trên Google):
+lich calendar add "Dự Án Cá Nhân"
+
+# 4. Liên kết một lịch Lich có sẵn với Google (tạo lịch mới trên Google):
+lich google create-calendar <lich_calendar_id> --name "Dự Án Cá Nhân"
+
+# 5. Xóa lịch
+lich calendar delete <lich_calendar_id>
+```
 
 ---
 
@@ -342,11 +364,16 @@ lich google calendars
 # Cú pháp: lich google map <lich_calendar_id> <google_calendar_id> [sync_direction]
 lich google map cal-default primary bidirectional
 ```
-- `<lich_calendar_id>`: ID lịch trong Lich (lấy qua `lich status` hoặc `lich google status`).
+- `<lich_calendar_id>`: ID lịch trong Lich (lấy qua `lich calendar list` hoặc `lich google status`).
 - `<google_calendar_id>`: ID lịch Google (ví dụ: `primary` hoặc `ten_lich@group.calendar.google.com`).
 - `[sync_direction]`: Hướng đồng bộ: `bidirectional` (2 chiều), `push` (chỉ đẩy lên), hoặc `pull` (chỉ kéo về).
 
-### 5. Đồng bộ hóa với Google Calendar (`sync`)
+### 5. Tạo lịch mới trên Google cho một lịch Lich (`create-calendar`)
+```bash
+lich google create-calendar <lich_calendar_id> --name "Tên Lịch Trên Google"
+```
+
+### 6. Đồng bộ hóa với Google Calendar (`sync`)
 ```bash
 # Đồng bộ hóa 2 chiều theo thiết lập ánh xạ
 lich google sync
@@ -361,7 +388,7 @@ lich google sync -d pull
 lich google sync --calendar cal-default -d both
 ```
 
-### 6. Hủy liên kết Google Calendar (`disconnect`)
+### 7. Hủy liên kết Google Calendar (`disconnect`)
 ```bash
 lich google disconnect
 ```

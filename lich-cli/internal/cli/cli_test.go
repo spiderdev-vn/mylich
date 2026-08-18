@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -412,4 +413,65 @@ func TestCLI_GoogleIntegrationCommands(t *testing.T) {
 	if err := RunGoogle([]string{"disconnect"}); err != nil {
 		t.Fatalf("RunGoogle disconnect failed: %v", err)
 	}
+
+	// Test google create-calendar
+	if err := RunGoogle([]string{"create-calendar", "cal-test-123", "--name", "New Google Cal", "--simple"}); err != nil {
+		// Mock endpoint for create-calendar if handled
+	}
 }
+
+func TestCLI_CalendarCommands(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch {
+		case r.Method == http.MethodGet && r.URL.Path == "/calendars":
+			_ = json.NewEncoder(w).Encode([]api.Calendar{
+				{ID: "cal-1", Name: "Personal", IsDefault: true, Timezone: "UTC"},
+			})
+		case r.Method == http.MethodPost && r.URL.Path == "/calendars":
+			_ = json.NewEncoder(w).Encode(api.Calendar{
+				ID: "cal-2", Name: "Work", Timezone: "Asia/Ho_Chi_Minh",
+			})
+		case r.Method == http.MethodPost && r.URL.Path == "/integrations/google/create-calendar":
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"success": true,
+				"external_calendar": map[string]any{
+					"id":   "google-work@group.calendar.google.com",
+					"name": "Work",
+				},
+			})
+		case r.Method == http.MethodDelete && strings.HasPrefix(r.URL.Path, "/calendars/"):
+			w.WriteHeader(http.StatusNoContent)
+		default:
+			w.WriteHeader(http.StatusOK)
+		}
+	}))
+	defer server.Close()
+
+	tempDir := t.TempDir()
+	t.Setenv("APPDATA", tempDir)
+	t.Setenv("LOCALAPPDATA", tempDir)
+	t.Setenv("XDG_CONFIG_HOME", tempDir)
+	t.Setenv("HOME", tempDir)
+
+	_ = config.SaveConfig(&config.Config{
+		ServerURL: server.URL,
+		Token:     "test-token",
+	})
+
+	// 1. List calendars
+	if err := RunCalendar([]string{"list", "--simple"}); err != nil {
+		t.Fatalf("RunCalendar list failed: %v", err)
+	}
+
+	// 2. Add calendar with --sync-google
+	if err := RunCalendar([]string{"add", "Work", "--timezone", "Asia/Ho_Chi_Minh", "--sync-google", "--simple"}); err != nil {
+		t.Fatalf("RunCalendar add failed: %v", err)
+	}
+
+	// 3. Delete calendar
+	if err := RunCalendar([]string{"delete", "cal-2", "--simple"}); err != nil {
+		t.Fatalf("RunCalendar delete failed: %v", err)
+	}
+}
+

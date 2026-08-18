@@ -65,6 +65,25 @@ export class FakeGoogleProvider implements CalendarProvider {
     return this.calendars;
   }
 
+  public async createCalendar(
+    _accessToken: string,
+    name: string,
+    timeZone = 'UTC',
+  ): Promise<ExternalCalendar> {
+    const id = `cal-${Date.now()}@group.calendar.google.com`;
+    const cal: ExternalCalendar = {
+      id,
+      name,
+      description: 'Created from Lich',
+      timeZone,
+      isPrimary: false,
+      accessRole: 'owner',
+    };
+    this.calendars.push(cal);
+    this.eventsByCalendar.set(id, []);
+    return cal;
+  }
+
   public async listEvents(
     _accessToken: string,
     calendarId: string,

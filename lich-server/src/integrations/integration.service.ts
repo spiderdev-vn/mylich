@@ -168,6 +168,38 @@ export class IntegrationService {
     });
   }
 
+  public async createAndMapCalendar(
+    userId: string,
+    calendarId: string,
+    name?: string,
+    syncDirection?: 'push' | 'pull' | 'bidirectional',
+  ): Promise<ExternalCalendar> {
+    const integration = this.integrationRepo.findByUserAndProvider(userId, this.provider.name);
+    if (!integration || integration.status !== 'connected') {
+      throw new BadRequestError('Google integration is not connected. Connect first with "lich google connect"');
+    }
+
+    const cal = this.calendarRepo.findById(calendarId);
+    if (!cal || cal.user_id !== userId) {
+      throw new NotFoundError(`Calendar '${calendarId}' not found`);
+    }
+
+    const accessToken = await this.getValidAccessToken(userId);
+    const targetName = name || cal.name;
+    const extCal = await this.provider.createCalendar(accessToken, targetName, cal.timezone);
+
+    this.calendarIntegrationRepo.upsert({
+      id: crypto.randomUUID(),
+      calendar_id: calendarId,
+      integration_id: integration.id,
+      external_calendar_id: extCal.id,
+      sync_direction: syncDirection || 'bidirectional',
+      enabled: true,
+    });
+
+    return extCal;
+  }
+
   public async sync(
     userId: string,
     calendarId?: string,

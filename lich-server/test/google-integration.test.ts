@@ -229,5 +229,55 @@ describe('Google Calendar Integration Tests', () => {
       assert.equal(JSON.parse(statusAfter.payload).connected, false);
       await app.close();
     });
+
+    test('should create a new calendar on Google and map it', async () => {
+      const app = await createTestApp();
+      const auth = await registerAndLoginUser(app, 'guser5', 'password123');
+
+      // 1. Connect
+      const authUrlRes = await app.inject({
+        method: 'GET',
+        url: '/integrations/google/auth-url',
+        headers: { Authorization: `Bearer ${auth.token}` },
+      });
+      const state = new URL(JSON.parse(authUrlRes.payload).auth_url).searchParams.get('state');
+      await app.inject({ method: 'GET', url: `/auth/google/callback?code=mock-code&state=${state}` });
+
+      // 2. Create a secondary Lich calendar
+      const calRes = await app.inject({
+        method: 'POST',
+        url: '/calendars',
+        headers: { Authorization: `Bearer ${auth.token}` },
+        payload: { name: 'Projects & Work', timezone: 'Asia/Ho_Chi_Minh' },
+      });
+      const newCal = JSON.parse(calRes.payload);
+
+      // 3. Create on Google and map
+      const createGoogleRes = await app.inject({
+        method: 'POST',
+        url: '/integrations/google/create-calendar',
+        headers: { Authorization: `Bearer ${auth.token}` },
+        payload: { calendar_id: newCal.id, name: 'Projects & Work (Google)' },
+      });
+      assert.equal(createGoogleRes.statusCode, 201);
+      const resPayload = JSON.parse(createGoogleRes.payload);
+      assert.equal(resPayload.success, true);
+      assert.ok(resPayload.external_calendar.id);
+      assert.equal(resPayload.external_calendar.name, 'Projects & Work (Google)');
+
+      // 4. Verify in status mapped calendars
+      const statusRes = await app.inject({
+        method: 'GET',
+        url: '/integrations/google/status',
+        headers: { Authorization: `Bearer ${auth.token}` },
+      });
+      const status = JSON.parse(statusRes.payload);
+      const mapped = status.mappedCalendars.find((m: any) => m.calendarId === newCal.id);
+      assert.ok(mapped);
+      assert.equal(mapped.externalCalendarId, resPayload.external_calendar.id);
+
+      await app.close();
+    });
   });
 });
+

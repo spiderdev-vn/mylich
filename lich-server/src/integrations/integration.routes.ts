@@ -144,6 +144,34 @@ export const integrationRoutes: FastifyPluginAsync<IntegrationRoutesOptions> = a
     },
   );
 
+  // 6. POST /integrations/google/create-calendar (Protected - create a new calendar on Google and map it)
+  fastify.post(
+    '/integrations/google/create-calendar',
+    { preHandler: [fastify.authenticate] },
+    async (request, reply) => {
+      const user = request.user as { id: string };
+      const body = request.body as {
+        calendar_id: string;
+        name?: string;
+        sync_direction?: 'push' | 'pull' | 'bidirectional';
+      };
+
+      if (!body.calendar_id) {
+        return reply.status(400).send({ error: 'calendar_id is required' });
+      }
+
+      const extCal = await integrationService.createAndMapCalendar(
+        user.id,
+        body.calendar_id,
+        body.name,
+        body.sync_direction,
+      );
+
+      reply.status(201);
+      return { success: true, external_calendar: extCal };
+    },
+  );
+
   // 6. POST /integrations/google/sync (Protected)
   fastify.post(
     '/integrations/google/sync',

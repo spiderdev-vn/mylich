@@ -49,6 +49,7 @@ export interface CalendarProvider {
   exchangeCode(code: string): Promise<TokenResult>;
   refreshToken(refreshToken: string): Promise<TokenResult>;
   listCalendars(accessToken: string): Promise<ExternalCalendar[]>;
+  createCalendar(accessToken: string, name: string, timeZone?: string): Promise<ExternalCalendar>;
   listEvents(accessToken: string, calendarId: string, syncToken?: string): Promise<ExternalEventsResult>;
   createEvent(accessToken: string, calendarId: string, event: Event): Promise<ExternalEvent>;
   updateEvent(accessToken: string, calendarId: string, externalId: string, event: Event): Promise<ExternalEvent>;

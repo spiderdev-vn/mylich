@@ -24,8 +24,7 @@ export class GoogleProvider implements CalendarProvider {
 
   public getAuthUrl(state: string): string {
     const scopes = [
-      'https://www.googleapis.com/auth/calendar.events',
-      'https://www.googleapis.com/auth/calendar.readonly',
+      'https://www.googleapis.com/auth/calendar',
       'https://www.googleapis.com/auth/userinfo.email',
     ].join(' ');
 
@@ -61,9 +60,8 @@ export class GoogleProvider implements CalendarProvider {
     }
 
     const data = (await res.json()) as any;
-    let email: string | undefined;
 
-    // Fetch user info email if accessible
+    let email: string | undefined;
     try {
       const userRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
         headers: { Authorization: `Bearer ${data.access_token}` },
@@ -73,12 +71,12 @@ export class GoogleProvider implements CalendarProvider {
         email = userData.email;
       }
     } catch {
-      // Non-fatal if userinfo fails
+      // Non-fatal if email fetch fails
     }
 
     return {
       accessToken: data.access_token,
-      refreshToken: data.refresh_token || null,
+      refreshToken: data.refresh_token,
       expiresIn: data.expires_in,
       tokenType: data.token_type || 'Bearer',
       scope: data.scope,
@@ -91,16 +89,16 @@ export class GoogleProvider implements CalendarProvider {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
-        refresh_token: refreshToken,
         client_id: this.config.clientId,
         client_secret: this.config.clientSecret,
+        refresh_token: refreshToken,
         grant_type: 'refresh_token',
       }),
     });
 
     if (!res.ok) {
       const errData = await res.text();
-      throw new Error(`Google OAuth token refresh failed: ${res.status} ${errData}`);
+      throw new Error(`Google token refresh failed: ${res.status} ${errData}`);
     }
 
     const data = (await res.json()) as any;
@@ -131,6 +129,39 @@ export class GoogleProvider implements CalendarProvider {
       isPrimary: Boolean(item.primary),
       accessRole: item.accessRole,
     }));
+  }
+
+  public async createCalendar(
+    accessToken: string,
+    name: string,
+    timeZone?: string,
+  ): Promise<ExternalCalendar> {
+    const res = await fetch('https://www.googleapis.com/calendar/v3/calendars', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        summary: name,
+        timeZone: timeZone || 'UTC',
+      }),
+    });
+
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(`Failed to create Google calendar: ${res.status} ${err}`);
+    }
+
+    const data = (await res.json()) as any;
+    return {
+      id: data.id,
+      name: data.summary,
+      description: data.description,
+      timeZone: data.timeZone,
+      isPrimary: false,
+      accessRole: 'owner',
+    };
   }
 
   public async listEvents(

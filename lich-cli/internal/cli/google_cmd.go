@@ -60,6 +60,8 @@ func RunGoogle(args []string) error {
 		return runGoogleCalendars(ctx, client, subArgs)
 	case "map":
 		return runGoogleMap(ctx, client, subArgs)
+	case "create-calendar", "create-cal", "new-calendar":
+		return runGoogleCreateCalendar(ctx, client, subArgs)
 	case "sync":
 		return runGoogleSync(ctx, client, subArgs)
 	case "disconnect", "logout":
@@ -342,3 +344,44 @@ func runGoogleDisconnect(ctx context.Context, client *api.Client, args []string)
 	)))
 	return nil
 }
+
+func runGoogleCreateCalendar(ctx context.Context, client *api.Client, args []string) error {
+	fs := flag.NewFlagSet("google create-calendar", flag.ContinueOnError)
+	nameFlag := fs.String("name", "", "Tên lịch hiển thị trên Google Calendar (mặc định lấy theo lịch Lich)")
+	dirFlag := fs.String("direction", "bidirectional", "Hướng đồng bộ (bidirectional, push, pull)")
+	simpleFlag := fs.Bool("simple", false, "Xuất dạng văn bản ASCII đơn giản")
+	fs.BoolVar(simpleFlag, "s", false, "Xuất dạng văn bản ASCII đơn giản (viết tắt)")
+
+	if err := fs.Parse(args); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			return nil
+		}
+		return err
+	}
+
+	calID := strings.TrimSpace(strings.Join(fs.Args(), " "))
+	if calID == "" {
+		return fmt.Errorf("vui lòng cung cấp ID lịch Lich: lich google create-calendar <lich_calendar_id> [flags]")
+	}
+
+	extCal, err := client.CreateGoogleCalendar(ctx, calID, *nameFlag, *dirFlag)
+	if err != nil {
+		return fmt.Errorf("lỗi tạo lịch trên Google Calendar: %w", err)
+	}
+
+	if ui.IsSimpleMode(*simpleFlag) {
+		fmt.Printf("✓ Đã tạo và liên kết lịch Google thành công: %s (%s)\n", extCal.Name, extCal.ID)
+		return nil
+	}
+
+	fmt.Println(ui.CardBoxSuccess.Render(fmt.Sprintf(
+		"%s\n\n%s %s\n%s %s\n%s %s (%s)\n%s %s",
+		ui.CardTitle.Render("✓ ĐÃ TẠO VÀ LIÊN KẾT LỊCH GOOGLE THÀNH CÔNG"),
+		ui.LabelStyle.Render("Lịch Lich ID:   "), ui.ValueStyle.Render(calID),
+		ui.LabelStyle.Render("Tên Google Cal: "), ui.ValueStyle.Render(extCal.Name),
+		ui.LabelStyle.Render("Google Cal ID:  "), ui.ValueStyle.Render(extCal.ID), *dirFlag,
+		ui.LabelStyle.Render("Trạng thái:     "), ui.BadgeSynced,
+	)))
+	return nil
+}
+
