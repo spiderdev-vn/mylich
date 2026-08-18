@@ -77,10 +77,28 @@ func RunMonth(args []string) error {
 
 	eventsByDay := make(map[string][]cache.LocalEvent)
 	for _, event := range events {
-		t, err := time.Parse(time.RFC3339, event.StartAt)
-		if err == nil {
-			dayKey := t.In(loc).Format("2006-01-02")
+		tStart, err1 := time.Parse(time.RFC3339, event.StartAt)
+		tEnd, err2 := time.Parse(time.RFC3339, event.EndAt)
+		if err1 != nil {
+			continue
+		}
+		if err2 != nil {
+			tEnd = tStart
+		}
+		startLocal := tStart.In(loc)
+		endLocal := tEnd.In(loc)
+
+		cur := time.Date(startLocal.Year(), startLocal.Month(), startLocal.Day(), 0, 0, 0, 0, loc)
+		lastDay := endLocal
+		if lastDay.Hour() == 0 && lastDay.Minute() == 0 && lastDay.Second() == 0 && lastDay.After(startLocal) {
+			lastDay = lastDay.Add(-time.Second)
+		}
+		endDay := time.Date(lastDay.Year(), lastDay.Month(), lastDay.Day(), 0, 0, 0, 0, loc)
+
+		for !cur.After(endDay) {
+			dayKey := cur.Format("2006-01-02")
 			eventsByDay[dayKey] = append(eventsByDay[dayKey], event)
+			cur = cur.AddDate(0, 0, 1)
 		}
 	}
 

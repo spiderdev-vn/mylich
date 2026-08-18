@@ -163,6 +163,28 @@ func TestCLI_ParseFlexibleTimeRange(t *testing.T) {
 	if err == nil {
 		t.Fatalf("expected error when both --to and --duration are provided, got nil")
 	}
+
+	// 5. Overnight with explicit same-day end date (default same day): 2026-08-20 22:00 -> 2026-08-20 03:00
+	start, end, overnight, err = parseFlexibleTimeRangeWithEndDate("2026-08-20", "2026-08-20", "22:00", "03:00", "", false, loc)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !overnight {
+		t.Errorf("expected overnight == true for 22:00 -> 03:00 with same end date")
+	}
+	if start.Day() != 20 || end.Day() != 21 {
+		t.Errorf("expected start day 20 and end day 21, got %d and %d", start.Day(), end.Day())
+	}
+	if !end.After(start) {
+		t.Errorf("end time (%v) must be after start time (%v)", end, start)
+	}
+}
+
+func TestCLI_NukeDatabaseForce(t *testing.T) {
+	err := RunNuke([]string{"--force", "--simple"})
+	if err != nil {
+		t.Fatalf("RunNuke --force failed: %v", err)
+	}
 }
 
 func TestCLI_ExecuteVersionAndHelp(t *testing.T) {

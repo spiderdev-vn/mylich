@@ -126,6 +126,8 @@ func Execute(args []string) int {
 		err = RunEdit(subArgs)
 	case "delete":
 		err = RunDelete(subArgs)
+	case "nuke-database", "nuke":
+		err = RunNuke(subArgs)
 	case "version", "-v", "--version":
 		fmt.Printf("Lich %s\n", Version)
 		return 0

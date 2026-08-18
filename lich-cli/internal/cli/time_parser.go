@@ -210,9 +210,13 @@ func parseFlexibleTimeRangeWithEndDate(
 
 		endTime = time.Date(targetEndDate.Year(), targetEndDate.Month(), targetEndDate.Day(), endHour, endMin, 0, 0, loc)
 
-		// Nếu không chỉ định ngày kết thúc khác mà endTime <= startTime (ví dụ bắt đầu 23:00 kết thúc 01:00) -> qua đêm
-		if strings.TrimSpace(endDateStr) == "" && !endTime.After(startTime) {
+		// Nếu targetEndDate cùng ngày với targetStartDate và endTime <= startTime (ví dụ bắt đầu 22:00 kết thúc 03:00) -> qua đêm
+		if targetEndDate.Equal(targetStartDate) && !endTime.After(startTime) {
 			endTime = endTime.AddDate(0, 0, 1)
+			isOvernight = true
+		} else if endTime.Before(startTime) {
+			return time.Time{}, time.Time{}, false, fmt.Errorf("thời gian kết thúc (%s) phải sau thời gian bắt đầu (%s)", endTime.Format("15:04 02/01/2006"), startTime.Format("15:04 02/01/2006"))
+		} else if endTime.Day() != startTime.Day() {
 			isOvernight = true
 		}
 	} else {

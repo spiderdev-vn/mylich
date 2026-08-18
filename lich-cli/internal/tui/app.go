@@ -115,10 +115,28 @@ func (m Model) loadLocalEventsCmd() tea.Cmd {
 
 		eventsMap := make(map[string][]cache.LocalEvent)
 		for _, ev := range events {
-			t, err := time.Parse(time.RFC3339, ev.StartAt)
-			if err == nil {
-				key := t.In(m.Location).Format("2006-01-02")
+			tStart, err1 := time.Parse(time.RFC3339, ev.StartAt)
+			tEnd, err2 := time.Parse(time.RFC3339, ev.EndAt)
+			if err1 != nil {
+				continue
+			}
+			if err2 != nil {
+				tEnd = tStart
+			}
+			startLocal := tStart.In(m.Location)
+			endLocal := tEnd.In(m.Location)
+
+			cur := time.Date(startLocal.Year(), startLocal.Month(), startLocal.Day(), 0, 0, 0, 0, m.Location)
+			lastDay := endLocal
+			if lastDay.Hour() == 0 && lastDay.Minute() == 0 && lastDay.Second() == 0 && lastDay.After(startLocal) {
+				lastDay = lastDay.Add(-time.Second)
+			}
+			endDay := time.Date(lastDay.Year(), lastDay.Month(), lastDay.Day(), 0, 0, 0, 0, m.Location)
+
+			for !cur.After(endDay) {
+				key := cur.Format("2006-01-02")
 				eventsMap[key] = append(eventsMap[key], ev)
+				cur = cur.AddDate(0, 0, 1)
 			}
 		}
 
