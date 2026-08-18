@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import type { EventRepository, Event } from '../db/repositories/event.repository.ts';
 import type { CalendarRepository } from '../db/repositories/calendar.repository.ts';
+import type { ChangeLogRepository } from '../db/repositories/change_log.repository.ts';
 import type {
   CreateEventDto,
   UpdateEventDto,
@@ -13,10 +14,16 @@ import { validateTimezone, validateEventDates, isValidIsoDate } from '../common/
 export class EventService {
   private eventRepo: EventRepository;
   private calendarRepo: CalendarRepository;
+  private changeLogRepo?: ChangeLogRepository;
 
-  constructor(eventRepo: EventRepository, calendarRepo: CalendarRepository) {
+  constructor(
+    eventRepo: EventRepository,
+    calendarRepo: CalendarRepository,
+    changeLogRepo?: ChangeLogRepository,
+  ) {
     this.eventRepo = eventRepo;
     this.calendarRepo = calendarRepo;
+    this.changeLogRepo = changeLogRepo;
   }
 
   private mapToResponse(event: Event): EventResponse {
@@ -74,7 +81,7 @@ export class EventService {
     const timezone = input.timezone || calendarTimezone;
     validateTimezone(timezone);
 
-    const id = crypto.randomUUID();
+    const id = input.id || crypto.randomUUID();
     const event = this.eventRepo.create({
       id,
       calendar_id: calendarId,
@@ -86,7 +93,20 @@ export class EventService {
       location: input.location?.trim() || null,
     });
 
-    return this.mapToResponse(event);
+    const response = this.mapToResponse(event);
+
+    if (this.changeLogRepo) {
+      this.changeLogRepo.recordChange({
+        userId,
+        entityType: 'event',
+        entityId: id,
+        action: 'create',
+        data: response,
+        createdAt: response.created_at,
+      });
+    }
+
+    return response;
   }
 
   public list(userId: string, query: EventQueryDto): EventResponse[] {
@@ -164,7 +184,20 @@ export class EventService {
       throw new NotFoundError(`Event with id '${id}' not found`);
     }
 
-    return this.mapToResponse(updated);
+    const response = this.mapToResponse(updated);
+
+    if (this.changeLogRepo) {
+      this.changeLogRepo.recordChange({
+        userId,
+        entityType: 'event',
+        entityId: id,
+        action: 'update',
+        data: response,
+        createdAt: response.updated_at,
+      });
+    }
+
+    return response;
   }
 
   public delete(id: string, userId: string): void {
@@ -174,5 +207,15 @@ export class EventService {
     }
 
     this.eventRepo.softDelete(id);
+
+    if (this.changeLogRepo) {
+      this.changeLogRepo.recordChange({
+        userId,
+        entityType: 'event',
+        entityId: id,
+        action: 'delete',
+        createdAt: new Date().toISOString(),
+      });
+    }
   }
 }

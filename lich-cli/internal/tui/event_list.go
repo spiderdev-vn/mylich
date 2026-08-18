@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"lich-cli/internal/api"
+	"lich-cli/internal/cache"
 )
 
 func formatEventTime(startStr, endStr string, loc *time.Location) string {
@@ -21,7 +21,7 @@ func formatEventTime(startStr, endStr string, loc *time.Location) string {
 	return fmt.Sprintf("%02d:%02d - %02d:%02d", startLocal.Hour(), startLocal.Minute(), endLocal.Hour(), endLocal.Minute())
 }
 
-func RenderAgenda(selectedDate time.Time, events []api.Event, loc *time.Location) string {
+func RenderAgenda(selectedDate time.Time, events []cache.LocalEvent, loc *time.Location) string {
 	var sb strings.Builder
 
 	header := fmt.Sprintf("Agenda: %s", selectedDate.Format("Mon, Jan 02, 2006"))
@@ -29,13 +29,17 @@ func RenderAgenda(selectedDate time.Time, events []api.Event, loc *time.Location
 	sb.WriteString("\n\n")
 
 	if len(events) == 0 {
-		sb.WriteString(eventLocStyle.Render("No events scheduled for this day."))
+		sb.WriteString(eventLocStyle.Render("Không có sự kiện nào cho ngày này."))
 		return sb.String()
 	}
 
 	for i, ev := range events {
 		timeStr := formatEventTime(ev.StartAt, ev.EndAt, loc)
-		sb.WriteString(fmt.Sprintf("%s  %s\n", eventTimeStyle.Render(timeStr), eventTitleStyle.Render(ev.Title)))
+		syncBadge := ""
+		if ev.SyncState != cache.SyncStateSynced {
+			syncBadge = " [↻]"
+		}
+		sb.WriteString(fmt.Sprintf("%s  %s%s\n", eventTimeStyle.Render(timeStr), eventTitleStyle.Render(ev.Title), syncBadge))
 		if ev.Location != "" {
 			sb.WriteString(fmt.Sprintf("       %s\n", eventLocStyle.Render("📍 "+ev.Location)))
 		}

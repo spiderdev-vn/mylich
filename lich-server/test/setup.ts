@@ -15,3 +15,21 @@ export async function createTestApp(): Promise<FastifyInstance> {
 
   return buildApp({ config: testConfig, database: db });
 }
+
+export async function registerAndLoginUser(
+  app: FastifyInstance,
+  username: string = 'testuser',
+  password: string = 'password123',
+): Promise<{ user: any; token: string }> {
+  const regRes = await app.inject({
+    method: 'POST',
+    url: '/auth/register',
+    payload: { username, password },
+  });
+
+  const body = JSON.parse(regRes.payload);
+  return {
+    user: body.user,
+    token: body.token,
+  };
+}

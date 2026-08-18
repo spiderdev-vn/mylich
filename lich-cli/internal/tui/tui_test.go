@@ -5,11 +5,11 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"lich-cli/internal/api"
+	"lich-cli/internal/cache"
 )
 
 func TestTUI_Navigation(t *testing.T) {
-	model := NewModel(nil)
+	model := NewModel(nil, nil)
 	baseDate := time.Date(2026, time.August, 18, 12, 0, 0, 0, time.UTC)
 	model.SelectedDate = baseDate
 	model.CurrentMonth = time.Date(2026, time.August, 1, 0, 0, 0, 0, time.UTC)
@@ -45,7 +45,7 @@ func TestTUI_Navigation(t *testing.T) {
 }
 
 func TestTUI_MonthChange(t *testing.T) {
-	model := NewModel(nil)
+	model := NewModel(nil, nil)
 	model.CurrentMonth = time.Date(2026, time.August, 1, 0, 0, 0, 0, time.UTC)
 	model.SelectedDate = time.Date(2026, time.August, 18, 0, 0, 0, 0, time.UTC)
 	model.Location = time.UTC
@@ -66,15 +66,16 @@ func TestTUI_MonthChange(t *testing.T) {
 }
 
 func TestTUI_RenderView(t *testing.T) {
-	model := NewModel(nil)
+	model := NewModel(nil, nil)
 	model.SelectedDate = time.Date(2026, time.August, 18, 0, 0, 0, 0, time.UTC)
 	model.CurrentMonth = time.Date(2026, time.August, 1, 0, 0, 0, 0, time.UTC)
-	model.Events["2026-08-18"] = []api.Event{
+	model.Events["2026-08-18"] = []cache.LocalEvent{
 		{
-			ID:      "test-1",
-			Title:   "Sprint Review",
-			StartAt: "2026-08-18T10:00:00Z",
-			EndAt:   "2026-08-18T11:00:00Z",
+			ID:        "test-1",
+			Title:     "Sprint Review",
+			StartAt:   "2026-08-18T10:00:00Z",
+			EndAt:     "2026-08-18T11:00:00Z",
+			SyncState: cache.SyncStateSynced,
 		},
 	}
 

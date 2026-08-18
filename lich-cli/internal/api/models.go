@@ -63,6 +63,7 @@ type Event struct {
 }
 
 type CreateEventRequest struct {
+	ID          string `json:"id,omitempty"`
 	Title       string `json:"title"`
 	CalendarID  string `json:"calendar_id,omitempty"`
 	Description string `json:"description,omitempty"`
@@ -86,6 +87,20 @@ type EventFilter struct {
 	CalendarID string
 	From       string
 	To         string
+}
+
+type SyncChangeItem struct {
+	ID         string `json:"id"`
+	EntityType string `json:"entity_type"`
+	EntityID   string `json:"entity_id"`
+	Action     string `json:"action"` // "create" | "update" | "delete"
+	Data       *Event `json:"data,omitempty"`
+	CreatedAt  string `json:"created_at"`
+}
+
+type SyncResponse struct {
+	Cursor  string           `json:"cursor"`
+	Changes []SyncChangeItem `json:"changes"`
 }
 
 type APIError struct {

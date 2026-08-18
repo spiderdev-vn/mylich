@@ -1,18 +1,26 @@
 package cli
 
 import (
-	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"flag"
 	"fmt"
 	"strings"
 	"time"
 
 	"lich-cli/internal/api"
+	"lich-cli/internal/cache"
 	"lich-cli/internal/config"
+	"lich-cli/internal/syncer"
 )
 
+func generateEventID() string {
+	b := make([]byte, 16)
+	_, _ = rand.Read(b)
+	return hex.EncodeToString(b)
+}
+
 func RunAdd(args []string) error {
-	// Reorder args so flags are parsed even if title is specified first
 	var flagArgs []string
 	var positionalArgs []string
 	hasDurationFlag := false
@@ -67,13 +75,17 @@ func RunAdd(args []string) error {
 	}
 	title := strings.Join(positionalArgs, " ")
 
-	cfg, err := config.LoadConfig()
-	if err != nil || cfg.Token == "" {
-		return fmt.Errorf("chưa đăng nhập. Vui lòng chạy 'lich login' trước")
+	// 1. Mở cache database cục bộ
+	cachePath, err := cache.GetCachePath()
+	if err != nil {
+		return fmt.Errorf("không thể mở thư mục cache: %w", err)
 	}
 
-	client := api.NewClient(cfg.ServerURL, cfg.Token)
-	ctx := context.Background()
+	db, err := cache.OpenDatabase(cachePath)
+	if err != nil {
+		return fmt.Errorf("lỗi khởi động database cục bộ: %w", err)
+	}
+	defer db.Close()
 
 	now := time.Now()
 	loc := now.Location()
@@ -97,25 +109,53 @@ func RunAdd(args []string) error {
 		return err
 	}
 
-	event, err := client.CreateEvent(ctx, api.CreateEventRequest{
-		Title:       title,
-		CalendarID:  *calendarFlag,
-		Description: *descFlag,
-		StartAt:     startTime.Format(time.RFC3339),
-		EndAt:       endTime.Format(time.RFC3339),
-		Timezone:    *timezoneFlag,
-		Location:    *locationFlag,
-	})
-	if err != nil {
-		return fmt.Errorf("tạo sự kiện thất bại: %w", err)
+	// 2. Tạo sự kiện cục bộ (Local-First)
+	eventID := generateEventID()
+	startRFC := startTime.UTC().Format(time.RFC3339)
+	endRFC := endTime.UTC().Format(time.RFC3339)
+
+	tz := *timezoneFlag
+	if tz == "" || tz == "Local" {
+		tz = "UTC"
 	}
 
+	localEvent := cache.LocalEvent{
+		ID:          eventID,
+		CalendarID:  *calendarFlag,
+		Title:       title,
+		Description: *descFlag,
+		StartAt:     startRFC,
+		EndAt:       endRFC,
+		Timezone:    tz,
+		Location:    *locationFlag,
+		SyncState:   cache.SyncStatePendingCreate,
+	}
+
+	if err := cache.UpsertEvent(db, localEvent); err != nil {
+		return fmt.Errorf("lỗi lưu sự kiện cục bộ: %w", err)
+	}
+
+	// 3. Đưa vào hàng đợi sync_jobs
+	_, err = cache.EnqueueSyncJob(db, "event", eventID, cache.SyncOpCreate, syncer.MarshalPayload(localEvent))
+	if err != nil {
+		return fmt.Errorf("lỗi tạo sync job: %w", err)
+	}
+
+	// 4. Kích hoạt đồng bộ hóa ngầm nếu đã đăng nhập
+	cfg, err := config.LoadConfig()
+	if err == nil && cfg.Token != "" {
+		client := api.NewClient(cfg.ServerURL, cfg.Token)
+		engine := syncer.NewSyncEngine(db, client)
+		engine.SyncInBackground()
+	}
+
+	// 5. Trả lời ngay lập tức mà không chờ mạng
 	fmt.Println("✓ Đã tạo sự kiện")
-	fmt.Printf("  ID:       %s\n", event.ID)
-	fmt.Printf("  Tiêu đề:  %s\n", event.Title)
+	fmt.Printf("  ID:        %s\n", eventID)
+	fmt.Printf("  Tiêu đề:   %s\n", title)
 
 	if startTime.Format("2006-01-02") == endTime.Format("2006-01-02") {
-		fmt.Printf("  Thời gian: %s (%s)\n", formatTimeRange(event.StartAt, event.EndAt, loc), startTime.Format("Mon, 02 Jan 2006"))
+		fmt.Printf("  Thời gian: %s (%s)\n", formatTimeRange(startRFC, endRFC, loc), startTime.Format("Mon, 02 Jan 2006"))
 	} else {
 		fmt.Printf("  Thời gian: %s %s -> %s %s\n",
 			startTime.Format("15:04"), startTime.Format("02/01/2006"),
@@ -130,12 +170,13 @@ func RunAdd(args []string) error {
 		)
 	}
 
-	if event.Location != "" {
-		fmt.Printf("  Địa điểm: %s\n", event.Location)
+	if *locationFlag != "" {
+		fmt.Printf("  Địa điểm:  %s\n", *locationFlag)
 	}
-	if event.Description != "" {
-		fmt.Printf("  Ghi chú:  %s\n", event.Description)
+	if *descFlag != "" {
+		fmt.Printf("  Ghi chú:   %s\n", *descFlag)
 	}
+	fmt.Println("  Đồng bộ:   ↻ Đang đồng bộ ngầm (Sync: pending)")
 
 	return nil
 }

@@ -1,4 +1,5 @@
 export interface CreateEventDto {
+  id?: string;
   title: string;
   calendar_id?: string;
   description?: string;

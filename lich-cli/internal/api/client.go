@@ -203,3 +203,25 @@ func (c *Client) UpdateEvent(ctx context.Context, id string, req UpdateEventRequ
 func (c *Client) DeleteEvent(ctx context.Context, id string) error {
 	return c.doRequest(ctx, http.MethodDelete, fmt.Sprintf("/events/%s", id), nil, nil)
 }
+
+func (c *Client) Sync(ctx context.Context, since string, limit int) (*SyncResponse, error) {
+	queryParams := url.Values{}
+	if since != "" {
+		queryParams.Set("since", since)
+	}
+	if limit > 0 {
+		queryParams.Set("limit", fmt.Sprintf("%d", limit))
+	}
+
+	path := "/sync"
+	if len(queryParams) > 0 {
+		path = fmt.Sprintf("%s?%s", path, queryParams.Encode())
+	}
+
+	var res SyncResponse
+	if err := c.doRequest(ctx, http.MethodGet, path, nil, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+

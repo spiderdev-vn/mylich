@@ -4,6 +4,9 @@ export function isValidTimezone(timezone: string): boolean {
   if (!timezone || typeof timezone !== 'string') {
     return false;
   }
+  if (timezone === 'Local') {
+    return true;
+  }
   try {
     Intl.DateTimeFormat(undefined, { timeZone: timezone });
     return true;

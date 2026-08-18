@@ -1,15 +1,17 @@
 package cli
 
 import (
-	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"lich-cli/internal/api"
+	"lich-cli/internal/cache"
 	"lich-cli/internal/config"
+	"lich-cli/internal/syncer"
 )
 
 func formatTimeRange(startStr, endStr string, localLoc *time.Location) string {
@@ -27,34 +29,42 @@ func formatTimeRange(startStr, endStr string, localLoc *time.Location) string {
 
 func RunToday(args []string) error {
 	fs := flag.NewFlagSet("today", flag.ContinueOnError)
-	calendarFlag := fs.String("calendar", "", "Filter by calendar ID")
-	jsonFlag := fs.Bool("json", false, "Output results as JSON")
+	calendarFlag := fs.String("calendar", "", "Lọc theo calendar ID")
+	jsonFlag := fs.Bool("json", false, "Xuất kết quả dưới định dạng JSON")
 
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
 
-	cfg, err := config.LoadConfig()
-	if err != nil || cfg.Token == "" {
-		return fmt.Errorf("not logged in. Please run 'lich login' first")
+	cachePath, err := cache.GetCachePath()
+	if err != nil {
+		return fmt.Errorf("không thể mở thư mục cache: %w", err)
 	}
 
-	client := api.NewClient(cfg.ServerURL, cfg.Token)
-	ctx := context.Background()
+	db, err := cache.OpenDatabase(cachePath)
+	if err != nil {
+		return fmt.Errorf("lỗi kết nối database cục bộ: %w", err)
+	}
+	defer db.Close()
 
 	now := time.Now()
 	loc := now.Location()
 
-	startOfDay := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
-	endOfDay := time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, int(time.Second-time.Nanosecond), loc)
+	startOfDay := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc).UTC().Format(time.RFC3339)
+	endOfDay := time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, int(time.Second-time.Nanosecond), loc).UTC().Format(time.RFC3339)
 
-	events, err := client.ListEvents(ctx, api.EventFilter{
-		CalendarID: *calendarFlag,
-		From:       startOfDay.Format(time.RFC3339),
-		To:         endOfDay.Format(time.RFC3339),
-	})
+	// Đọc tức thì từ SQLite cục bộ (0ms)
+	events, err := cache.GetEventsInRange(db, startOfDay, endOfDay, *calendarFlag)
 	if err != nil {
-		return fmt.Errorf("failed to fetch events: %w", err)
+		return fmt.Errorf("lỗi đọc sự kiện hôm nay từ cache: %w", err)
+	}
+
+	// Kích hoạt đồng bộ hóa ngầm nếu đã cấu hình
+	cfg, err := config.LoadConfig()
+	if err == nil && cfg.Token != "" {
+		client := api.NewClient(cfg.ServerURL, cfg.Token)
+		engine := syncer.NewSyncEngine(db, client)
+		engine.SyncInBackground()
 	}
 
 	if *jsonFlag {
@@ -65,10 +75,10 @@ func RunToday(args []string) error {
 
 	dateHeader := now.Format("Monday, January 02, 2006")
 	fmt.Println(dateHeader)
-	fmt.Println(stringsRepeat("-", len(dateHeader)))
+	fmt.Println(strings.Repeat("-", len(dateHeader)))
 
 	if len(events) == 0 {
-		fmt.Println("No events scheduled for today.")
+		fmt.Println("Không có sự kiện nào được lên lịch hôm nay.")
 		return nil
 	}
 
@@ -78,16 +88,12 @@ func RunToday(args []string) error {
 		if event.Location != "" {
 			locStr = fmt.Sprintf(" (%s)", event.Location)
 		}
-		fmt.Printf("%s  %s%s\n", timeStr, event.Title, locStr)
+		syncBadge := ""
+		if event.SyncState != cache.SyncStateSynced {
+			syncBadge = " [↻ pending]"
+		}
+		fmt.Printf("%s  %s%s%s\n", timeStr, event.Title, locStr, syncBadge)
 	}
 
 	return nil
-}
-
-func stringsRepeat(s string, count int) string {
-	var result string
-	for i := 0; i < count; i++ {
-		result += s
-	}
-	return result
 }

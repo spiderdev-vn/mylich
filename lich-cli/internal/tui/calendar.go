@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/charmbracelet/lipgloss"
-	"lich-cli/internal/api"
+	"lich-cli/internal/cache"
 )
 
 type DayInfo struct {
@@ -18,7 +18,7 @@ type DayInfo struct {
 	EventsCount int
 }
 
-func GetMonthDays(year int, month time.Month, selectedDate time.Time, events map[string][]api.Event, loc *time.Location) [][]DayInfo {
+func GetMonthDays(year int, month time.Month, selectedDate time.Time, events map[string][]cache.LocalEvent, loc *time.Location) [][]DayInfo {
 	firstOfMonth := time.Date(year, month, 1, 0, 0, 0, 0, loc)
 	now := time.Now().In(loc)
 
@@ -59,7 +59,7 @@ func GetMonthDays(year int, month time.Month, selectedDate time.Time, events map
 	return weeks
 }
 
-func RenderCalendarGrid(year int, month time.Month, selectedDate time.Time, events map[string][]api.Event, loc *time.Location) string {
+func RenderCalendarGrid(year int, month time.Month, selectedDate time.Time, events map[string][]cache.LocalEvent, loc *time.Location) string {
 	var sb strings.Builder
 
 	// Header: Month Year

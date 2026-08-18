@@ -6,13 +6,16 @@ import { Migrator } from './db/migrator.ts';
 import { UserRepository } from './db/repositories/user.repository.ts';
 import { CalendarRepository } from './db/repositories/calendar.repository.ts';
 import { EventRepository } from './db/repositories/event.repository.ts';
+import { ChangeLogRepository } from './db/repositories/change_log.repository.ts';
 import { AuthService } from './auth/auth.service.ts';
 import { CalendarService } from './calendars/calendar.service.ts';
 import { EventService } from './events/event.service.ts';
+import { SyncService } from './sync/sync.service.ts';
 import { createAuthPlugin } from './auth/auth.plugin.ts';
 import { createAuthRoutes } from './auth/auth.routes.ts';
 import { createCalendarRoutes } from './calendars/calendar.routes.ts';
 import { createEventRoutes } from './events/event.routes.ts';
+import { syncRoutes } from './sync/sync.routes.ts';
 import { AppError } from './common/errors.ts';
 
 export interface BuildAppOptions {
@@ -32,11 +35,13 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
   const userRepo = new UserRepository(db);
   const calendarRepo = new CalendarRepository(db);
   const eventRepo = new EventRepository(db);
+  const changeLogRepo = new ChangeLogRepository(db);
 
   // Instantiate services
   const authService = new AuthService(userRepo, calendarRepo, config.jwtSecret);
   const calendarService = new CalendarService(calendarRepo);
-  const eventService = new EventService(eventRepo, calendarRepo);
+  const eventService = new EventService(eventRepo, calendarRepo, changeLogRepo);
+  const syncService = new SyncService(changeLogRepo);
 
   const app = Fastify({
     logger: {
@@ -89,6 +94,7 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
   await app.register(createAuthRoutes(authService), { prefix: '/auth' });
   await app.register(createCalendarRoutes(calendarService), { prefix: '/calendars' });
   await app.register(createEventRoutes(eventService), { prefix: '/events' });
+  await app.register(syncRoutes, { syncService });
 
   // Store db instance on fastify for test cleanup / closing
   app.decorate('db', db);
