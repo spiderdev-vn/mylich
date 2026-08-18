@@ -114,8 +114,13 @@ func RunWeek(args []string) error {
 		return nil
 	}
 
+	icons := ui.CurrentIcons()
+	if *simpleFlag {
+		icons = ui.IconASCII
+	}
+
 	// Lip Gloss Styled Week
-	weekHeader := fmt.Sprintf(" LỊCH TUẦN: %s — %s ", startOfWeek.Format("02/01"), endOfWeek.Format("02/01/2006"))
+	weekHeader := fmt.Sprintf(" %s LỊCH TUẦN: %s — %s ", icons.Calendar, startOfWeek.Format("02/01"), endOfWeek.Format("02/01/2006"))
 	fmt.Println(ui.TitleBanner.Render(weekHeader))
 
 	for i := 0; i < 7; i++ {
@@ -126,10 +131,10 @@ func RunWeek(args []string) error {
 		dayTitle := currentDay.Format("Monday, 02/01")
 		isToday := currentDay.Year() == now.Year() && currentDay.YearDay() == now.YearDay()
 		if isToday {
-			dayTitle += " [HÔM NAY]"
+			dayTitle += " " + icons.TagToday
 			fmt.Println(ui.HeaderDateStyle.Render(" " + dayTitle + " "))
 		} else {
-			fmt.Println(ui.SubTitleStyle.Render("• " + dayTitle))
+			fmt.Println(ui.SubTitleStyle.Render(fmt.Sprintf("%s %s", icons.Arrow, dayTitle)))
 		}
 
 		if len(dayEvents) == 0 {
@@ -139,7 +144,7 @@ func RunWeek(args []string) error {
 				timeStr := formatTimeRange(event.StartAt, event.EndAt, loc)
 				syncBadge := ""
 				if event.SyncState != cache.SyncStateSynced {
-					syncBadge = " " + ui.BadgePending
+					syncBadge = " " + ui.RenderBadgePending(icons.Pending)
 				}
 				fmt.Printf("   %s  %s%s\n",
 					ui.TimePill.Render(timeStr),
@@ -147,7 +152,7 @@ func RunWeek(args []string) error {
 					syncBadge,
 				)
 				if event.Location != "" {
-					fmt.Printf("             %s\n", ui.EventLocationStyle.Render(event.Location))
+					fmt.Printf("             %s %s\n", ui.LabelStyle.Render(icons.Location), ui.EventLocationStyle.Render(event.Location))
 				}
 			}
 		}

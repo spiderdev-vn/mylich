@@ -103,6 +103,26 @@ var (
 			Render("⚠ Đồng bộ thất bại")
 )
 
+func RenderBadgeOnline(icon string) string {
+	return lipgloss.NewStyle().Foreground(ColorSuccess).Render(icon + " Trực tuyến (Online)")
+}
+
+func RenderBadgeOffline(icon string) string {
+	return lipgloss.NewStyle().Foreground(ColorError).Render(icon + " Ngoại tuyến (Offline)")
+}
+
+func RenderBadgeSynced(icon string) string {
+	return lipgloss.NewStyle().Foreground(ColorSuccess).Render(icon + " Đã đồng bộ")
+}
+
+func RenderBadgePending(icon string) string {
+	return lipgloss.NewStyle().Foreground(ColorWarning).Render(icon + " Đang chờ đồng bộ")
+}
+
+func RenderBadgeFailed(icon string) string {
+	return lipgloss.NewStyle().Foreground(ColorError).Render(icon + " Đồng bộ thất bại")
+}
+
 // IsSimpleMode checks if the user requested plain ASCII output or if terminal doesn't support color/TTY
 func IsSimpleMode(simpleFlag bool) bool {
 	if simpleFlag {

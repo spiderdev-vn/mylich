@@ -64,6 +64,7 @@ Tùy chọn cho 'add':
   %s      %s
   %s   %s
   %s  %s
+  %s  %s
 
 %s
   %s     %s
@@ -72,6 +73,7 @@ Tùy chọn cho 'add':
 		ui.ValueStyle.Render("lich"), ui.LabelStyle.Render("Mở giao diện Terminal tương tác (TUI)"),
 		ui.ValueStyle.Render("lich login"), ui.LabelStyle.Render("Đăng nhập hoặc đăng ký tài khoản (Interactive form)"),
 		ui.ValueStyle.Render("lich status"), ui.LabelStyle.Render("Bảng điều khiển trạng thái hệ thống, cache & sync"),
+		ui.ValueStyle.Render("lich config"), ui.LabelStyle.Render("Quản lý cấu hình (icon theme: unicode/nerd/ascii/emoji)"),
 		ui.ValueStyle.Render("lich sync"), ui.LabelStyle.Render("Đồng bộ hóa 2 chiều với máy chủ (--wait)"),
 		ui.ValueStyle.Render("lich today"), ui.LabelStyle.Render("Xem lịch trình hôm nay"),
 		ui.ValueStyle.Render("lich week"), ui.LabelStyle.Render("Xem lịch trình cả tuần"),
@@ -102,6 +104,8 @@ func Execute(args []string) int {
 		err = RunLogin(subArgs)
 	case "status":
 		err = RunStatus(subArgs)
+	case "config":
+		err = RunConfig(subArgs)
 	case "sync":
 		err = RunSync(subArgs)
 	case "today":

@@ -109,8 +109,13 @@ func RunMonth(args []string) error {
 		return nil
 	}
 
+	icons := ui.CurrentIcons()
+	if *simpleFlag {
+		icons = ui.IconASCII
+	}
+
 	// Lip Gloss Styled Month
-	monthHeader := fmt.Sprintf(" LỊCH THÁNG %s — TỔNG CỘNG %d SỰ KIỆN ", now.Format("01/2006"), len(events))
+	monthHeader := fmt.Sprintf(" %s LỊCH THÁNG %s — TỔNG CỘNG %d SỰ KIỆN ", icons.Calendar, now.Format("01/2006"), len(events))
 	fmt.Println(ui.TitleBanner.Render(monthHeader))
 
 	if len(events) == 0 {
@@ -130,17 +135,17 @@ func RunMonth(args []string) error {
 		dayTitle := currentDate.Format("Monday, 02/01/2006")
 		isToday := currentDate.Year() == now.Year() && currentDate.YearDay() == now.YearDay()
 		if isToday {
-			dayTitle += " [HÔM NAY]"
+			dayTitle += " " + icons.TagToday
 			fmt.Println(ui.HeaderDateStyle.Render(" " + dayTitle + " "))
 		} else {
-			fmt.Println(ui.SubTitleStyle.Render("• " + dayTitle))
+			fmt.Println(ui.SubTitleStyle.Render(fmt.Sprintf("%s %s", icons.Arrow, dayTitle)))
 		}
 
 		for _, e := range dayEvents {
 			timeStr := formatTimeRange(e.StartAt, e.EndAt, loc)
 			syncBadge := ""
 			if e.SyncState != cache.SyncStateSynced {
-				syncBadge = " " + ui.BadgePending
+				syncBadge = " " + ui.RenderBadgePending(icons.Pending)
 			}
 			fmt.Printf("   %s  %s%s\n",
 				ui.TimePill.Render(timeStr),
@@ -148,7 +153,7 @@ func RunMonth(args []string) error {
 				syncBadge,
 			)
 			if e.Location != "" {
-				fmt.Printf("             %s\n", ui.EventLocationStyle.Render(e.Location))
+				fmt.Printf("             %s %s\n", ui.LabelStyle.Render(icons.Location), ui.EventLocationStyle.Render(e.Location))
 			}
 		}
 		fmt.Println()

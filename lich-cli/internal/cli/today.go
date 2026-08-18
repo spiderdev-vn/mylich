@@ -101,8 +101,13 @@ func RunToday(args []string) error {
 		return nil
 	}
 
+	icons := ui.CurrentIcons()
+	if *simpleFlag {
+		icons = ui.IconASCII
+	}
+
 	// Lip Gloss Styled Agenda
-	headerText := fmt.Sprintf(" LỊCH TRÌNH HÔM NAY — %s ", now.Format("Monday, 02/01/2006"))
+	headerText := fmt.Sprintf(" %s LỊCH TRÌNH HÔM NAY — %s ", icons.Calendar, now.Format("Monday, 02/01/2006"))
 	fmt.Println(ui.HeaderDateStyle.Render(headerText))
 	fmt.Println()
 
@@ -116,7 +121,7 @@ func RunToday(args []string) error {
 		timeStr := formatTimeRange(event.StartAt, event.EndAt, loc)
 		syncBadge := ""
 		if event.SyncState != cache.SyncStateSynced {
-			syncBadge = " " + ui.BadgePending
+			syncBadge = " " + ui.RenderBadgePending(icons.Pending)
 		}
 
 		fmt.Printf("  %s  %s%s\n",
@@ -125,7 +130,7 @@ func RunToday(args []string) error {
 			syncBadge,
 		)
 		if event.Location != "" {
-			fmt.Printf("            %s\n", ui.EventLocationStyle.Render(event.Location))
+			fmt.Printf("            %s %s\n", ui.LabelStyle.Render(icons.Location), ui.EventLocationStyle.Render(event.Location))
 		}
 		if event.Description != "" {
 			fmt.Printf("            %s\n", ui.EventDescStyle.Render(event.Description))

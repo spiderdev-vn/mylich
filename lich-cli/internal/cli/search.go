@@ -119,8 +119,13 @@ func RunSearch(args []string) error {
 		return nil
 	}
 
+	icons := ui.CurrentIcons()
+	if *simpleFlag {
+		icons = ui.IconASCII
+	}
+
 	// Lip Gloss Search Results
-	headerText := fmt.Sprintf(" KẾT QUẢ TÌM KIẾM CHO: '%s' — %d KẾT QUẢ ", keyword, len(events))
+	headerText := fmt.Sprintf(" %s KẾT QUẢ TÌM KIẾM CHO: '%s' — %d KẾT QUẢ ", icons.Calendar, keyword, len(events))
 	fmt.Println(ui.TitleBanner.Render(headerText))
 
 	if len(events) == 0 {
@@ -135,7 +140,7 @@ func RunSearch(args []string) error {
 		timeStr := formatTimeRange(event.StartAt, event.EndAt, loc)
 		syncBadge := ""
 		if event.SyncState != cache.SyncStateSynced {
-			syncBadge = " " + ui.BadgePending
+			syncBadge = " " + ui.RenderBadgePending(icons.Pending)
 		}
 
 		fmt.Printf("  %s %s  %s%s\n",
@@ -146,7 +151,7 @@ func RunSearch(args []string) error {
 		)
 		fmt.Printf("            %s %s\n", ui.LabelStyle.Render("ID:"), ui.LabelStyle.Render(event.ID))
 		if event.Location != "" {
-			fmt.Printf("            %s\n", ui.EventLocationStyle.Render(event.Location))
+			fmt.Printf("            %s %s\n", ui.LabelStyle.Render(icons.Location), ui.EventLocationStyle.Render(event.Location))
 		}
 		if event.Description != "" {
 			fmt.Printf("            %s\n", ui.EventDescStyle.Render(event.Description))

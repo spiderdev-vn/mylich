@@ -23,6 +23,7 @@ type StatusReport struct {
 	TotalEvents  int    `json:"total_events"`
 	PendingJobs  int    `json:"pending_jobs"`
 	LastSyncTime string `json:"last_sync_time,omitempty"`
+	IconStyle    string `json:"icon_style"`
 }
 
 func RunStatus(args []string) error {
@@ -35,9 +36,15 @@ func RunStatus(args []string) error {
 		return err
 	}
 
+	icons := ui.CurrentIcons()
+	if *simpleFlag {
+		icons = ui.IconASCII
+	}
+
 	report := StatusReport{
 		User:      "(Chưa đăng nhập)",
 		ServerURL: "-",
+		IconStyle: icons.Name,
 	}
 
 	// 1. Kiểm tra cấu hình & Auth
@@ -101,15 +108,15 @@ func RunStatus(args []string) error {
 		return nil
 	}
 
-	// Giao diện dạng Hàng đơn (Single Column Card) — Minimalist, không icon emoji
-	serverStatusBadge := ui.BadgeOffline
+	// Giao diện dạng Hàng đơn (Single Column Card) — Thích ứng động theo Icon Set
+	serverStatusBadge := ui.RenderBadgeOffline(icons.Failed)
 	if report.ServerOnline {
-		serverStatusBadge = ui.BadgeOnline
+		serverStatusBadge = ui.RenderBadgeOnline(icons.Dot)
 	}
 
-	syncBadge := ui.BadgeSynced
+	syncBadge := ui.RenderBadgeSynced(icons.Check)
 	if report.PendingJobs > 0 {
-		syncBadge = ui.BadgePending
+		syncBadge = ui.RenderBadgePending(icons.Pending)
 	}
 
 	syncTimeStr := report.LastSyncTime
@@ -120,27 +127,27 @@ func RunStatus(args []string) error {
 	var sb strings.Builder
 
 	// Header banner
-	sb.WriteString(ui.TitleBanner.Render("MỸ LÍCH — TRẠNG THÁI HỆ THỐNG") + "\n\n")
+	sb.WriteString(ui.TitleBanner.Render(fmt.Sprintf("MỸ LÍCH — TRẠNG THÁI HỆ THỐNG [Theme: %s]", icons.Name)) + "\n\n")
 
 	// Section 1: Server & Auth
 	var lines []string
-	lines = append(lines, ui.SectionHeaderStyle.Render("MÁY CHỦ & TÀI KHOẢN"))
-	lines = append(lines, fmt.Sprintf("  • %s %s", ui.LabelStyle.Render("Tài khoản: "), ui.ValueStyle.Render(report.User)))
-	lines = append(lines, fmt.Sprintf("  • %s %s", ui.LabelStyle.Render("Máy chủ:   "), ui.ValueStyle.Render(report.ServerURL)))
-	lines = append(lines, fmt.Sprintf("  • %s %s", ui.LabelStyle.Render("Trạng thái:"), serverStatusBadge))
+	lines = append(lines, ui.SectionHeaderStyle.Render(fmt.Sprintf("%s MÁY CHỦ & TÀI KHOẢN", icons.Server)))
+	lines = append(lines, fmt.Sprintf("  %s %s %s", icons.Bullet, ui.LabelStyle.Render("Tài khoản: "), ui.ValueStyle.Render(report.User)))
+	lines = append(lines, fmt.Sprintf("  %s %s %s", icons.Bullet, ui.LabelStyle.Render("Máy chủ:   "), ui.ValueStyle.Render(report.ServerURL)))
+	lines = append(lines, fmt.Sprintf("  %s %s %s", icons.Bullet, ui.LabelStyle.Render("Trạng thái:"), serverStatusBadge))
 	lines = append(lines, "")
 
 	// Section 2: Local Cache
-	lines = append(lines, ui.SectionHeaderStyle.Render("BỘ NHỚ ĐỆM CỤC BỘ (SQLITE)"))
-	lines = append(lines, fmt.Sprintf("  • %s %s", ui.LabelStyle.Render("Vị trí:    "), ui.LabelStyle.Render(report.CachePath)))
-	lines = append(lines, fmt.Sprintf("  • %s %s", ui.LabelStyle.Render("Sự kiện:   "), ui.ValueStyle.Render(fmt.Sprintf("%d sự kiện", report.TotalEvents))))
+	lines = append(lines, ui.SectionHeaderStyle.Render(fmt.Sprintf("%s BỘ NHỚ ĐỆM CỤC BỘ (SQLITE)", icons.Database)))
+	lines = append(lines, fmt.Sprintf("  %s %s %s", icons.Bullet, ui.LabelStyle.Render("Vị trí:    "), ui.LabelStyle.Render(report.CachePath)))
+	lines = append(lines, fmt.Sprintf("  %s %s %s", icons.Bullet, ui.LabelStyle.Render("Sự kiện:   "), ui.ValueStyle.Render(fmt.Sprintf("%d sự kiện", report.TotalEvents))))
 	lines = append(lines, "")
 
 	// Section 3: Synchronization
-	lines = append(lines, ui.SectionHeaderStyle.Render("ĐỒNG BỘ HÓA 2 CHIỀU"))
-	lines = append(lines, fmt.Sprintf("  • %s %s", ui.LabelStyle.Render("Hàng đợi:  "), ui.ValueStyle.Render(fmt.Sprintf("%d thao tác chờ", report.PendingJobs))))
-	lines = append(lines, fmt.Sprintf("  • %s %s", ui.LabelStyle.Render("Sync gần nhất:"), ui.ValueStyle.Render(syncTimeStr)))
-	lines = append(lines, fmt.Sprintf("  • %s %s", ui.LabelStyle.Render("Trạng thái:   "), syncBadge))
+	lines = append(lines, ui.SectionHeaderStyle.Render(fmt.Sprintf("%s ĐỒNG BỘ HÓA 2 CHIỀU", icons.Sync)))
+	lines = append(lines, fmt.Sprintf("  %s %s %s", icons.Bullet, ui.LabelStyle.Render("Hàng đợi:  "), ui.ValueStyle.Render(fmt.Sprintf("%d thao tác chờ", report.PendingJobs))))
+	lines = append(lines, fmt.Sprintf("  %s %s %s", icons.Bullet, ui.LabelStyle.Render("Sync gần nhất:"), ui.ValueStyle.Render(syncTimeStr)))
+	lines = append(lines, fmt.Sprintf("  %s %s %s", icons.Bullet, ui.LabelStyle.Render("Trạng thái:   "), syncBadge))
 
 	cardContent := strings.Join(lines, "\n")
 	sb.WriteString(ui.ContainerCard.Render(cardContent))
