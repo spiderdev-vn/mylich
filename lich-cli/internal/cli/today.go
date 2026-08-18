@@ -122,7 +122,6 @@ func RunToday(args []string) error {
 	// Lip Gloss Styled Agenda
 	headerText := fmt.Sprintf(" %s LỊCH TRÌNH HÔM NAY — %s ", icons.Calendar, now.Format("Monday, 02/01/2006"))
 	fmt.Println(ui.HeaderDateStyle.Render(headerText))
-	fmt.Println()
 
 	if len(events) == 0 {
 		fmt.Println(ui.EventDescStyle.Render("  (Không có sự kiện nào được lên lịch cho hôm nay)"))

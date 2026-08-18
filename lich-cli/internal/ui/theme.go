@@ -21,8 +21,7 @@ var (
 	// Typography & Styles
 	TitleBanner = lipgloss.NewStyle().
 			Bold(true).
-			Foreground(ColorHighlight).
-			MarginBottom(1)
+			Foreground(ColorHighlight)
 
 	SectionHeaderStyle = lipgloss.NewStyle().
 				Bold(true).

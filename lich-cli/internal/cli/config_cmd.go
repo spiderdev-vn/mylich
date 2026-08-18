@@ -8,9 +8,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/charmbracelet/huh"
 	"lich-cli/internal/config"
 	"lich-cli/internal/ui"
+
+	"github.com/charmbracelet/huh"
 )
 
 func RunConfig(args []string) error {
@@ -23,7 +24,7 @@ func RunConfig(args []string) error {
 		fmt.Println("Sử dụng: lich config [subcommand] [flags]")
 		fmt.Println()
 		fmt.Println("Lệnh con:")
-		fmt.Println("  lich config                    Mở form tương tác Huh cấu hình icon theme và máy chủ")
+		fmt.Println("  lich config                    Mở form tương tác cấu hình icon theme và máy chủ")
 		fmt.Println("  lich config list               Xem toàn bộ cấu hình hiện tại")
 		fmt.Println("  lich config get <key>          Xem giá trị một khóa (icons, server_url, username)")
 		fmt.Println("  lich config set <key> <value>  Thay đổi giá trị (ví dụ: lich config set icons nerd)")
@@ -195,12 +196,12 @@ func printConfigList(cfg *config.Config, configPath string, isJSON, isSimple boo
 	icons := ui.CurrentIcons()
 	lines := []string{
 		ui.SectionHeaderStyle.Render("CẤU HÌNH HỆ THỐNG LICH"),
-		fmt.Sprintf("  • %s %s", ui.LabelStyle.Render("Bộ Icon:   "), ui.ValueStyle.Render(cfg.Icons)),
-		fmt.Sprintf("  • %s %s", ui.LabelStyle.Render("Máy chủ:   "), ui.ValueStyle.Render(cfg.ServerURL)),
-		fmt.Sprintf("  • %s %s", ui.LabelStyle.Render("Tài khoản: "), ui.ValueStyle.Render(cfg.Username)),
-		fmt.Sprintf("  • %s %s", ui.LabelStyle.Render("File lưu:  "), ui.LabelStyle.Render(configPath)),
+		fmt.Sprintf(" • %s %s", ui.LabelStyle.Render("Bộ Icon:   "), ui.ValueStyle.Render(cfg.Icons)),
+		fmt.Sprintf(" • %s %s", ui.LabelStyle.Render("Máy chủ:   "), ui.ValueStyle.Render(cfg.ServerURL)),
+		fmt.Sprintf(" • %s %s", ui.LabelStyle.Render("Tài khoản: "), ui.ValueStyle.Render(cfg.Username)),
+		fmt.Sprintf(" • %s %s", ui.LabelStyle.Render("File lưu:  "), ui.LabelStyle.Render(configPath)),
 		"",
-		fmt.Sprintf("  %s %s", ui.LabelStyle.Render("Mẫu hiển thị:"), fmt.Sprintf("%s Server | %s Database | %s Sync | %s Lịch", icons.Server, icons.Database, icons.Sync, icons.Calendar)),
+		fmt.Sprintf(" %s %s", ui.LabelStyle.Render("Mẫu hiển thị:"), fmt.Sprintf("%s Server | %s Database | %s Sync | %s Lịch", icons.Server, icons.Database, icons.Sync, icons.Calendar)),
 	}
 
 	fmt.Println(ui.ContainerCard.Render(strings.Join(lines, "\n")))

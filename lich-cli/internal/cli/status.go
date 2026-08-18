@@ -142,27 +142,28 @@ func RunStatus(args []string) error {
 	var sb strings.Builder
 
 	// Header banner
-	sb.WriteString(ui.TitleBanner.Render(fmt.Sprintf("MỸ LÍCH — TRẠNG THÁI HỆ THỐNG [Theme: %s]", icons.Name)) + "\n\n")
+	sb.WriteString(ui.TitleBanner.Render(fmt.Sprintf("MỸ LÍCH — TRẠNG THÁI HỆ THỐNG [Theme: %s]", icons.Name)))
+	sb.WriteString("\n")
 
 	// Section 1: Server & Auth
 	var lines []string
 	lines = append(lines, ui.SectionHeaderStyle.Render(fmt.Sprintf("%s MÁY CHỦ & TÀI KHOẢN", icons.Server)))
-	lines = append(lines, fmt.Sprintf("  %s %s %s", icons.Bullet, ui.LabelStyle.Render("Tài khoản: "), ui.ValueStyle.Render(report.User)))
-	lines = append(lines, fmt.Sprintf("  %s %s %s", icons.Bullet, ui.LabelStyle.Render("Máy chủ:   "), ui.ValueStyle.Render(report.ServerURL)))
-	lines = append(lines, fmt.Sprintf("  %s %s %s", icons.Bullet, ui.LabelStyle.Render("Trạng thái:"), serverStatusBadge))
+	lines = append(lines, fmt.Sprintf(" %s %s %s", icons.Bullet, ui.LabelStyle.Render("Tài khoản: "), ui.ValueStyle.Render(report.User)))
+	lines = append(lines, fmt.Sprintf(" %s %s %s", icons.Bullet, ui.LabelStyle.Render("Máy chủ:   "), ui.ValueStyle.Render(report.ServerURL)))
+	lines = append(lines, fmt.Sprintf(" %s %s %s", icons.Bullet, ui.LabelStyle.Render("Trạng thái:"), serverStatusBadge))
 	lines = append(lines, "")
 
 	// Section 2: Local Cache
 	lines = append(lines, ui.SectionHeaderStyle.Render(fmt.Sprintf("%s BỘ NHỚ ĐỆM CỤC BỘ (SQLITE)", icons.Database)))
-	lines = append(lines, fmt.Sprintf("  %s %s %s", icons.Bullet, ui.LabelStyle.Render("Vị trí:    "), ui.LabelStyle.Render(report.CachePath)))
-	lines = append(lines, fmt.Sprintf("  %s %s %s", icons.Bullet, ui.LabelStyle.Render("Sự kiện:   "), ui.ValueStyle.Render(fmt.Sprintf("%d sự kiện", report.TotalEvents))))
+	lines = append(lines, fmt.Sprintf(" %s %s %s", icons.Bullet, ui.LabelStyle.Render("Vị trí:    "), ui.LabelStyle.Render(report.CachePath)))
+	lines = append(lines, fmt.Sprintf(" %s %s %s", icons.Bullet, ui.LabelStyle.Render("Sự kiện:   "), ui.ValueStyle.Render(fmt.Sprintf("%d sự kiện", report.TotalEvents))))
 	lines = append(lines, "")
 
 	// Section 3: Synchronization
 	lines = append(lines, ui.SectionHeaderStyle.Render(fmt.Sprintf("%s ĐỒNG BỘ HÓA 2 CHIỀU", icons.Sync)))
-	lines = append(lines, fmt.Sprintf("  %s %s %s", icons.Bullet, ui.LabelStyle.Render("Hàng đợi:  "), ui.ValueStyle.Render(fmt.Sprintf("%d thao tác chờ", report.PendingJobs))))
-	lines = append(lines, fmt.Sprintf("  %s %s %s", icons.Bullet, ui.LabelStyle.Render("Sync gần nhất:"), ui.ValueStyle.Render(syncTimeStr)))
-	lines = append(lines, fmt.Sprintf("  %s %s %s", icons.Bullet, ui.LabelStyle.Render("Trạng thái:   "), syncBadge))
+	lines = append(lines, fmt.Sprintf(" %s %s %s", icons.Bullet, ui.LabelStyle.Render("Hàng đợi:  "), ui.ValueStyle.Render(fmt.Sprintf("%d thao tác chờ", report.PendingJobs))))
+	lines = append(lines, fmt.Sprintf(" %s %s %s", icons.Bullet, ui.LabelStyle.Render("Sync gần nhất:"), ui.ValueStyle.Render(syncTimeStr)))
+	lines = append(lines, fmt.Sprintf(" %s %s %s", icons.Bullet, ui.LabelStyle.Render("Trạng thái:   "), syncBadge))
 
 	cardContent := strings.Join(lines, "\n")
 	sb.WriteString(ui.ContainerCard.Render(cardContent))
