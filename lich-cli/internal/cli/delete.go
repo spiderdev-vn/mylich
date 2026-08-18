@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"strings"
@@ -32,7 +33,21 @@ func RunDelete(args []string) error {
 	simpleFlag := fs.Bool("simple", false, "Hiển thị dạng văn bản ASCII đơn giản")
 	fs.BoolVar(simpleFlag, "s", false, "Hiển thị dạng văn bản ASCII đơn giản (viết tắt)")
 
+	fs.Usage = func() {
+		fmt.Println("Sử dụng: lich delete [id] [flags]")
+		fmt.Println()
+		fmt.Println("Mô tả:")
+		fmt.Println("  Xóa sự kiện. Nếu không truyền ID, sẽ mở danh sách chọn và hỏi xác nhận.")
+		fmt.Println()
+		fmt.Println("Tùy chọn:")
+		fmt.Println("  --yes, -y      Bỏ qua bước xác nhận xóa")
+		fmt.Println("  --simple, -s   Hiển thị dạng văn bản ASCII đơn giản")
+	}
+
 	if err := fs.Parse(flagArgs); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			return nil
+		}
 		return err
 	}
 

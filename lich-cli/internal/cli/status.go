@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -32,7 +33,21 @@ func RunStatus(args []string) error {
 	fs.BoolVar(simpleFlag, "s", false, "Hiển thị dạng văn bản ASCII đơn giản (viết tắt)")
 	jsonFlag := fs.Bool("json", false, "Xuất kết quả dưới định dạng JSON")
 
+	fs.Usage = func() {
+		fmt.Println("Sử dụng: lich status [flags]")
+		fmt.Println()
+		fmt.Println("Mô tả:")
+		fmt.Println("  Hiển thị bảng trạng thái máy chủ, bộ nhớ đệm cục bộ và hàng đợi đồng bộ.")
+		fmt.Println()
+		fmt.Println("Tùy chọn:")
+		fmt.Println("  --simple, -s   Hiển thị dạng văn bản ASCII đơn giản (phù hợp scripts/CI)")
+		fmt.Println("  --json         Xuất kết quả dưới định dạng JSON")
+	}
+
 	if err := fs.Parse(args); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			return nil
+		}
 		return err
 	}
 

@@ -2,6 +2,7 @@ package cli
 
 import (
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -22,7 +23,19 @@ func RunWeek(args []string) error {
 	simpleFlag := fs.Bool("simple", false, "Hiển thị dạng văn bản ASCII đơn giản")
 	fs.BoolVar(simpleFlag, "s", false, "Hiển thị dạng văn bản ASCII đơn giản (viết tắt)")
 
+	fs.Usage = func() {
+		fmt.Println("Sử dụng: lich week [flags]")
+		fmt.Println()
+		fmt.Println("Tùy chọn:")
+		fmt.Println("  --calendar <id>  Lọc sự kiện theo ID lịch")
+		fmt.Println("  --simple, -s     Hiển thị dạng văn bản ASCII đơn giản")
+		fmt.Println("  --json           Xuất kết quả dưới định dạng JSON")
+	}
+
 	if err := fs.Parse(args); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			return nil
+		}
 		return err
 	}
 

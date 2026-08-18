@@ -2,6 +2,7 @@ package cli
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"time"
@@ -20,7 +21,21 @@ func RunSync(args []string) error {
 	simpleFlag := fs.Bool("simple", false, "Hiển thị dạng văn bản ASCII đơn giản")
 	fs.BoolVar(simpleFlag, "s", false, "Hiển thị dạng văn bản ASCII đơn giản (viết tắt)")
 
+	fs.Usage = func() {
+		fmt.Println("Sử dụng: lich sync [flags]")
+		fmt.Println()
+		fmt.Println("Mô tả:")
+		fmt.Println("  Đồng bộ hóa 2 chiều (Push & Pull) giữa Local SQLite Cache và Máy chủ Lich.")
+		fmt.Println()
+		fmt.Println("Tùy chọn:")
+		fmt.Println("  --wait, -w     Chờ quá trình đồng bộ hoàn tất và hiển thị chi tiết")
+		fmt.Println("  --simple, -s   Hiển thị dạng văn bản ASCII đơn giản")
+	}
+
 	if err := fs.Parse(args); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			return nil
+		}
 		return err
 	}
 

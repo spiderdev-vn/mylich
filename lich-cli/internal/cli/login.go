@@ -2,6 +2,7 @@ package cli
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"strings"
@@ -23,7 +24,24 @@ func RunLogin(args []string) error {
 	simpleFlag := fs.Bool("simple", false, "Hiển thị dạng text ASCII đơn giản")
 	fs.BoolVar(simpleFlag, "s", false, "Hiển thị dạng text ASCII đơn giản (viết tắt)")
 
+	fs.Usage = func() {
+		fmt.Println("Sử dụng: lich login [flags]")
+		fmt.Println()
+		fmt.Println("Mô tả:")
+		fmt.Println("  Đăng nhập hoặc đăng ký tài khoản mới. Nếu để trống cờ, sẽ mở Form tương tác Huh.")
+		fmt.Println()
+		fmt.Println("Tùy chọn:")
+		fmt.Println("  --server <url>        URL máy chủ (mặc định: http://127.0.0.1:3000)")
+		fmt.Println("  --username, -u <user> Tên đăng nhập")
+		fmt.Println("  --password, -p <pass> Mật khẩu")
+		fmt.Println("  --register            Đăng ký tài khoản mới")
+		fmt.Println("  --simple, -s          Hiển thị dạng text ASCII đơn giản")
+	}
+
 	if err := fs.Parse(args); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			return nil
+		}
 		return err
 	}
 

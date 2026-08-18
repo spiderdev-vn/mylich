@@ -2,6 +2,7 @@ package cli
 
 import (
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -18,6 +19,26 @@ func RunConfig(args []string) error {
 	simpleFlag := fs.Bool("simple", false, "Hiển thị dạng văn bản ASCII đơn giản")
 	fs.BoolVar(simpleFlag, "s", false, "Hiển thị dạng văn bản ASCII đơn giản (viết tắt)")
 
+	fs.Usage = func() {
+		fmt.Println("Sử dụng: lich config [subcommand] [flags]")
+		fmt.Println()
+		fmt.Println("Lệnh con:")
+		fmt.Println("  lich config                    Mở form tương tác Huh cấu hình icon theme và máy chủ")
+		fmt.Println("  lich config list               Xem toàn bộ cấu hình hiện tại")
+		fmt.Println("  lich config get <key>          Xem giá trị một khóa (icons, server_url, username)")
+		fmt.Println("  lich config set <key> <value>  Thay đổi giá trị (ví dụ: lich config set icons nerd)")
+		fmt.Println()
+		fmt.Println("Các bộ icon theme hỗ trợ:")
+		fmt.Println("  unicode   Unicode 1-cell (Mặc định - Chuẩn không bao giờ vỡ khung viền)")
+		fmt.Println("  nerd      Nerd Font (Dành cho font lập trình: JetBrainsMono, FiraCode)")
+		fmt.Println("  ascii     ASCII thuần túy (Dành cho server/scripts)")
+		fmt.Println("  emoji     Emoji màu sắc sống động")
+		fmt.Println()
+		fmt.Println("Tùy chọn:")
+		fmt.Println("  --simple, -s   Hiển thị dạng văn bản ASCII đơn giản")
+		fmt.Println("  --json         Xuất cấu hình dưới định dạng JSON")
+	}
+
 	// Tách subcommand (list, get, set) và flags
 	var subArgs []string
 	var commandArgs []string
@@ -31,6 +52,9 @@ func RunConfig(args []string) error {
 	}
 
 	if err := fs.Parse(subArgs); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			return nil
+		}
 		return err
 	}
 
@@ -113,7 +137,7 @@ func RunConfig(args []string) error {
 				Options(
 					huh.NewOption("Unicode 1-cell (Mặc định - An toàn 100%, không vỡ khung)", "unicode"),
 					huh.NewOption("Nerd Font (Glyphs dành cho font lập trình: JetBrainsMono, FiraCode)", "nerd"),
-					huh.NewOption("ASCII thuần túy (Dành cho máy chủ/CI)", "ascii"),
+					huh.NewOption("ASCII thuần túy (Dành cho server/scripts)", "ascii"),
 					huh.NewOption("Emoji màu sắc (Hiện đại, sinh động)", "emoji"),
 				).
 				Value(&selectedIcons),

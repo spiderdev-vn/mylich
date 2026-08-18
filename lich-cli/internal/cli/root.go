@@ -1,6 +1,8 @@
 package cli
 
 import (
+	"errors"
+	"flag"
 	"fmt"
 	"os"
 
@@ -138,6 +140,9 @@ func Execute(args []string) int {
 	}
 
 	if err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			return 0
+		}
 		if ui.IsSimpleMode(false) {
 			fmt.Fprintf(os.Stderr, "Lỗi: %v\n", err)
 		} else {

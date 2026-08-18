@@ -3,6 +3,7 @@ package cli
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"flag"
 	"fmt"
 	"strings"
@@ -70,7 +71,28 @@ func RunAdd(args []string) error {
 	simpleFlag := fs.Bool("simple", false, "Hiển thị dạng văn bản ASCII đơn giản")
 	fs.BoolVar(simpleFlag, "s", false, "Hiển thị dạng văn bản ASCII đơn giản (viết tắt)")
 
+	fs.Usage = func() {
+		fmt.Println("Sử dụng: lich add [tiêu đề] [flags]")
+		fmt.Println()
+		fmt.Println("Mô tả:")
+		fmt.Println("  Tạo sự kiện mới. Nếu không truyền tham số, sẽ mở Form tương tác Huh để điền thông tin.")
+		fmt.Println()
+		fmt.Println("Tùy chọn:")
+		fmt.Println("  --date <date>         Ngày sự kiện (YYYY-MM-DD, today, tomorrow)")
+		fmt.Println("  --at <time>           Giờ bắt đầu (10:00, 23:30, 11:30pm, 10am)")
+		fmt.Println("  --to <time>           Giờ kết thúc (22:33, 03:00, 3am)")
+		fmt.Println("  --duration <duration> Thời lượng sự kiện (30m, 1h, 2h30m, mặc định: 1h)")
+		fmt.Println("  --calendar <id>       ID lịch đích")
+		fmt.Println("  --location <text>     Địa điểm")
+		fmt.Println("  --desc <text>         Ghi chú mô tả")
+		fmt.Println("  --timezone <tz>       Múi giờ (ví dụ: Asia/Ho_Chi_Minh)")
+		fmt.Println("  --simple, -s          Hiển thị dạng văn bản ASCII đơn giản")
+	}
+
 	if err := fs.Parse(flagArgs); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			return nil
+		}
 		return err
 	}
 
