@@ -9,13 +9,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"lich-cli/internal/api"
 	"lich-cli/internal/cache"
 	"lich-cli/internal/config"
 	"lich-cli/internal/syncer"
+
+	"github.com/charmbracelet/bubbles/textinput"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 type FormMode int
@@ -483,11 +484,11 @@ func (f EventFormModal) Render(width, height int) string {
 
 	lines = append(lines, "")
 
-	saveBtn := inactiveBtnStyle.Render("[ Lưu sự kiện (Enter) ]")
+	saveBtn := inactiveBtnStyle.Render("[ Lưu (Enter) ]")
 	if f.FocusIndex == len(f.Inputs) {
-		saveBtn = activeBtnStyle.Render("[ Lưu sự kiện (Enter) ]")
+		saveBtn = activeBtnStyle.Render("[ Lưu (Enter) ]")
 	}
-	cancelHint := lipgloss.NewStyle().Foreground(lipgloss.Color("#6C7086")).Italic(true).Render("Nhấn [Esc] hoặc [Ctrl+C] để HỦY")
+	cancelHint := lipgloss.NewStyle().Foreground(lipgloss.Color("#6C7086")).Italic(true).Render("Hủy [Esc] - [Ctrl+C]")
 
 	lines = append(lines, fmt.Sprintf("%s    %s", saveBtn, cancelHint))
 

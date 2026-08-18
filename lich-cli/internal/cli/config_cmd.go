@@ -24,16 +24,21 @@ func RunConfig(args []string) error {
 		fmt.Println("Sử dụng: lich config [subcommand] [flags]")
 		fmt.Println()
 		fmt.Println("Lệnh con:")
-		fmt.Println("  lich config                    Mở form tương tác cấu hình icon theme và máy chủ")
+		fmt.Println("  lich config                    Mở form tương tác cấu hình icon theme, agenda mode và máy chủ")
 		fmt.Println("  lich config list               Xem toàn bộ cấu hình hiện tại")
-		fmt.Println("  lich config get <key>          Xem giá trị một khóa (icons, server_url, username)")
-		fmt.Println("  lich config set <key> <value>  Thay đổi giá trị (ví dụ: lich config set icons nerd)")
+		fmt.Println("  lich config get <key>          Xem giá trị một khóa (icons, agenda_mode, server_url, username)")
+		fmt.Println("  lich config set <key> <value>  Thay đổi giá trị (ví dụ: lich config set agenda_mode gantt)")
 		fmt.Println()
-		fmt.Println("Các bộ icon theme hỗ trợ:")
+		fmt.Println("Các bộ icon theme hỗ trợ (icons):")
 		fmt.Println("  unicode   Unicode 1-cell (Mặc định - Chuẩn không bao giờ vỡ khung viền)")
 		fmt.Println("  nerd      Nerd Font (Dành cho font lập trình: JetBrainsMono, FiraCode)")
 		fmt.Println("  ascii     ASCII thuần túy (Dành cho server/scripts)")
 		fmt.Println("  emoji     Emoji màu sắc sống động")
+		fmt.Println()
+		fmt.Println("Các chế độ hiển thị Agenda (agenda_mode):")
+		fmt.Println("  list      Danh sách thẻ sự kiện hiện đại (Mặc định, có badge cảnh báo trùng giờ)")
+		fmt.Println("  gantt     Timeline theo trục giờ chia cột song song khi trùng lịch")
+		fmt.Println("  ascii     Văn bản ASCII 7-bit tối giản")
 		fmt.Println()
 		fmt.Println("Tùy chọn:")
 		fmt.Println("  --simple, -s   Hiển thị dạng văn bản ASCII đơn giản")
@@ -61,7 +66,7 @@ func RunConfig(args []string) error {
 
 	cfg, err := config.LoadConfig()
 	if err != nil {
-		cfg = &config.Config{ServerURL: config.DefaultServerURL, Icons: config.DefaultIcons}
+		cfg = &config.Config{ServerURL: config.DefaultServerURL, Icons: config.DefaultIcons, AgendaMode: config.DefaultAgendaMode}
 	}
 
 	configPath, _ := config.GetConfigPath()
@@ -88,7 +93,7 @@ func RunConfig(args []string) error {
 
 		case "set":
 			if len(commandArgs) < 3 {
-				return fmt.Errorf("cần chỉ định khóa và giá trị: lich config set <key> <value>\nVí dụ: lich config set icons nerd")
+				return fmt.Errorf("cần chỉ định khóa và giá trị: lich config set <key> <value>\nVí dụ: lich config set agenda_mode gantt")
 			}
 			key := commandArgs[1]
 			val := commandArgs[2]
@@ -128,6 +133,10 @@ func RunConfig(args []string) error {
 	if selectedIcons == "" {
 		selectedIcons = config.DefaultIcons
 	}
+	selectedAgendaMode := cfg.AgendaMode
+	if selectedAgendaMode == "" {
+		selectedAgendaMode = config.DefaultAgendaMode
+	}
 	serverURL := cfg.ServerURL
 
 	form := huh.NewForm(
@@ -143,6 +152,16 @@ func RunConfig(args []string) error {
 				).
 				Value(&selectedIcons),
 
+			huh.NewSelect[string]().
+				Title("Chế độ hiển thị Agenda (Agenda View Mode)").
+				Description("Chọn cách biểu diễn sự kiện và các xung đột trùng giờ").
+				Options(
+					huh.NewOption("List View (Danh sách thẻ gọn gàng, có badge cảnh báo trùng giờ)", "list"),
+					huh.NewOption("Gantt Timeline (Chia cột song song theo trục giờ)", "gantt"),
+					huh.NewOption("ASCII Mode (Văn bản 7-bit an toàn, tương thích cao)", "ascii"),
+				).
+				Value(&selectedAgendaMode),
+
 			huh.NewInput().
 				Title("Địa chỉ Máy chủ Lich (Server URL)").
 				Value(&serverURL),
@@ -154,6 +173,7 @@ func RunConfig(args []string) error {
 	}
 
 	cfg.Icons = selectedIcons
+	cfg.AgendaMode = selectedAgendaMode
 	cfg.ServerURL = strings.TrimSpace(serverURL)
 
 	if err := config.SaveConfig(cfg); err != nil {
@@ -161,11 +181,12 @@ func RunConfig(args []string) error {
 	}
 
 	fmt.Println(ui.CardBoxSuccess.Render(fmt.Sprintf(
-		"%s\n\n%s %s\n%s %s\n%s %s",
+		"%s\n\n%s %s\n%s %s\n%s %s\n%s %s",
 		ui.CardTitle.Render("✓ ĐÃ LƯU CẤU HÌNH THÀNH CÔNG"),
-		ui.LabelStyle.Render("Bộ Icon:  "), ui.ValueStyle.Render(cfg.Icons),
-		ui.LabelStyle.Render("Máy chủ:  "), ui.ValueStyle.Render(cfg.ServerURL),
-		ui.LabelStyle.Render("File lưu: "), ui.LabelStyle.Render(configPath),
+		ui.LabelStyle.Render("Bộ Icon:     "), ui.ValueStyle.Render(cfg.Icons),
+		ui.LabelStyle.Render("Chế độ Lịch: "), ui.ValueStyle.Render(cfg.AgendaMode),
+		ui.LabelStyle.Render("Máy chủ:     "), ui.ValueStyle.Render(cfg.ServerURL),
+		ui.LabelStyle.Render("File lưu:    "), ui.LabelStyle.Render(configPath),
 	)))
 
 	return nil
@@ -177,6 +198,7 @@ func printConfigList(cfg *config.Config, configPath string, isJSON, isSimple boo
 		enc.SetIndent("", "  ")
 		return enc.Encode(map[string]any{
 			"icons":       cfg.Icons,
+			"agenda_mode": cfg.AgendaMode,
 			"server_url":  cfg.ServerURL,
 			"username":    cfg.Username,
 			"config_path": configPath,
@@ -187,6 +209,7 @@ func printConfigList(cfg *config.Config, configPath string, isJSON, isSimple boo
 		fmt.Println("Lich Configuration")
 		fmt.Println("==================")
 		fmt.Printf("icons:       %s\n", cfg.Icons)
+		fmt.Printf("agenda_mode: %s\n", cfg.AgendaMode)
 		fmt.Printf("server_url:  %s\n", cfg.ServerURL)
 		fmt.Printf("username:    %s\n", cfg.Username)
 		fmt.Printf("config_path: %s\n", configPath)
@@ -196,10 +219,11 @@ func printConfigList(cfg *config.Config, configPath string, isJSON, isSimple boo
 	icons := ui.CurrentIcons()
 	lines := []string{
 		ui.SectionHeaderStyle.Render("CẤU HÌNH HỆ THỐNG LICH"),
-		fmt.Sprintf(" • %s %s", ui.LabelStyle.Render("Bộ Icon:   "), ui.ValueStyle.Render(cfg.Icons)),
-		fmt.Sprintf(" • %s %s", ui.LabelStyle.Render("Máy chủ:   "), ui.ValueStyle.Render(cfg.ServerURL)),
-		fmt.Sprintf(" • %s %s", ui.LabelStyle.Render("Tài khoản: "), ui.ValueStyle.Render(cfg.Username)),
-		fmt.Sprintf(" • %s %s", ui.LabelStyle.Render("File lưu:  "), ui.LabelStyle.Render(configPath)),
+		fmt.Sprintf(" • %s %s", ui.LabelStyle.Render("Bộ Icon:     "), ui.ValueStyle.Render(cfg.Icons)),
+		fmt.Sprintf(" • %s %s", ui.LabelStyle.Render("Chế độ Lịch: "), ui.ValueStyle.Render(cfg.AgendaMode)),
+		fmt.Sprintf(" • %s %s", ui.LabelStyle.Render("Máy chủ:     "), ui.ValueStyle.Render(cfg.ServerURL)),
+		fmt.Sprintf(" • %s %s", ui.LabelStyle.Render("Tài khoản:   "), ui.ValueStyle.Render(cfg.Username)),
+		fmt.Sprintf(" • %s %s", ui.LabelStyle.Render("File lưu:    "), ui.LabelStyle.Render(configPath)),
 		"",
 		fmt.Sprintf(" %s %s", ui.LabelStyle.Render("Mẫu hiển thị:"), fmt.Sprintf("%s Server | %s Database | %s Sync | %s Lịch", icons.Server, icons.Database, icons.Sync, icons.Calendar)),
 	}

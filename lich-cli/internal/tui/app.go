@@ -11,6 +11,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"lich-cli/internal/api"
 	"lich-cli/internal/cache"
+	"lich-cli/internal/config"
 	"lich-cli/internal/syncer"
 )
 
@@ -51,6 +52,7 @@ type Model struct {
 	Focus            FocusArea
 	ViewingEvent     *cache.LocalEvent
 	Modal            *EventFormModal
+	AgendaMode       string // list | gantt | ascii
 	Events           map[string][]cache.LocalEvent
 	Loading          bool
 	Syncing          bool
@@ -66,6 +68,12 @@ func NewModel(client *api.Client, db *sql.DB) Model {
 	loc := now.Location()
 	firstOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, loc)
 
+	agendaMode := config.DefaultAgendaMode
+	cfg, err := config.LoadConfig()
+	if err == nil && cfg.AgendaMode != "" {
+		agendaMode = cfg.AgendaMode
+	}
+
 	return Model{
 		Client:           client,
 		DB:               db,
@@ -75,6 +83,7 @@ func NewModel(client *api.Client, db *sql.DB) Model {
 		Focus:            FocusCalendar,
 		ViewingEvent:     nil,
 		Modal:            nil,
+		AgendaMode:       agendaMode,
 		Events:           make(map[string][]cache.LocalEvent),
 		Loading:          true,
 		Syncing:          false,
@@ -261,6 +270,26 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			return m, nil
 
+		// Phím tắt đổi chế độ Agenda (Mode: list -> gantt -> ascii -> list)
+		case "m":
+			switch m.AgendaMode {
+			case "list":
+				m.AgendaMode = "gantt"
+			case "gantt":
+				m.AgendaMode = "ascii"
+			default:
+				m.AgendaMode = "list"
+			}
+			// Lưu cấu hình ngầm
+			go func(newMode string) {
+				cfg, err := config.LoadConfig()
+				if err == nil {
+					cfg.AgendaMode = newMode
+					_ = config.SaveConfig(cfg)
+				}
+			}(m.AgendaMode)
+			return m, nil
+
 		// Phím tắt tạo sự kiện mới (Create) - Dùng Native Bubble Tea Form Modal
 		case "a", "c", "+":
 			modal := NewAddFormModal(m.SelectedDate)
@@ -419,7 +448,7 @@ func (m Model) View() string {
 	}
 
 	selectedEvents := m.getSelectedDayEvents()
-	agendaView := RenderAgenda(m.SelectedDate, selectedEvents, m.Location, m.SelectedEventIdx, m.Focus == FocusAgenda)
+	agendaView := RenderAgenda(m.AgendaMode, m.SelectedDate, selectedEvents, m.Location, m.SelectedEventIdx, m.Focus == FocusAgenda, agendaWidth)
 	agendaBox := agendaStyle.Render(agendaView)
 
 	// Join side-by-side or stacked based on width
@@ -445,14 +474,17 @@ func (m Model) View() string {
 	sb.WriteString("\n")
 
 	// Footer Help
+	modeBadge := strings.ToUpper(m.AgendaMode)
 	helpKeys := fmt.Sprintf(
-		"%s di chuyển  •  %s thêm  •  %s sửa  •  %s xóa  •  %s chi tiết  •  %s chuyển  •  %s thoát",
+		"%s di chuyển  •  %s thêm  •  %s sửa  •  %s xóa  •  %s chi tiết  •  %s chuyển  •  %s [%s]  •  %s thoát",
 		helpKeyStyle.Render("←↓↑→/hjkl:"),
 		helpKeyStyle.Render("a:"),
 		helpKeyStyle.Render("e:"),
 		helpKeyStyle.Render("d:"),
 		helpKeyStyle.Render("Enter:"),
 		helpKeyStyle.Render("Tab:"),
+		helpKeyStyle.Render("m:"),
+		modeBadge,
 		helpKeyStyle.Render("q:"),
 	)
 	sb.WriteString(helpDescStyle.Render(helpKeys))

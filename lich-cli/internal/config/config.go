@@ -10,15 +10,17 @@ import (
 )
 
 const (
-	DefaultServerURL = "http://127.0.0.1:3000"
-	DefaultIcons     = "unicode"
+	DefaultServerURL  = "http://127.0.0.1:3000"
+	DefaultIcons      = "unicode"
+	DefaultAgendaMode = "list"
 )
 
 type Config struct {
-	ServerURL string `json:"server_url"`
-	Token     string `json:"token"`
-	Username  string `json:"username,omitempty"`
-	Icons     string `json:"icons,omitempty"` // unicode | nerd | ascii | emoji
+	ServerURL  string `json:"server_url"`
+	Token      string `json:"token"`
+	Username   string `json:"username,omitempty"`
+	Icons      string `json:"icons,omitempty"`       // unicode | nerd | ascii | emoji
+	AgendaMode string `json:"agenda_mode,omitempty"` // list | gantt | ascii
 }
 
 var ValidIconStyles = map[string]bool{
@@ -26,6 +28,12 @@ var ValidIconStyles = map[string]bool{
 	"nerd":    true,
 	"ascii":   true,
 	"emoji":   true,
+}
+
+var ValidAgendaModes = map[string]bool{
+	"list":  true,
+	"gantt": true,
+	"ascii": true,
 }
 
 func GetConfigPath() (string, error) {
@@ -39,13 +47,13 @@ func GetConfigPath() (string, error) {
 func LoadConfig() (*Config, error) {
 	path, err := GetConfigPath()
 	if err != nil {
-		return &Config{ServerURL: DefaultServerURL, Icons: DefaultIcons}, nil
+		return &Config{ServerURL: DefaultServerURL, Icons: DefaultIcons, AgendaMode: DefaultAgendaMode}, nil
 	}
 
 	data, err := os.ReadFile(path)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			return &Config{ServerURL: DefaultServerURL, Icons: DefaultIcons}, nil
+			return &Config{ServerURL: DefaultServerURL, Icons: DefaultIcons, AgendaMode: DefaultAgendaMode}, nil
 		}
 		return nil, fmt.Errorf("lỗi đọc file cấu hình: %w", err)
 	}
@@ -60,6 +68,9 @@ func LoadConfig() (*Config, error) {
 	}
 	if cfg.Icons == "" {
 		cfg.Icons = DefaultIcons
+	}
+	if cfg.AgendaMode == "" || !ValidAgendaModes[cfg.AgendaMode] {
+		cfg.AgendaMode = DefaultAgendaMode
 	}
 
 	return &cfg, nil
@@ -78,6 +89,9 @@ func SaveConfig(cfg *Config) error {
 
 	if cfg.Icons == "" {
 		cfg.Icons = DefaultIcons
+	}
+	if cfg.AgendaMode == "" || !ValidAgendaModes[cfg.AgendaMode] {
+		cfg.AgendaMode = DefaultAgendaMode
 	}
 
 	data, err := json.MarshalIndent(cfg, "", "  ")
@@ -105,6 +119,11 @@ func (c *Config) Get(key string) (string, error) {
 			return DefaultIcons, nil
 		}
 		return c.Icons, nil
+	case "agenda_mode", "agenda", "mode":
+		if c.AgendaMode == "" {
+			return DefaultAgendaMode, nil
+		}
+		return c.AgendaMode, nil
 	default:
 		return "", fmt.Errorf("khóa cấu hình không tồn tại '%s'", key)
 	}
@@ -127,8 +146,14 @@ func (c *Config) Set(key, value string) error {
 			return fmt.Errorf("bộ icon '%s' không hợp lệ. Các tùy chọn: unicode, nerd, ascii, emoji", value)
 		}
 		c.Icons = val
+	case "agenda_mode", "agenda", "mode":
+		val := strings.ToLower(strings.TrimSpace(value))
+		if !ValidAgendaModes[val] {
+			return fmt.Errorf("chế độ agenda '%s' không hợp lệ. Các tùy chọn: list, gantt, ascii", value)
+		}
+		c.AgendaMode = val
 	default:
-		return fmt.Errorf("khóa cấu hình không hợp lệ '%s'. Các khóa hỗ trợ: icons, server_url, username", key)
+		return fmt.Errorf("khóa cấu hình không hợp lệ '%s'. Các khóa hỗ trợ: icons, agenda_mode, server_url, username", key)
 	}
 	return nil
 }

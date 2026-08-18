@@ -171,6 +171,81 @@ func TestTUI_CRUDInteractions(t *testing.T) {
 	if model.Modal != nil {
 		t.Errorf("expected Modal to be nil after 'n', got %v", model.Modal)
 	}
+
+	// 9. 'm' key cycles Agenda modes: list -> gantt -> ascii -> list
+	m12, _ := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'m'}})
+	model = m12.(Model)
+	if model.AgendaMode != "gantt" {
+		t.Errorf("expected AgendaMode gantt, got %s", model.AgendaMode)
+	}
+
+	m13, _ := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'m'}})
+	model = m13.(Model)
+	if model.AgendaMode != "ascii" {
+		t.Errorf("expected AgendaMode ascii, got %s", model.AgendaMode)
+	}
+
+	m14, _ := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'m'}})
+	model = m14.(Model)
+	if model.AgendaMode != "list" {
+		t.Errorf("expected AgendaMode list, got %s", model.AgendaMode)
+	}
+}
+
+func TestTUI_OverlappingEvents(t *testing.T) {
+	loc := time.UTC
+	selectedDate := time.Date(2026, time.August, 18, 0, 0, 0, 0, loc)
+
+	events := []cache.LocalEvent{
+		{
+			ID:        "e1",
+			Title:     "Họp Backend",
+			StartAt:   "2026-08-18T10:00:00Z",
+			EndAt:     "2026-08-18T11:30:00Z",
+			SyncState: cache.SyncStateSynced,
+		},
+		{
+			ID:        "e2",
+			Title:     "Phỏng vấn FE",
+			StartAt:   "2026-08-18T10:30:00Z",
+			EndAt:     "2026-08-18T12:00:00Z",
+			SyncState: cache.SyncStateSynced,
+		},
+		{
+			ID:        "e3",
+			Title:     "Sprint Review",
+			StartAt:   "2026-08-18T14:00:00Z",
+			EndAt:     "2026-08-18T15:00:00Z",
+			SyncState: cache.SyncStateSynced,
+		},
+	}
+
+	// 1. Conflict detection
+	conflicts := detectConflicts(events, loc)
+	if !conflicts[0] || !conflicts[1] {
+		t.Errorf("expected e1 and e2 to be in conflict")
+	}
+	if conflicts[2] {
+		t.Errorf("expected e3 to NOT be in conflict")
+	}
+
+	// 2. Test RenderAgendaList
+	listView := RenderAgendaList(selectedDate, events, loc, 0, true)
+	if !strings.Contains(listView, "Trùng giờ") {
+		t.Errorf("expected 'Trùng giờ' badge in list view")
+	}
+
+	// 3. Test RenderAgendaGantt
+	ganttView := RenderAgendaGantt(selectedDate, events, loc, 0, true, 60)
+	if !strings.Contains(ganttView, "Họp Backend") || !strings.Contains(ganttView, "Phỏng vấn FE") {
+		t.Errorf("expected events in Gantt view")
+	}
+
+	// 4. Test RenderAgendaASCII
+	asciiView := RenderAgendaASCII(selectedDate, events, loc, 0, true)
+	if !strings.Contains(asciiView, "[CONFLICT]") {
+		t.Errorf("expected '[CONFLICT]' tag in ascii view")
+	}
 }
 
 func TestTUI_TerminalTooSmall(t *testing.T) {
