@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -67,6 +68,8 @@ func TestTUI_MonthChange(t *testing.T) {
 
 func TestTUI_CRUDInteractions(t *testing.T) {
 	model := NewModel(nil, nil)
+	model.Width = 100
+	model.Height = 30
 	model.SelectedDate = time.Date(2026, time.August, 18, 0, 0, 0, 0, time.UTC)
 	model.CurrentMonth = time.Date(2026, time.August, 1, 0, 0, 0, 0, time.UTC)
 	model.Events["2026-08-18"] = []cache.LocalEvent{
@@ -128,8 +131,21 @@ func TestTUI_CRUDInteractions(t *testing.T) {
 	}
 }
 
+func TestTUI_TerminalTooSmall(t *testing.T) {
+	model := NewModel(nil, nil)
+	model.Width = 40 // Too narrow (< 60)
+	model.Height = 20
+
+	view := model.View()
+	if !strings.Contains(view, "CỬA SỔ TERMINAL QUÁ NHỎ") {
+		t.Errorf("expected warning about small terminal, got: %s", view)
+	}
+}
+
 func TestTUI_RenderView(t *testing.T) {
 	model := NewModel(nil, nil)
+	model.Width = 100
+	model.Height = 30
 	model.SelectedDate = time.Date(2026, time.August, 18, 0, 0, 0, 0, time.UTC)
 	model.CurrentMonth = time.Date(2026, time.August, 1, 0, 0, 0, 0, time.UTC)
 	model.Events["2026-08-18"] = []cache.LocalEvent{

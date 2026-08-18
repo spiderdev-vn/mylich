@@ -21,6 +21,9 @@ type FocusArea int
 const (
 	FocusCalendar FocusArea = iota
 	FocusAgenda
+
+	MinTerminalWidth  = 60
+	MinTerminalHeight = 15
 )
 
 type eventsLoadedMsg struct {
@@ -335,6 +338,11 @@ func (m Model) syncMonthAndFetchIfNeeded() (Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
+	// Nếu kích thước terminal quá nhỏ không đủ hiển thị
+	if m.Width > 0 && m.Height > 0 && (m.Width < MinTerminalWidth || m.Height < MinTerminalHeight) {
+		return m.renderTerminalTooSmall()
+	}
+
 	// Nếu đang mở Modal xem chi tiết sự kiện
 	if m.ViewingEvent != nil {
 		return m.renderEventDetailModal(*m.ViewingEvent)
@@ -416,6 +424,32 @@ func (m Model) View() string {
 	sb.WriteString(helpDescStyle.Render(helpKeys))
 
 	return sb.String()
+}
+
+func (m Model) renderTerminalTooSmall() string {
+	warningStyle := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(lipgloss.Color("#FFA8A8")).
+		Padding(1, 2).
+		Align(lipgloss.Center)
+
+	title := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#FFA8A8")).Render("⚠ CỬA SỔ TERMINAL QUÁ NHỎ")
+
+	widthText := fmt.Sprintf("Chiều ngang: %d / %d tối thiểu", m.Width, MinTerminalWidth)
+	heightText := fmt.Sprintf("Chiều dọc:   %d / %d tối thiểu", m.Height, MinTerminalHeight)
+
+	msg := fmt.Sprintf(
+		"%s\n\n%s\n%s\n\nVui lòng phóng to cửa sổ terminal hoặc thu nhỏ font chữ\nđể tiếp tục sử dụng giao diện Lịch.",
+		title,
+		widthText,
+		heightText,
+	)
+
+	card := warningStyle.Render(msg)
+	if m.Width <= 0 || m.Height <= 0 {
+		return card
+	}
+	return lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, card)
 }
 
 func (m Model) renderEventDetailModal(ev cache.LocalEvent) string {
