@@ -458,14 +458,19 @@ func (f EventFormModal) Render(width, height int) string {
 		modalTitle = titleStyle.Render("✎ CHỈNH SỬA SỰ KIỆN")
 	}
 
-	labels := []string{
-		"Tiêu đề:",
-		"Ngày (dd/mm/yyyy):",
-		"Giờ bắt đầu:",
-		"Giờ kết thúc:",
-		"Địa điểm:",
-		"Ghi chú:",
+	// Plain-text labels (không có ANSI) để pad width chính xác
+	redAsterisk := lipgloss.NewStyle().Foreground(lipgloss.Color("#FF6B6B")).Bold(true).Render("*")
+	reqStar := redAsterisk
+	labelWidth := 16 // độ rộng plain text tối đa
+	plainLabels := []string{
+		"Tiêu đề",
+		"Ngày (dd/mm)",
+		"Giờ bắt đầu",
+		"Giờ kết thúc",
+		"Địa điểm",
+		"Ghi chú",
 	}
+	required := []bool{true, true, true, true, false, false}
 
 	var lines []string
 	lines = append(lines, modalTitle)
@@ -477,9 +482,16 @@ func (f EventFormModal) Render(width, height int) string {
 	}
 
 	for i := 0; i < len(f.Inputs); i++ {
-		lbl := labelStyle.Render(labels[i])
+		// Pad plain text đến labelWidth, sau đó thêm dấu : (và * nếu bắt buộc)
+		padded := fmt.Sprintf("%-*s", labelWidth, plainLabels[i])
+		var lbl string
+		if required[i] {
+			lbl = labelStyle.Render(padded+":") + " " + reqStar
+		} else {
+			lbl = labelStyle.Render(padded+":")
+		}
 		inputView := f.Inputs[i].View()
-		lines = append(lines, fmt.Sprintf("%-20s %s", lbl, inputView))
+		lines = append(lines, lbl+"  "+inputView)
 	}
 
 	lines = append(lines, "")

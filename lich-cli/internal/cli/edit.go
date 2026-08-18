@@ -174,10 +174,12 @@ func RunEdit(args []string) error {
 	// 3. Nếu không có cờ nào được truyền qua CLI và ở chế độ interactive, mở Form Huh điền sẵn
 	hasAnyFlag := *titleFlag != "" || *dateFlag != "" || *endDateFlag != "" || *atFlag != "" || *toFlag != "" || *durationFlag != "" || *locationFlag != "" || *descFlag != "" || *calendarFlag != "" || *timezoneFlag != ""
 	if !hasAnyFlag && !ui.IsSimpleMode(*simpleFlag) {
+		reqStar := ui.RequiredAsterisk
+
 		form := huh.NewForm(
 			huh.NewGroup(
 				huh.NewInput().
-					Title("Tiêu đề sự kiện").
+					Title(fmt.Sprintf("Tiêu đề sự kiện %s", reqStar)).
 					Value(&titleVal).
 					Validate(func(s string) error {
 						if strings.TrimSpace(s) == "" {
@@ -187,23 +189,23 @@ func RunEdit(args []string) error {
 					}),
 
 				huh.NewInput().
-					Title("Ngày diễn ra").
+					Title(fmt.Sprintf("Ngày diễn ra %s", reqStar)).
 					Value(&dateVal),
 
 				huh.NewInput().
-					Title("Giờ bắt đầu (--at)").
+					Title(fmt.Sprintf("Giờ bắt đầu (--at) %s", reqStar)).
 					Value(&atVal),
 
 				huh.NewInput().
-					Title("Giờ kết thúc (--to)").
+					Title(fmt.Sprintf("Giờ kết thúc (--to) %s", reqStar)).
 					Value(&toVal),
 
 				huh.NewInput().
-					Title("Địa điểm").
+					Title("Địa điểm (Tùy chọn)").
 					Value(&locVal),
 
 				huh.NewInput().
-					Title("Ghi chú").
+					Title("Ghi chú (Tùy chọn)").
 					Value(&descVal),
 			),
 		)

@@ -69,6 +69,8 @@ func RunLogin(args []string) error {
 			action = "register"
 		}
 
+		reqStar := ui.RequiredAsterisk
+
 		form := huh.NewForm(
 			huh.NewGroup(
 				huh.NewSelect[string]().
@@ -84,7 +86,7 @@ func RunLogin(args []string) error {
 					Value(&serverURL),
 
 				huh.NewInput().
-					Title("Tên đăng nhập (Username)").
+					Title(fmt.Sprintf("Tên đăng nhập (Username) %s", reqStar)).
 					Placeholder("alice").
 					Validate(func(s string) error {
 						if strings.TrimSpace(s) == "" {
@@ -95,7 +97,7 @@ func RunLogin(args []string) error {
 					Value(&username),
 
 				huh.NewInput().
-					Title("Mật khẩu (Password)").
+					Title(fmt.Sprintf("Mật khẩu (Password) %s", reqStar)).
 					EchoMode(huh.EchoModePassword).
 					Validate(func(s string) error {
 						if len(s) < 6 {

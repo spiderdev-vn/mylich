@@ -80,6 +80,11 @@ var (
 	DividerStyle = lipgloss.NewStyle().
 			Foreground(ColorBorder)
 
+	RequiredAsterisk = lipgloss.NewStyle().
+				Bold(true).
+				Foreground(lipgloss.Color("#FF6B6B")).
+				Render("*")
+
 	// Status Badges
 	BadgeOnline = lipgloss.NewStyle().
 			Foreground(ColorSuccess).

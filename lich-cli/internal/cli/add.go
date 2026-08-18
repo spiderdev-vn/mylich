@@ -9,12 +9,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/huh"
 	"lich-cli/internal/api"
 	"lich-cli/internal/cache"
 	"lich-cli/internal/config"
 	"lich-cli/internal/syncer"
 	"lich-cli/internal/ui"
+
+	"github.com/charmbracelet/huh"
 )
 
 func generateEventID() string {
@@ -119,10 +120,12 @@ func RunAdd(args []string) error {
 			toVal = "11:00"
 		}
 
+		reqStar := ui.RequiredAsterisk
+
 		form := huh.NewForm(
 			huh.NewGroup(
 				huh.NewInput().
-					Title("Tiêu đề sự kiện").
+					Title(fmt.Sprintf("Tiêu đề sự kiện %s", reqStar)).
 					Placeholder("Họp nhóm Sprint / Đi chơi").
 					Validate(func(s string) error {
 						if strings.TrimSpace(s) == "" {
@@ -133,28 +136,28 @@ func RunAdd(args []string) error {
 					Value(&title),
 
 				huh.NewInput().
-					Title("Ngày diễn ra").
-					Placeholder("today / tomorrow / 2026-08-20").
+					Title(fmt.Sprintf("Ngày diễn ra %s", reqStar)).
+					Placeholder("today / 18/08 / 2026-08-20").
 					Value(&dateVal),
 
 				huh.NewInput().
-					Title("Giờ bắt đầu (--at)").
+					Title(fmt.Sprintf("Giờ bắt đầu (--at) %s", reqStar)).
 					Placeholder("10:00 / 11:30pm / 9am").
 					Value(&atVal),
 
 				huh.NewInput().
-					Title("Giờ kết thúc (--to)").
+					Title(fmt.Sprintf("Giờ kết thúc (--to) %s", reqStar)).
 					Placeholder("11:30 / 3am / 22:33").
 					Value(&toVal),
 
 				huh.NewInput().
 					Title("Địa điểm (Tùy chọn)").
-					Placeholder("Phòng họp 101 / Quán cafe").
+					Placeholder("Tùy chọn...").
 					Value(&locVal),
 
 				huh.NewInput().
 					Title("Ghi chú (Tùy chọn)").
-					Placeholder("Nội dung chi tiết...").
+					Placeholder("Tùy chọn...").
 					Value(&descVal),
 			),
 		)

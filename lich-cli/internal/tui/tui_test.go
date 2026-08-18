@@ -72,6 +72,7 @@ func TestTUI_CRUDInteractions(t *testing.T) {
 	model.Height = 30
 	model.SelectedDate = time.Date(2026, time.August, 18, 0, 0, 0, 0, time.UTC)
 	model.CurrentMonth = time.Date(2026, time.August, 1, 0, 0, 0, 0, time.UTC)
+	model.AgendaMode = "list" // Ensure deterministic start for cycle test
 	model.Events["2026-08-18"] = []cache.LocalEvent{
 		{
 			ID:        "ev-1",
