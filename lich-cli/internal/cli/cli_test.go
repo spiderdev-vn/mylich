@@ -163,20 +163,115 @@ func TestCLI_ParseFlexibleTimeRange(t *testing.T) {
 	if err == nil {
 		t.Fatalf("expected error when both --to and --duration are provided, got nil")
 	}
+}
 
-	// 5. Overnight with explicit same-day end date (default same day): 2026-08-20 22:00 -> 2026-08-20 03:00
-	start, end, overnight, err = parseFlexibleTimeRangeWithEndDate("2026-08-20", "2026-08-20", "22:00", "03:00", "", false, loc)
+func TestCLI_FormatTimeRange_EdgeCases(t *testing.T) {
+	loc := time.UTC
+
+	// Same day
+	t1 := formatTimeRange("2026-08-18T10:00:00Z", "2026-08-18T11:30:00Z", loc)
+	if t1 != "10:00 - 11:30" {
+		t.Errorf("expected '10:00 - 11:30', got '%s'", t1)
+	}
+
+	// Overnight cross midnight (20/08 22:00 -> 21/08 03:00)
+	t2 := formatTimeRange("2026-08-20T22:00:00Z", "2026-08-21T03:00:00Z", loc)
+	if t2 != "22:00 20/08 - 03:00 21/08" {
+		t.Errorf("expected '22:00 20/08 - 03:00 21/08', got '%s'", t2)
+	}
+
+	// Multi-day spanning 3 days (20/08 08:00 -> 23/08 17:00)
+	t3 := formatTimeRange("2026-08-20T08:00:00Z", "2026-08-23T17:00:00Z", loc)
+	if t3 != "08:00 20/08 - 17:00 23/08" {
+		t.Errorf("expected '08:00 20/08 - 17:00 23/08', got '%s'", t3)
+	}
+
+	// Invalid ISO format fallback
+	t4 := formatTimeRange("invalid-start", "invalid-end", loc)
+	if t4 != "invalid-start - invalid-end" {
+		t.Errorf("expected fallback 'invalid-start - invalid-end', got '%s'", t4)
+	}
+}
+
+func TestCLI_ParseFlexibleTimeRange_EdgeCases(t *testing.T) {
+	loc := time.UTC
+
+	// 1. Cross Month Boundary: 31/08/2026 23:00 -> 01/09/2026 04:00
+	start, end, overnight, err := parseFlexibleTimeRangeWithEndDate("31/08/2026", "01/09/2026", "23:00", "04:00", "", false, loc)
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("cross-month error: %v", err)
 	}
 	if !overnight {
-		t.Errorf("expected overnight == true for 22:00 -> 03:00 with same end date")
+		t.Errorf("expected overnight == true for cross-month")
 	}
-	if start.Day() != 20 || end.Day() != 21 {
-		t.Errorf("expected start day 20 and end day 21, got %d and %d", start.Day(), end.Day())
+	if start.Month() != time.August || start.Day() != 31 || end.Month() != time.September || end.Day() != 1 {
+		t.Errorf("unexpected cross-month dates: %v -> %v", start, end)
 	}
-	if !end.After(start) {
-		t.Errorf("end time (%v) must be after start time (%v)", end, start)
+
+	// 2. Cross Year Boundary: 31/12/2026 22:00 -> 01/01/2027 02:00
+	start, end, overnight, err = parseFlexibleTimeRangeWithEndDate("31/12/2026", "01/01/2027", "22:00", "02:00", "", false, loc)
+	if err != nil {
+		t.Fatalf("cross-year error: %v", err)
+	}
+	if !overnight {
+		t.Errorf("expected overnight == true for cross-year")
+	}
+	if start.Year() != 2026 || end.Year() != 2027 {
+		t.Errorf("unexpected cross-year: %v -> %v", start, end)
+	}
+
+	// 3. Multi-day duration (48h spanning 2 full days)
+	start, end, overnight, err = parseFlexibleTimeRange("2026-08-18", "10:00", "", "48h", true, loc)
+	if err != nil {
+		t.Fatalf("duration 48h error: %v", err)
+	}
+	if !overnight {
+		t.Errorf("expected overnight == true for 48h duration")
+	}
+	if end.Day() != 20 || end.Hour() != 10 {
+		t.Errorf("expected end date 2026-08-20 10:00, got %v", end)
+	}
+
+	// 4. 12-hour AM/PM edge cases: 12:00am (00:00) and 12:00pm (12:00)
+	start, end, overnight, err = parseFlexibleTimeRange("2026-08-18", "12:00am", "12:00pm", "", false, loc)
+	if err != nil {
+		t.Fatalf("12am->12pm error: %v", err)
+	}
+	if overnight {
+		t.Errorf("expected overnight == false for 12am -> 12pm on same day")
+	}
+	if start.Hour() != 0 || end.Hour() != 12 {
+		t.Errorf("expected start=00:00 end=12:00, got start=%d end=%d", start.Hour(), end.Hour())
+	}
+
+	// 5. 12-hour PM to AM overnight: 12:00pm -> 12:00am (12:00 -> 00:00 next day)
+	start, end, overnight, err = parseFlexibleTimeRange("2026-08-18", "12:00pm", "12:00am", "", false, loc)
+	if err != nil {
+		t.Fatalf("12pm->12am error: %v", err)
+	}
+	if !overnight {
+		t.Errorf("expected overnight == true for 12pm -> 12am")
+	}
+	if start.Hour() != 12 || end.Hour() != 0 || end.Day() != 19 {
+		t.Errorf("expected start=18th 12:00 end=19th 00:00, got start=%v end=%v", start, end)
+	}
+
+	// 6. Invalid: end date strictly before start date
+	_, _, _, err = parseFlexibleTimeRangeWithEndDate("2026-08-20", "2026-08-19", "10:00", "11:00", "", false, loc)
+	if err == nil {
+		t.Fatalf("expected error when end date is before start date, got nil")
+	}
+
+	// 7. Same start and end time on same day (advances to 24h next day)
+	start, end, overnight, err = parseFlexibleTimeRange("2026-08-18", "10:00", "10:00", "", false, loc)
+	if err != nil {
+		t.Fatalf("same time error: %v", err)
+	}
+	if !overnight {
+		t.Errorf("expected overnight == true for 10:00 -> 10:00 same time")
+	}
+	if end.Day() != 19 || end.Hour() != 10 {
+		t.Errorf("expected end date next day 10:00, got %v", end)
 	}
 }
 

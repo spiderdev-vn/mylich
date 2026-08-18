@@ -26,7 +26,15 @@ func formatTimeRange(startStr, endStr string, localLoc *time.Location) string {
 	startLocal := tStart.In(localLoc)
 	endLocal := tEnd.In(localLoc)
 
-	return fmt.Sprintf("%02d:%02d - %02d:%02d", startLocal.Hour(), startLocal.Minute(), endLocal.Hour(), endLocal.Minute())
+	startDay := startLocal.Truncate(24 * time.Hour)
+	endDay := endLocal.Truncate(24 * time.Hour)
+
+	if endDay.Equal(startDay) {
+		return fmt.Sprintf("%02d:%02d - %02d:%02d", startLocal.Hour(), startLocal.Minute(), endLocal.Hour(), endLocal.Minute())
+	}
+	return fmt.Sprintf("%02d:%02d %02d/%02d - %02d:%02d %02d/%02d",
+		startLocal.Hour(), startLocal.Minute(), startLocal.Day(), int(startLocal.Month()),
+		endLocal.Hour(), endLocal.Minute(), endLocal.Day(), int(endLocal.Month()))
 }
 
 func RunToday(args []string) error {

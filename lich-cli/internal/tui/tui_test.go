@@ -290,3 +290,25 @@ func TestTUI_RenderView(t *testing.T) {
 		t.Fatalf("rendered view is empty")
 	}
 }
+
+func TestTUI_MultiDayEventFormatAndDetail(t *testing.T) {
+	loc := time.UTC
+
+	// 1. Same-day event
+	f1 := formatEventTime("2026-08-18T10:00:00Z", "2026-08-18T11:30:00Z", loc)
+	if f1 != "10:00 - 11:30" {
+		t.Errorf("expected '10:00 - 11:30', got '%s'", f1)
+	}
+
+	// 2. Overnight cross midnight (20/08 22:00 -> 21/08 03:00)
+	f2 := formatEventTime("2026-08-20T22:00:00Z", "2026-08-21T03:00:00Z", loc)
+	if f2 != "22:00 20/08 - 03:00 21/08" {
+		t.Errorf("expected '22:00 20/08 - 03:00 21/08', got '%s'", f2)
+	}
+
+	// 3. Multi-day 3-day spanning (20/08 08:00 -> 23/08 17:00)
+	f3 := formatEventTime("2026-08-20T08:00:00Z", "2026-08-23T17:00:00Z", loc)
+	if f3 != "08:00 20/08 - 17:00 23/08" {
+		t.Errorf("expected '08:00 20/08 - 17:00 23/08', got '%s'", f3)
+	}
+}
