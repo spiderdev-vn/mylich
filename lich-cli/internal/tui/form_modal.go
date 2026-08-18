@@ -51,7 +51,7 @@ func newTextInput(placeholder string, width int) textinput.Model {
 }
 
 func NewAddFormModal(selectedDate time.Time) EventFormModal {
-	inputs := make([]textinput.Model, 6)
+	inputs := make([]textinput.Model, 7)
 
 	inputs[0] = newTextInput("Tiêu đề sự kiện *", 40)
 	inputs[0].Focus()
@@ -66,8 +66,12 @@ func NewAddFormModal(selectedDate time.Time) EventFormModal {
 	inputs[3] = newTextInput("11:00, 11am, 23:30...", 40)
 	inputs[3].SetValue("11:00")
 
-	inputs[4] = newTextInput("Địa điểm (tùy chọn)", 40)
-	inputs[5] = newTextInput("Ghi chú mô tả (tùy chọn)", 40)
+	// [4] Ngày kết thúc — mặc định cùng ngày bắt đầu
+	inputs[4] = newTextInput("Mặc định: cùng ngày bắt đầu", 40)
+	inputs[4].SetValue(selectedDate.Format("02/01/2006"))
+
+	inputs[5] = newTextInput("Địa điểm (tùy chọn)", 40)
+	inputs[6] = newTextInput("Ghi chú mô tả (tùy chọn)", 40)
 
 	return EventFormModal{
 		Mode:       FormModeAdd,
@@ -77,7 +81,7 @@ func NewAddFormModal(selectedDate time.Time) EventFormModal {
 }
 
 func NewEditFormModal(ev cache.LocalEvent, loc *time.Location) EventFormModal {
-	inputs := make([]textinput.Model, 6)
+	inputs := make([]textinput.Model, 7)
 
 	tStart, _ := time.Parse(time.RFC3339, ev.StartAt)
 	tEnd, _ := time.Parse(time.RFC3339, ev.EndAt)
@@ -98,11 +102,15 @@ func NewEditFormModal(ev cache.LocalEvent, loc *time.Location) EventFormModal {
 	inputs[3] = newTextInput("11:00, 11am, 23:30...", 40)
 	inputs[3].SetValue(endLocal.Format("15:04"))
 
-	inputs[4] = newTextInput("Địa điểm (tùy chọn)", 40)
-	inputs[4].SetValue(ev.Location)
+	// [4] Ngày kết thúc — mặc định cùng ngày bắt đầu
+	inputs[4] = newTextInput("Mặc định: cùng ngày bắt đầu", 40)
+	inputs[4].SetValue(endLocal.Format("02/01/2006"))
 
-	inputs[5] = newTextInput("Ghi chú mô tả (tùy chọn)", 40)
-	inputs[5].SetValue(ev.Description)
+	inputs[5] = newTextInput("Địa điểm (tùy chọn)", 40)
+	inputs[5].SetValue(ev.Location)
+
+	inputs[6] = newTextInput("Ghi chú mô tả (tùy chọn)", 40)
+	inputs[6].SetValue(ev.Description)
 
 	return EventFormModal{
 		Mode:       FormModeEdit,
@@ -313,7 +321,7 @@ func (f *EventFormModal) SubmitToDB(db *sql.DB, loc *time.Location) error {
 		return fmt.Errorf("tiêu đề không được để trống")
 	}
 
-	dateVal, err := parseDateFlexibleInTUI(f.Inputs[1].Value(), loc)
+	startDate, err := parseDateFlexibleInTUI(f.Inputs[1].Value(), loc)
 	if err != nil {
 		return err
 	}
@@ -328,16 +336,25 @@ func (f *EventFormModal) SubmitToDB(db *sql.DB, loc *time.Location) error {
 		return fmt.Errorf("giờ kết thúc: %w", err)
 	}
 
-	startTime := time.Date(dateVal.Year(), dateVal.Month(), dateVal.Day(), startH, startM, 0, 0, loc)
-	endTime := time.Date(dateVal.Year(), dateVal.Month(), dateVal.Day(), endH, endM, 0, 0, loc)
-	if !endTime.After(startTime) {
-		endTime = endTime.AddDate(0, 0, 1) // qua đêm
+	// [4] Ngày kết thúc — mặc định cùng ngày bắt đầu nếu trống
+	endDate := startDate
+	if endDateStr := strings.TrimSpace(f.Inputs[4].Value()); endDateStr != "" {
+		if parsed, err2 := parseDateFlexibleInTUI(endDateStr, loc); err2 == nil {
+			endDate = parsed
+		}
+	}
+
+	startTime := time.Date(startDate.Year(), startDate.Month(), startDate.Day(), startH, startM, 0, 0, loc)
+	endTime := time.Date(endDate.Year(), endDate.Month(), endDate.Day(), endH, endM, 0, 0, loc)
+	// Nếu cùng ngày mà giờ kết thúc <= giờ bắt đầu → qua đêm
+	if endDate.Equal(startDate) && !endTime.After(startTime) {
+		endTime = endTime.AddDate(0, 0, 1)
 	}
 
 	startRFC := startTime.UTC().Format(time.RFC3339)
 	endRFC := endTime.UTC().Format(time.RFC3339)
-	locationVal := strings.TrimSpace(f.Inputs[4].Value())
-	descVal := strings.TrimSpace(f.Inputs[5].Value())
+	locationVal := strings.TrimSpace(f.Inputs[5].Value())
+	descVal := strings.TrimSpace(f.Inputs[6].Value())
 
 	eventID := f.EventID
 	calID := f.CalendarID
@@ -464,13 +481,14 @@ func (f EventFormModal) Render(width, height int) string {
 	labelWidth := 16 // độ rộng plain text tối đa
 	plainLabels := []string{
 		"Tiêu đề",
-		"Ngày (dd/mm)",
+		"Ngày bắt đầu",
 		"Bắt đầu",
 		"Kết thúc",
+		"Ngày kết thúc",
 		"Địa điểm",
 		"Ghi chú",
 	}
-	required := []bool{true, true, true, true, false, false}
+	required := []bool{true, true, true, true, false, false, false}
 
 	var lines []string
 	lines = append(lines, modalTitle)
