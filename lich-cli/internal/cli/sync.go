@@ -59,15 +59,31 @@ func RunSync(args []string) error {
 	engine := syncer.NewSyncEngine(db, client)
 
 	if !*waitFlag {
-		engine.SyncInBackground()
+		// Chạy sync nhanh (timeout 10s), không chờ kết quả chi tiết
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		pushed, pulled, syncErr := engine.Sync(ctx)
 		if ui.IsSimpleMode(*simpleFlag) {
-			fmt.Println("✓ Lệnh đồng bộ đã được phát động trong nền.")
+			if syncErr != nil {
+				fmt.Printf("⚠ Đồng bộ thất bại: %v\n", syncErr)
+			} else {
+				fmt.Printf("✓ Đã đồng bộ (↑%d ↓%d)\n", pushed, pulled)
+			}
 		} else {
-			fmt.Println(ui.CardBoxSuccess.Render(fmt.Sprintf(
-				"%s\n\n%s %s\n%s %s",
-				ui.CardTitle.Render("↻ ĐỒNG BỘ NỀN"),
+			statusLabel := ui.BadgeSynced
+			cardStyle := ui.CardBoxSuccess
+			title := "✓ ĐỒNG BỘ HOÀN TẤT"
+			if syncErr != nil {
+				statusLabel = ui.BadgeFailed
+				cardStyle = ui.CardBoxError
+				title = "⚠ ĐỒNG BỘ THẤT BẠI"
+			}
+			fmt.Println(cardStyle.Render(fmt.Sprintf(
+				"%s\n\n%s %s\n%s %s\n%s %s",
+				ui.CardTitle.Render(title),
 				ui.LabelStyle.Render("Máy chủ:   "), ui.ValueStyle.Render(cfg.ServerURL),
-				ui.LabelStyle.Render("Trạng thái:"), ui.BadgePending,
+				ui.LabelStyle.Render("Kết quả:   "), ui.ValueStyle.Render(fmt.Sprintf("↑%d đẩy lên  ↓%d nhận về", pushed, pulled)),
+				ui.LabelStyle.Render("Trạng thái:"), statusLabel,
 			)))
 		}
 		return nil

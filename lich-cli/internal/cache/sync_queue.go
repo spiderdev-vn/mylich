@@ -129,6 +129,16 @@ func DeleteJob(db *sql.DB, jobID string) error {
 }
 
 func GetPendingJobCount(db *sql.DB) (int, error) {
+	// Chỉ đếm các job thực sự sẵn sàng để chạy (next_attempt_at <= now)
+	now := time.Now().UTC().Format(time.RFC3339)
+	query := `SELECT COUNT(*) FROM sync_jobs WHERE next_attempt_at <= ?`
+	var count int
+	err := db.QueryRow(query, now).Scan(&count)
+	return count, err
+}
+
+func GetTotalJobCount(db *sql.DB) (int, error) {
+	// Tổng số tất cả job (kể cả failed đang backoff)
 	query := `SELECT COUNT(*) FROM sync_jobs`
 	var count int
 	err := db.QueryRow(query).Scan(&count)

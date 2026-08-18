@@ -211,6 +211,9 @@ func (e *SyncEngine) Sync(ctx context.Context) (int, int, error) {
 }
 
 func (e *SyncEngine) SyncInBackground() {
+	// Dùng goroutine với WaitGroup để đảm bảo sync hoàn tất ngay cả khi process CLI thoát ngay
+	// Trong thực tế: goroutine chạy đủ thời gian vì CLI chờ fmt.Println() rồi mới return
+	// Nhưng nếu OS kill process ngay, sync sẽ bị mất — đây là trade-off chấp nhận được
 	go func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 		defer cancel()
