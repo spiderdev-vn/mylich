@@ -6,9 +6,9 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
-	"github.com/charmbracelet/lipgloss"
 	"lich-cli/internal/api"
 	"lich-cli/internal/cache"
 	"lich-cli/internal/config"
@@ -101,54 +101,50 @@ func RunStatus(args []string) error {
 		return nil
 	}
 
-	// Giao diện Dashboard Lip Gloss đẹp mắt
-	banner := ui.TitleBanner.Render(" ⚡ MỸ LÍCH — TRẠNG THÁI HỆ THỐNG ")
-
-	// Card 1: Server & Auth
+	// Giao diện dạng Hàng đơn (Single Column Card) — Bền vững, không vỡ layout
 	serverStatusBadge := ui.BadgeOffline
 	if report.ServerOnline {
 		serverStatusBadge = ui.BadgeOnline
 	}
-	serverCardContent := fmt.Sprintf(
-		"%s\n\n%s %s\n%s %s\n%s %s",
-		ui.CardTitle.Render("🌐 MÁY CHỦ & TÀI KHOẢN"),
-		ui.LabelStyle.Render("Tài khoản: "), ui.ValueStyle.Render(report.User),
-		ui.LabelStyle.Render("Máy chủ:   "), ui.ValueStyle.Render(report.ServerURL),
-		ui.LabelStyle.Render("Trạng thái:"), serverStatusBadge,
-	)
-	serverCard := ui.CardBox.Width(38).Render(serverCardContent)
 
-	// Card 2: Cache & Storage
-	cacheCardContent := fmt.Sprintf(
-		"%s\n\n%s %s\n%s %s\n%s %s",
-		ui.CardTitle.Render("💾 BỘ NHỚ ĐỆM CỤC BỘ"),
-		ui.LabelStyle.Render("Trạng thái:"), ui.BadgeOnline,
-		ui.LabelStyle.Render("Sự kiện:   "), ui.ValueStyle.Render(fmt.Sprintf("%d sự kiện", report.TotalEvents)),
-		ui.LabelStyle.Render("Vị trí:    "), ui.ValueStyle.Render("cache.db (SQLite)"),
-	)
-	cacheCard := ui.CardBoxSecondary.Width(38).Render(cacheCardContent)
-
-	// Card 3: Synchronization Queue
 	syncBadge := ui.BadgeSynced
 	if report.PendingJobs > 0 {
 		syncBadge = ui.BadgePending
 	}
+
 	syncTimeStr := report.LastSyncTime
 	if syncTimeStr == "" {
 		syncTimeStr = "Chưa thực hiện"
 	}
-	syncCardContent := fmt.Sprintf(
-		"%s\n\n%s %s\n%s %s\n%s %s",
-		ui.CardTitle.Render("🔄 ĐỒNG BỘ HÓA BẤT ĐỒNG BỘ"),
-		ui.LabelStyle.Render("Hàng đợi:  "), ui.ValueStyle.Render(fmt.Sprintf("%d thao tác chờ", report.PendingJobs)),
-		ui.LabelStyle.Render("Sync gần nhất:"), ui.ValueStyle.Render(syncTimeStr),
-		ui.LabelStyle.Render("Trạng thái:   "), syncBadge,
-	)
-	syncCard := ui.CardBoxSuccess.Width(78).Render(syncCardContent)
 
-	topRow := lipgloss.JoinHorizontal(lipgloss.Top, serverCard, cacheCard)
-	fullDashboard := lipgloss.JoinVertical(lipgloss.Left, banner, topRow, syncCard)
+	var sb strings.Builder
 
-	fmt.Println(fullDashboard)
+	// Header banner
+	sb.WriteString(ui.TitleBanner.Render("⚡ MỸ LÍCH — TRẠNG THÁI HỆ THỐNG") + "\n\n")
+
+	// Section 1: Server & Auth
+	var lines []string
+	lines = append(lines, ui.SectionHeaderStyle.Render("🌐 MÁY CHỦ & TÀI KHOẢN"))
+	lines = append(lines, fmt.Sprintf("  %s %s", ui.LabelStyle.Render("• Tài khoản: "), ui.ValueStyle.Render(report.User)))
+	lines = append(lines, fmt.Sprintf("  %s %s", ui.LabelStyle.Render("• Máy chủ:   "), ui.ValueStyle.Render(report.ServerURL)))
+	lines = append(lines, fmt.Sprintf("  %s %s", ui.LabelStyle.Render("• Trạng thái:"), serverStatusBadge))
+	lines = append(lines, "")
+
+	// Section 2: Local Cache
+	lines = append(lines, ui.SectionHeaderStyle.Render("💾 BỘ NHỚ ĐỆM CỤC BỘ (SQLITE)"))
+	lines = append(lines, fmt.Sprintf("  %s %s", ui.LabelStyle.Render("• Vị trí:    "), ui.LabelStyle.Render(report.CachePath)))
+	lines = append(lines, fmt.Sprintf("  %s %s", ui.LabelStyle.Render("• Sự kiện:   "), ui.ValueStyle.Render(fmt.Sprintf("%d sự kiện", report.TotalEvents))))
+	lines = append(lines, "")
+
+	// Section 3: Synchronization
+	lines = append(lines, ui.SectionHeaderStyle.Render("🔄 ĐỒNG BỘ HÓA 2 CHIỀU"))
+	lines = append(lines, fmt.Sprintf("  %s %s", ui.LabelStyle.Render("• Hàng đợi:  "), ui.ValueStyle.Render(fmt.Sprintf("%d thao tác chờ", report.PendingJobs))))
+	lines = append(lines, fmt.Sprintf("  %s %s", ui.LabelStyle.Render("• Sync gần nhất:"), ui.ValueStyle.Render(syncTimeStr)))
+	lines = append(lines, fmt.Sprintf("  %s %s", ui.LabelStyle.Render("• Trạng thái:   "), syncBadge))
+
+	cardContent := strings.Join(lines, "\n")
+	sb.WriteString(ui.ContainerCard.Render(cardContent))
+
+	fmt.Println(sb.String())
 	return nil
 }

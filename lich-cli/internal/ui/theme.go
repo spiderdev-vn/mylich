@@ -8,61 +8,51 @@ import (
 )
 
 var (
-	// Colors
-	ColorPrimary   = lipgloss.Color("#7D56F4") // Charm Purple
-	ColorSecondary = lipgloss.Color("#00D2FF") // Neon Cyan
-	ColorSuccess   = lipgloss.Color("#04B575") // Emerald Green
-	ColorWarning   = lipgloss.Color("#FFAF00") // Amber
-	ColorError     = lipgloss.Color("#FF5F87") // Coral Red
-	ColorMuted     = lipgloss.Color("#6C7086") // Slate Gray
-	ColorHighlight = lipgloss.Color("#FFFFFF") // Bright White
+	// Palette: Soft, elegant Catppuccin/Nord inspired colors
+	ColorPrimary   = lipgloss.Color("#8075FF") // Soft Indigo/Purple
+	ColorSecondary = lipgloss.Color("#74C0FC") // Soft Blue/Cyan
+	ColorSuccess   = lipgloss.Color("#63E6BE") // Soft Mint/Green
+	ColorWarning   = lipgloss.Color("#FCD34D") // Soft Amber
+	ColorError     = lipgloss.Color("#FFA8A8") // Soft Rose/Red
+	ColorMuted     = lipgloss.Color("#7982A9") // Soft Muted Slate
+	ColorBorder    = lipgloss.Color("#4B526D") // Muted Border
+	ColorHighlight = lipgloss.Color("#F8F9FA") // Crisp White
 
 	// Typography & Styles
 	TitleBanner = lipgloss.NewStyle().
 			Bold(true).
-			Foreground(lipgloss.Color("#FFFFFF")).
-			Background(ColorPrimary).
-			Padding(0, 1).
+			Foreground(ColorHighlight).
 			MarginBottom(1)
 
-	SubTitleStyle = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(ColorSecondary)
+	SectionHeaderStyle = lipgloss.NewStyle().
+				Bold(true).
+				Foreground(ColorSecondary)
+
+	CardTitle = SectionHeaderStyle
+	SubTitleStyle = SectionHeaderStyle
+	CardBox = ContainerCard
 
 	HeaderDateStyle = lipgloss.NewStyle().
 			Bold(true).
-			Foreground(lipgloss.Color("#FFFFFF")).
-			Background(lipgloss.Color("#313244")).
+			Foreground(ColorHighlight).
+			Background(lipgloss.Color("#2A2E3F")).
 			Padding(0, 1)
 
-	CardBox = lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(ColorPrimary).
-		Padding(0, 1).
-		Margin(0, 1, 1, 0)
-
-	CardBoxSecondary = lipgloss.NewStyle().
-				Border(lipgloss.RoundedBorder()).
-				BorderForeground(ColorSecondary).
-				Padding(0, 1).
-				Margin(0, 1, 1, 0)
+	// Single unified container box that adapts cleanly to terminal width
+	ContainerCard = lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(ColorBorder).
+			Padding(0, 1)
 
 	CardBoxSuccess = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(ColorSuccess).
-			Padding(0, 1).
-			Margin(0, 0, 1, 0)
+			Padding(0, 1)
 
 	CardBoxError = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(ColorError).
-			Padding(0, 1).
-			Margin(0, 0, 1, 0)
-
-	CardTitle = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(ColorSecondary).
-			MarginBottom(0)
+			Padding(0, 1)
 
 	LabelStyle = lipgloss.NewStyle().
 			Foreground(ColorMuted)
@@ -74,7 +64,7 @@ var (
 	TimePill = lipgloss.NewStyle().
 			Bold(true).
 			Foreground(ColorSecondary).
-			Background(lipgloss.Color("#1E1E2E")).
+			Background(lipgloss.Color("#24273A")).
 			Padding(0, 1)
 
 	EventTitleStyle = lipgloss.NewStyle().
@@ -83,36 +73,34 @@ var (
 
 	EventLocationStyle = lipgloss.NewStyle().
 				Italic(true).
-				Foreground(lipgloss.Color("#A6ADC8"))
+				Foreground(lipgloss.Color("#939AB5"))
 
 	EventDescStyle = lipgloss.NewStyle().
 			Foreground(ColorMuted)
 
+	DividerStyle = lipgloss.NewStyle().
+			Foreground(ColorBorder)
+
 	// Status Badges
 	BadgeOnline = lipgloss.NewStyle().
-			Bold(true).
 			Foreground(ColorSuccess).
-			Render("● TRỰC TUYẾN (ONLINE)")
+			Render("● Trực tuyến (Online)")
 
 	BadgeOffline = lipgloss.NewStyle().
-			Bold(true).
 			Foreground(ColorError).
-			Render("○ NGOẠI TUYẾN (OFFLINE)")
+			Render("○ Ngoại tuyến (Offline)")
 
 	BadgeSynced = lipgloss.NewStyle().
-			Bold(true).
 			Foreground(ColorSuccess).
-			Render("✓ ĐÃ ĐỒNG BỘ")
+			Render("✓ Đã đồng bộ")
 
 	BadgePending = lipgloss.NewStyle().
-			Bold(true).
 			Foreground(ColorWarning).
-			Render("↻ ĐANG CHỜ ĐỒNG BỘ")
+			Render("↻ Đang chờ đồng bộ")
 
 	BadgeFailed = lipgloss.NewStyle().
-			Bold(true).
 			Foreground(ColorError).
-			Render("⚠ ĐỒNG BỘ THẤT BẠI")
+			Render("⚠ Đồng bộ thất bại")
 )
 
 // IsSimpleMode checks if the user requested plain ASCII output or if terminal doesn't support color/TTY
@@ -126,7 +114,6 @@ func IsSimpleMode(simpleFlag bool) bool {
 	if os.Getenv("TERM") == "dumb" {
 		return true
 	}
-	// If stdout is redirected / piped and not a terminal, default to simple
 	if !isatty.IsTerminal(os.Stdout.Fd()) && !isatty.IsCygwinTerminal(os.Stdout.Fd()) {
 		return true
 	}
