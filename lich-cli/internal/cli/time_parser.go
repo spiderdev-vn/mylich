@@ -152,18 +152,40 @@ func parseFlexibleTimeRange(
 	hasDurationFlag bool,
 	loc *time.Location,
 ) (startTime time.Time, endTime time.Time, isOvernight bool, err error) {
+	return parseFlexibleTimeRangeWithEndDate(dateStr, "", atStr, toStr, durationStr, hasDurationFlag, loc)
+}
+
+func parseFlexibleTimeRangeWithEndDate(
+	startDateStr string,
+	endDateStr string,
+	atStr string,
+	toStr string,
+	durationStr string,
+	hasDurationFlag bool,
+	loc *time.Location,
+) (startTime time.Time, endTime time.Time, isOvernight bool, err error) {
 	// 1. Kiểm tra mâu thuẫn giữa --to và --duration
 	if toStr != "" && hasDurationFlag {
 		return time.Time{}, time.Time{}, false, fmt.Errorf("không thể dùng đồng thời cả '--to' và '--duration'. Vui lòng chọn một trong hai")
 	}
 
 	// 2. Phân tích ngày bắt đầu
-	targetDate, err := parseFlexibleDate(dateStr, loc)
+	targetStartDate, err := parseFlexibleDate(startDateStr, loc)
 	if err != nil {
 		return time.Time{}, time.Time{}, false, err
 	}
 
-	// 3. Phân tích giờ bắt đầu
+	// 3. Phân tích ngày kết thúc (Mặc định: CÙNG NGÀY BẮT ĐẦU / DEFAULT SAME DAY)
+	targetEndDate := targetStartDate
+	if strings.TrimSpace(endDateStr) != "" {
+		parsedEndDate, err := parseFlexibleDate(endDateStr, loc)
+		if err != nil {
+			return time.Time{}, time.Time{}, false, fmt.Errorf("ngày kết thúc không hợp lệ: %w", err)
+		}
+		targetEndDate = parsedEndDate
+	}
+
+	// 4. Phân tích giờ bắt đầu
 	now := time.Now().In(loc)
 	startHour := (now.Hour() + 1) % 24
 	startMin := 0
@@ -177,19 +199,19 @@ func parseFlexibleTimeRange(
 		startMin = m
 	}
 
-	startTime = time.Date(targetDate.Year(), targetDate.Month(), targetDate.Day(), startHour, startMin, 0, 0, loc)
+	startTime = time.Date(targetStartDate.Year(), targetStartDate.Month(), targetStartDate.Day(), startHour, startMin, 0, 0, loc)
 
-	// 4. Phân tích giờ kết thúc (--to hoặc --duration)
+	// 5. Phân tích giờ kết thúc (--to hoặc --duration)
 	if toStr != "" {
 		endHour, endMin, err := parseFlexibleTime(toStr)
 		if err != nil {
 			return time.Time{}, time.Time{}, false, fmt.Errorf("lỗi giờ kết thúc (--to): %w", err)
 		}
 
-		endTime = time.Date(targetDate.Year(), targetDate.Month(), targetDate.Day(), endHour, endMin, 0, 0, loc)
+		endTime = time.Date(targetEndDate.Year(), targetEndDate.Month(), targetEndDate.Day(), endHour, endMin, 0, 0, loc)
 
-		// Xử lý sự kiện qua đêm: nếu endTime <= startTime thì tự động cộng thêm 1 ngày
-		if !endTime.After(startTime) {
+		// Nếu không chỉ định ngày kết thúc khác mà endTime <= startTime (ví dụ bắt đầu 23:00 kết thúc 01:00) -> qua đêm
+		if strings.TrimSpace(endDateStr) == "" && !endTime.After(startTime) {
 			endTime = endTime.AddDate(0, 0, 1)
 			isOvernight = true
 		}

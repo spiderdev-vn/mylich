@@ -23,6 +23,8 @@ func RunEdit(args []string) error {
 	flagsWithValues := map[string]bool{
 		"--title": true, "-title": true,
 		"--date": true, "-date": true,
+		"--end-date": true, "-end-date": true,
+		"--to-date": true, "-to-date": true,
 		"--at": true, "-at": true,
 		"--to": true, "-to": true,
 		"--duration": true, "-duration": true,
@@ -55,6 +57,8 @@ func RunEdit(args []string) error {
 	fs := flag.NewFlagSet("edit", flag.ContinueOnError)
 	titleFlag := fs.String("title", "", "Tiêu đề sự kiện mới")
 	dateFlag := fs.String("date", "", "Ngày diễn ra (YYYY-MM-DD, today, tomorrow)")
+	endDateFlag := fs.String("end-date", "", "Ngày kết thúc sự kiện (Mặc định: cùng ngày diễn ra)")
+	fs.StringVar(endDateFlag, "to-date", "", "Ngày kết thúc sự kiện (viết tắt)")
 	atFlag := fs.String("at", "", "Giờ bắt đầu (10:00, 23:30, 11:30pm)")
 	toFlag := fs.String("to", "", "Giờ kết thúc (22:33, 03:00, 3am)")
 	durationFlag := fs.String("duration", "", "Thời lượng sự kiện (ví dụ: 30m, 1h, 2h30m)")
@@ -74,6 +78,7 @@ func RunEdit(args []string) error {
 		fmt.Println("Tùy chọn:")
 		fmt.Println("  --title <text>        Tiêu đề sự kiện mới")
 		fmt.Println("  --date <date>         Ngày diễn ra (YYYY-MM-DD, today, tomorrow)")
+		fmt.Println("  --end-date <date>     Ngày kết thúc (Mặc định: cùng ngày với --date)")
 		fmt.Println("  --at <time>           Giờ bắt đầu (10:00, 23:30, 11:30pm)")
 		fmt.Println("  --to <time>           Giờ kết thúc (22:33, 03:00, 3am)")
 		fmt.Println("  --duration <duration> Thời lượng sự kiện (ví dụ: 30m, 1h, 2h30m)")
@@ -167,7 +172,7 @@ func RunEdit(args []string) error {
 	}
 
 	// 3. Nếu không có cờ nào được truyền qua CLI và ở chế độ interactive, mở Form Huh điền sẵn
-	hasAnyFlag := *titleFlag != "" || *dateFlag != "" || *atFlag != "" || *toFlag != "" || *durationFlag != "" || *locationFlag != "" || *descFlag != "" || *calendarFlag != "" || *timezoneFlag != ""
+	hasAnyFlag := *titleFlag != "" || *dateFlag != "" || *endDateFlag != "" || *atFlag != "" || *toFlag != "" || *durationFlag != "" || *locationFlag != "" || *descFlag != "" || *calendarFlag != "" || *timezoneFlag != ""
 	if !hasAnyFlag && !ui.IsSimpleMode(*simpleFlag) {
 		form := huh.NewForm(
 			huh.NewGroup(
@@ -209,8 +214,9 @@ func RunEdit(args []string) error {
 	}
 
 	// 4. Tính toán thời gian mới
-	startTime, endTime, _, err := parseFlexibleTimeRange(
+	startTime, endTime, _, err := parseFlexibleTimeRangeWithEndDate(
 		dateVal,
+		*endDateFlag,
 		atVal,
 		toVal,
 		*durationFlag,

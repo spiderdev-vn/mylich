@@ -30,6 +30,8 @@ func RunAdd(args []string) error {
 
 	flagsWithValues := map[string]bool{
 		"--date": true, "-date": true,
+		"--end-date": true, "-end-date": true,
+		"--to-date": true, "-to-date": true,
 		"--at": true, "-at": true,
 		"--to": true, "-to": true,
 		"--duration": true, "-duration": true,
@@ -61,6 +63,8 @@ func RunAdd(args []string) error {
 
 	fs := flag.NewFlagSet("add", flag.ContinueOnError)
 	dateFlag := fs.String("date", "", "Ngày diễn ra (YYYY-MM-DD, today, tomorrow)")
+	endDateFlag := fs.String("end-date", "", "Ngày kết thúc sự kiện (Mặc định: cùng ngày diễn ra)")
+	fs.StringVar(endDateFlag, "to-date", "", "Ngày kết thúc sự kiện (viết tắt)")
 	atFlag := fs.String("at", "", "Giờ bắt đầu (ví dụ: 10:00, 23:30, 11:30pm)")
 	toFlag := fs.String("to", "", "Giờ kết thúc (ví dụ: 22:33, 3am, 03:00)")
 	durationFlag := fs.String("duration", "1h", "Thời lượng sự kiện (ví dụ: 30m, 1h, 2h30m)")
@@ -186,8 +190,9 @@ func RunAdd(args []string) error {
 		loc = parsedLoc
 	}
 
-	startTime, endTime, isOvernight, err := parseFlexibleTimeRange(
+	startTime, endTime, isOvernight, err := parseFlexibleTimeRangeWithEndDate(
 		dateVal,
+		*endDateFlag,
 		atVal,
 		toVal,
 		*durationFlag,

@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -62,10 +63,11 @@ func TestEdit_Commands(t *testing.T) {
 		t.Errorf("expected error when editing non-existent event, got nil")
 	}
 
-	// 3. Test edit with flags
+	// 3. Test edit with flags (change date to 2026-12-25, verify start and end date are both same day: 2026-12-25)
 	err = RunEdit([]string{
 		eventID,
 		"--title", "Đã đổi tiêu đề",
+		"--date", "25/12/2026",
 		"--location", "Phòng họp VIP",
 		"--at", "15:00",
 		"--to", "16:30",
@@ -89,6 +91,12 @@ func TestEdit_Commands(t *testing.T) {
 	}
 	if updated.Location != "Phòng họp VIP" {
 		t.Errorf("expected updated location 'Phòng họp VIP', got '%s'", updated.Location)
+	}
+	if !strings.HasPrefix(updated.StartAt, "2026-12-25") {
+		t.Errorf("expected start date 2026-12-25, got %s", updated.StartAt)
+	}
+	if !strings.HasPrefix(updated.EndAt, "2026-12-25") {
+		t.Errorf("expected end date to default to SAME DAY 2026-12-25, got %s", updated.EndAt)
 	}
 	if updated.SyncState != cache.SyncStatePendingUpdate {
 		t.Errorf("expected SyncStatePendingUpdate, got '%s'", updated.SyncState)
