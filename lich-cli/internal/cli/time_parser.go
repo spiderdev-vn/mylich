@@ -28,14 +28,73 @@ func parseFlexibleDate(input string, loc *time.Location) (time.Time, error) {
 	case "yesterday", "hom qua", "hôm qua":
 		yesterday := now.AddDate(0, 0, -1)
 		return time.Date(yesterday.Year(), yesterday.Month(), yesterday.Day(), 0, 0, 0, 0, loc), nil
-	default:
-		// Attempt YYYY-MM-DD
-		parsed, err := time.ParseInLocation("2006-01-02", input, loc)
-		if err != nil {
-			return time.Time{}, fmt.Errorf("định dạng ngày không hợp lệ '%s' (sử dụng YYYY-MM-DD, today, tomorrow)", input)
-		}
-		return time.Date(parsed.Year(), parsed.Month(), parsed.Day(), 0, 0, 0, 0, loc), nil
 	}
+
+	// 1. Tách theo ký tự phân tách: '/', '-', '.'
+	var separator string
+	if strings.Contains(input, "/") {
+		separator = "/"
+	} else if strings.Contains(input, "-") {
+		separator = "-"
+	} else if strings.Contains(input, ".") {
+		separator = "."
+	} else {
+		return time.Time{}, fmt.Errorf("định dạng ngày không hợp lệ '%s' (hỗ trợ dd/mm, dd-mm, dd/mm/yyyy, dd-mm-yy, yyyy-mm-dd)", input)
+	}
+
+	parts := strings.Split(input, separator)
+	var day, month, year int
+
+	if len(parts) == 3 {
+		p0, err0 := strconv.Atoi(strings.TrimSpace(parts[0]))
+		p1, err1 := strconv.Atoi(strings.TrimSpace(parts[1]))
+		p2, err2 := strconv.Atoi(strings.TrimSpace(parts[2]))
+		if err0 != nil || err1 != nil || err2 != nil {
+			return time.Time{}, fmt.Errorf("định dạng ngày không hợp lệ '%s'", input)
+		}
+
+		// Trường hợp ISO YYYY-MM-DD hoặc YYYY/MM/DD (p0 >= 1000)
+		if p0 >= 1000 {
+			year = p0
+			month = p1
+			day = p2
+		} else {
+			// Trường hợp DD-MM-YYYY hoặc DD-MM-YY hoặc D-M-YY
+			day = p0
+			month = p1
+			year = p2
+
+			// Guess 2-digit year (ví dụ: 26 -> 2026)
+			if year < 100 {
+				year += 2000
+			}
+		}
+	} else if len(parts) == 2 {
+		// Trường hợp DD/MM, DD-MM, D/M, D-M (Tự động đoán năm hiện tại)
+		p0, err0 := strconv.Atoi(strings.TrimSpace(parts[0]))
+		p1, err1 := strconv.Atoi(strings.TrimSpace(parts[1]))
+		if err0 != nil || err1 != nil {
+			return time.Time{}, fmt.Errorf("định dạng ngày không hợp lệ '%s'", input)
+		}
+
+		day = p0
+		month = p1
+		year = now.Year()
+	} else {
+		return time.Time{}, fmt.Errorf("định dạng ngày không hợp lệ '%s' (hỗ trợ dd/mm, dd-mm, dd-mm-yy, dd-mm-yyyy)", input)
+	}
+
+	if month < 1 || month > 12 || day < 1 || day > 31 {
+		return time.Time{}, fmt.Errorf("ngày tháng không hợp lệ '%s'", input)
+	}
+
+	res := time.Date(year, time.Month(month), day, 0, 0, 0, 0, loc)
+	// Kiểm tra xem ngày có bị tràn (overflow) không, ví dụ 31/02 hoặc 31/04
+	if res.Day() != day || int(res.Month()) != month || res.Year() != year {
+		return time.Time{}, fmt.Errorf("ngày không tồn tại trên lịch '%s'", input)
+	}
+
+	return res, nil
 }
 
 func parseFlexibleTime(input string) (hour int, minute int, err error) {

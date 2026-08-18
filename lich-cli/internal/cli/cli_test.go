@@ -72,10 +72,44 @@ func TestCLI_ParseFlexibleDate(t *testing.T) {
 		t.Errorf("parseFlexibleDate('tomorrow') failed: %v", err)
 	}
 
-	// Test explicit date
-	d3, err := parseFlexibleDate("2026-12-25", loc)
-	if err != nil || d3.Year() != 2026 || d3.Month() != 12 || d3.Day() != 25 {
-		t.Errorf("parseFlexibleDate('2026-12-25') failed: %v", err)
+	// Test explicit date formats
+	testCases := []struct {
+		input       string
+		expectedDay int
+		expectedMon time.Month
+		expectedYr  int
+		expectErr   bool
+	}{
+		{"2026-12-25", 25, time.December, 2026, false},
+		{"18-08-26", 18, time.August, 2026, false},
+		{"5-8-26", 5, time.August, 2026, false},
+		{"18-08-2026", 18, time.August, 2026, false},
+		{"5-8-2026", 5, time.August, 2026, false},
+		{"18/08/2026", 18, time.August, 2026, false},
+		{"5/8/2026", 5, time.August, 2026, false},
+		{"18/08/26", 18, time.August, 2026, false},
+		{"5/8/26", 5, time.August, 2026, false},
+		{"18/08", 18, time.August, now.Year(), false},
+		{"5/8", 5, time.August, now.Year(), false},
+		{"18-08", 18, time.August, now.Year(), false},
+		{"5-8", 5, time.August, now.Year(), false},
+		{"31/02/2026", 0, 0, 0, true}, // Invalid date
+		{"invalid-date", 0, 0, 0, true},
+	}
+
+	for _, tc := range testCases {
+		d, err := parseFlexibleDate(tc.input, loc)
+		if tc.expectErr {
+			if err == nil {
+				t.Errorf("parseFlexibleDate('%s') expected error, got nil", tc.input)
+			}
+		} else {
+			if err != nil {
+				t.Errorf("parseFlexibleDate('%s') failed: %v", tc.input, err)
+			} else if d.Day() != tc.expectedDay || d.Month() != tc.expectedMon || d.Year() != tc.expectedYr {
+				t.Errorf("parseFlexibleDate('%s') = %v, expected %d/%d/%d", tc.input, d, tc.expectedDay, tc.expectedMon, tc.expectedYr)
+			}
+		}
 	}
 }
 

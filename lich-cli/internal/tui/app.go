@@ -9,11 +9,12 @@ import (
 	"strings"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"lich-cli/internal/api"
 	"lich-cli/internal/cache"
 	"lich-cli/internal/syncer"
+
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 type FocusArea int
@@ -351,7 +352,7 @@ func (m Model) View() string {
 	var sb strings.Builder
 
 	// Top Title
-	appTitle := titleStyle.Render("LICH CALENDAR (MỸ LÍCH)")
+	appTitle := titleStyle.Render("MY LICH")
 	sb.WriteString(appTitle)
 	sb.WriteString("\n\n")
 
