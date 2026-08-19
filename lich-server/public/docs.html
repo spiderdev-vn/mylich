@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tài Liệu Hướng Dẫn — Mỹ Lích (Lich Docs)</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🗓️</text></svg>">
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    .docs-toc {
+      background: var(--surface-clay);
+      border: 2px solid var(--border);
+      border-radius: 16px;
+      padding: 20px 24px;
+      margin-bottom: 32px;
+    }
+    .docs-toc h3 {
+      font-size: 1.1rem;
+      color: var(--pop-cyan);
+      margin-bottom: 12px;
+      font-weight: 800;
+    }
+    .docs-toc ul {
+      list-style-type: none;
+      margin-left: 0;
+    }
+    .docs-toc li {
+      margin-bottom: 8px;
+    }
+    .docs-toc a {
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.2s;
+    }
+    .docs-toc a:hover {
+      color: var(--pop-yellow);
+    }
+    .cmd-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0 28px;
+    }
+    .cmd-table th, .cmd-table td {
+      border: 1px solid var(--border);
+      padding: 12px 14px;
+      text-align: left;
+      font-size: 0.95rem;
+    }
+    .cmd-table th {
+      background: var(--surface-clay);
+      color: var(--pop-yellow);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .cmd-table td:first-child {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--pop-pink);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    pre.code-block {
+      background: #090714;
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      padding: 16px 20px;
+      overflow-x: auto;
+      margin: 16px 0 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.92rem;
+      line-height: 1.6;
+      color: #f1f5f9;
+    }
+    pre.code-block code {
+      background: none;
+      padding: 0;
+      border: none;
+      color: inherit;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <a href="/" class="logo">
+        <span class="logo-badge">MỸ LÍCH</span>
+      </a>
+      <nav>
+        <a href="/">Trang chủ</a>
+        <a href="/docs" style="color: var(--pop-yellow);">Tài liệu</a>
+        <a href="/privacy">Bảo mật</a>
+        <a href="/terms">Điều khoản</a>
+        <a href="https://github.com/spiderdev-vn/mylich" target="_blank" rel="noopener">★ GitHub</a>
+      </nav>
+    </header>
+
+    <main>
+      <div class="doc-container">
+        <h1>📖 Tài Liệu Hướng Dẫn Mỹ Lích (Lich)</h1>
+        <p class="tagline" style="text-align: left; margin: 8px 0 24px;">Hướng dẫn toàn diện từ việc sử dụng CLI/TUI đến triển khai tự host backend riêng tư.</p>
+
+        <!-- Table of Contents -->
+        <div class="docs-toc">
+          <h3>📌 Mục Lục Nhanh</h3>
+          <ul>
+            <li><a href="#quickstart">1. Cài đặt & Bắt đầu nhanh với CLI</a></li>
+            <li><a href="#cli-commands">2. Tra cứu lệnh CLI thường dùng</a></li>
+            <li><a href="#tui-guide">3. Trải nghiệm giao diện TUI tương tác</a></li>
+            <li><a href="#google-sync">4. Tích hợp Google Calendar hai chiều</a></li>
+            <li><a href="#self-host">5. Hướng dẫn tự host lich-server bằng Docker</a></li>
+            <li><a href="#api-reference">6. Đặc tả REST API v1</a></li>
+          </ul>
+        </div>
+
+        <h2 id="quickstart">1. Cài đặt & Bắt đầu nhanh với CLI</h2>
+        <p>Mỹ Lích CLI là công cụ dòng lệnh cực nhẹ viết bằng Go, hỗ trợ đầy đủ Linux, macOS và Windows:</p>
+        <pre class="code-block"><code># Tải bản phát hành mới nhất từ GitHub Releases:
+# https://github.com/spiderdev-vn/mylich/releases
+
+# Hoặc cài đặt trực tiếp bằng Go:
+go install github.com/spiderdev-vn/mylich/lich-cli/cmd/lich@latest
+
+# Kiểm tra phiên bản
+lich version</code></pre>
+
+        <h2 id="cli-commands">2. Tra cứu lệnh CLI thường dùng</h2>
+        <table class="cmd-table">
+          <thead>
+            <tr>
+              <th>Lệnh CLI</th>
+              <th>Mô tả tác vụ</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>lich</td>
+              <td>Mở giao diện Terminal tương tác toàn màn hình (TUI)</td>
+            </tr>
+            <tr>
+              <td>lich login</td>
+              <td>Đăng nhập hoặc đăng ký tài khoản vào máy chủ tự host</td>
+            </tr>
+            <tr>
+              <td>lich today</td>
+              <td>Xem lịch trình hôm nay dạng thẻ tóm tắt</td>
+            </tr>
+            <tr>
+              <td>lich week</td>
+              <td>Xem danh sách sự kiện trong tuần hiện tại</td>
+            </tr>
+            <tr>
+              <td>lich month</td>
+              <td>Xem lịch trình cả tháng</td>
+            </tr>
+            <tr>
+              <td>lich add &lt;title&gt;</td>
+              <td>Tạo sự kiện mới (hỗ trợ <code>--date</code>, <code>--at</code>, <code>--to</code>, <code>--desc</code>)</td>
+            </tr>
+            <tr>
+              <td>lich edit &lt;id&gt;</td>
+              <td>Chỉnh sửa tiêu đề hoặc mốc thời gian sự kiện</td>
+            </tr>
+            <tr>
+              <td>lich delete &lt;id&gt;</td>
+              <td>Xóa sự kiện (có hộp thoại hỏi xác nhận an toàn)</td>
+            </tr>
+            <tr>
+              <td>lich search &lt;text&gt;</td>
+              <td>Tìm kiếm sự kiện tức thì theo từ khóa trong tiêu đề/mô tả</td>
+            </tr>
+            <tr>
+              <td>lich sync</td>
+              <td>Đồng bộ hóa 2 chiều tức thì với <code>lich-server</code></td>
+            </tr>
+            <tr>
+              <td>lich status</td>
+              <td>Kiểm tra kết nối máy chủ, hàng đợi đồng bộ và cache cục bộ</td>
+            </tr>
+            <tr>
+              <td>lich nuke-database</td>
+              <td>Xóa sạch database cục bộ (hoặc thêm <code>--remote</code> để xóa cả server)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2 id="tui-guide">3. Trải nghiệm giao diện TUI tương tác</h2>
+        <p>Gõ lệnh <code>lich</code> để khởi động giao diện bảng điều khiển tương tác:</p>
+        <ul>
+          <li><strong>Phím mũi tên (↑ ↓ ← →)</strong> hoặc <strong>h / j / k / l</strong>: Di chuyển qua lại giữa các ngày trong tháng.</li>
+          <li><strong>Phím [n] / [p]</strong>: Chuyển nhanh sang tháng tiếp theo hoặc quay về tháng trước.</li>
+          <li><strong>Phím [a]</strong>: Mở form thêm sự kiện mới.</li>
+          <li><strong>Phím [d]</strong>: Xóa sự kiện đang chọn.</li>
+          <li><strong>Phím [s]</strong>: Kích hoạt đồng bộ hóa ngầm.</li>
+          <li><strong>Phím [q] / [Esc]</strong>: Thoát TUI.</li>
+        </ul>
+
+        <h2 id="google-sync">4. Tích hợp Google Calendar hai chiều</h2>
+        <p>Để liên kết lịch cá nhân với Google Calendar:</p>
+        <pre class="code-block"><code># 1. Mở trình duyệt để xác thực OAuth với tài khoản Google
+lich google connect
+
+# 2. Kiểm tra trạng thái kết nối và danh sách lịch Google đã ánh xạ
+lich google status
+
+# 3. Đồng bộ 2 chiều sự kiện ngay lập tức
+lich google sync
+
+# 4. Hủy liên kết khi không còn nhu cầu
+lich google disconnect</code></pre>
+
+        <h2 id="self-host">5. Hướng dẫn tự host lich-server bằng Docker</h2>
+        <p>Triển khai máy chủ riêng với <code>docker-compose.yml</code>:</p>
+        <pre class="code-block"><code>services:
+  lich-server:
+    image: ghcr.io/spiderdev-vn/mylich-server:latest
+    restart: unless-stopped
+    env_file:
+      - .env.docker
+    volumes:
+      - ./data:/data
+    networks:
+      - traefik_default
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.lich.rule=Host(\`${DOMAIN}\`)"
+      - "traefik.http.routers.lich.entrypoints=websecure"
+      - "traefik.http.routers.lich.tls.certresolver=letsencrypt"
+      - "traefik.http.services.lich.loadbalancer.server.port=3000"
+
+networks:
+  traefik_default:
+    external: true</code></pre>
+
+        <p>Tạo file <code>.env.docker</code> với các biến môi trường thiết yếu:</p>
+        <pre class="code-block"><code>DOMAIN=lich.yourdomain.com
+JWT_SECRET=your-super-strong-32-chars-jwt-secret-key-here
+GOOGLE_CLIENT_ID=your-google-oauth-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+GOOGLE_REDIRECT_URI=https://lich.yourdomain.com/api/v1/auth/google/callback</code></pre>
+
+        <h2 id="api-reference">6. Đặc tả REST API v1</h2>
+        <p>Tất cả các API endpoints đều nằm dưới tiền tố chuẩn <code>/api/v1/...</code>:</p>
+        <ul>
+          <li><code>POST /api/v1/auth/register</code>: Đăng ký người dùng mới</li>
+          <li><code>POST /api/v1/auth/login</code>: Đăng nhập nhận JWT Token</li>
+          <li><code>GET /api/v1/auth/me</code>: Xem thông tin người dùng hiện tại</li>
+          <li><code>GET /api/v1/calendars</code>: Danh sách lịch</li>
+          <li><code>GET /api/v1/events</code>: Lấy danh sách sự kiện (hỗ trợ lọc theo khoảng thời gian)</li>
+          <li><code>POST /api/v1/events</code>: Tạo sự kiện mới</li>
+          <li><code>PATCH /api/v1/events/:id</code>: Cập nhật sự kiện</li>
+          <li><code>DELETE /api/v1/events/:id</code>: Xóa sự kiện</li>
+          <li><code>POST /api/v1/sync/push-pull</code>: Đồng bộ hóa hai chiều theo Cursor log</li>
+        </ul>
+      </div>
+    </main>
+
+    <footer>
+      <div>© 2026 <strong>Mỹ Lích (Lich)</strong>. Lịch của mình, mình tính! 🚀</div>
+      <div>
+        <a href="/docs">Tài liệu</a> · 
+        <a href="/privacy">Privacy Policy</a> · 
+        <a href="/terms">Terms of Service</a> · 
+        <a href="https://github.com/spiderdev-vn/mylich" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>

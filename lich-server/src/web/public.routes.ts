@@ -39,12 +39,17 @@ export const publicRoutes: FastifyPluginAsync = async (app) => {
     return serveFile(reply, 'index.html', 'text/html; charset=utf-8', 'no-cache');
   });
 
-  // 2. Privacy Policy
+  // 2. Documentation Page
+  app.get('/docs', async (_request, reply) => {
+    return serveFile(reply, 'docs.html', 'text/html; charset=utf-8', 'no-cache');
+  });
+
+  // 3. Privacy Policy
   app.get('/privacy', async (_request, reply) => {
     return serveFile(reply, 'privacy.html', 'text/html; charset=utf-8', 'no-cache');
   });
 
-  // 3. Terms of Service
+  // 4. Terms of Service
   app.get('/terms', async (_request, reply) => {
     return serveFile(reply, 'terms.html', 'text/html; charset=utf-8', 'no-cache');
   });
