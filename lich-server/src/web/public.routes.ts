@@ -1,129 +1,309 @@
 import type { FastifyPluginAsync } from 'fastify';
 
-const baseStyles = `
+const popStyles = `
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,700;0,800;1,400&family=Space+Grotesk:wght@500;700;800&display=swap');
+
   :root {
-    --bg: #0d1117;
-    --surface: #161b22;
-    --border: #30363d;
-    --primary: #58a6ff;
-    --primary-hover: #79c0ff;
-    --text: #c9d1d9;
-    --text-heading: #f0f6fc;
-    --muted: #8b949e;
-    --success: #3fb950;
-    --accent-purple: #bc8cff;
+    --bg: #0d0b18;
+    --surface: #18142a;
+    --surface-clay: #211c38;
+    --border: #352f55;
+    --primary: #a855f7;
+    --pop-pink: #ff2a85;
+    --pop-yellow: #facc15;
+    --pop-cyan: #06b6d4;
+    --pop-green: #22c55e;
+    --pop-orange: #f97316;
+    --text: #e2e8f0;
+    --text-heading: #ffffff;
+    --muted: #94a3b8;
   }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  
   body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-family: 'Space Grotesk', -apple-system, sans-serif;
     background-color: var(--bg);
     color: var(--text);
     line-height: 1.6;
-    padding: 0;
+    background-image: 
+      radial-gradient(circle at 15% 15%, rgba(255, 42, 133, 0.12) 0%, transparent 40%),
+      radial-gradient(circle at 85% 25%, rgba(6, 182, 212, 0.15) 0%, transparent 45%),
+      radial-gradient(circle at 50% 85%, rgba(168, 85, 247, 0.12) 0%, transparent 50%);
+    background-attachment: fixed;
+    overflow-x: hidden;
   }
+
   .container {
-    max-width: 860px;
+    max-width: 920px;
     margin: 0 auto;
-    padding: 40px 20px 80px;
+    padding: 32px 24px 80px;
   }
+
   header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding-bottom: 24px;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 40px;
+    padding: 16px 24px;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 20px;
+    box-shadow: 0 6px 0 var(--border), 0 12px 24px rgba(0,0,0,0.3);
+    margin-bottom: 48px;
   }
+
   .logo {
     display: flex;
     align-items: center;
     gap: 12px;
-    font-weight: 700;
-    font-size: 1.3rem;
+    font-weight: 800;
+    font-size: 1.4rem;
     color: var(--text-heading);
     text-decoration: none;
   }
+
   .logo-badge {
-    background: linear-gradient(135deg, #6e40c9, #1f6feb);
+    background: linear-gradient(135deg, var(--pop-pink), var(--primary));
     color: #fff;
-    padding: 4px 10px;
-    border-radius: 8px;
-    font-size: 0.9rem;
-    letter-spacing: 0.5px;
+    padding: 6px 14px;
+    border-radius: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 800;
+    font-size: 0.95rem;
+    box-shadow: 0 3px 0 #7e22ce;
+    transform: rotate(-2deg);
+    display: inline-block;
   }
+
   nav a {
-    color: var(--muted);
+    color: var(--text);
     text-decoration: none;
     margin-left: 20px;
+    font-weight: 700;
     font-size: 0.95rem;
-    transition: color 0.2s;
-  }
-  nav a:hover { color: var(--primary); }
-  h1 { font-size: 2.4rem; font-weight: 800; color: var(--text-heading); margin-bottom: 16px; letter-spacing: -0.5px; }
-  h2 { font-size: 1.5rem; font-weight: 700; color: var(--text-heading); margin-top: 36px; margin-bottom: 12px; }
-  h3 { font-size: 1.2rem; font-weight: 600; color: var(--text-heading); margin-top: 24px; margin-bottom: 8px; }
-  p { margin-bottom: 16px; color: var(--text); }
-  ul, ol { margin-left: 24px; margin-bottom: 20px; }
-  li { margin-bottom: 8px; }
-  .tagline {
-    font-size: 1.25rem;
-    color: var(--muted);
-    margin-bottom: 32px;
-  }
-  .hero-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 32px;
-    margin-bottom: 40px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-  }
-  .code-block {
-    background: #090d13;
-    border: 1px solid var(--border);
+    transition: all 0.2s;
+    padding: 6px 12px;
     border-radius: 8px;
-    padding: 16px 20px;
-    font-family: 'JetBrains Mono', Consolas, Monaco, monospace;
-    font-size: 0.95rem;
-    color: #58a6ff;
-    overflow-x: auto;
-    margin: 16px 0 24px;
   }
-  .btn {
-    display: inline-block;
-    background: #238636;
+  nav a:hover {
+    color: var(--pop-yellow);
+    background: rgba(255,255,255,0.05);
+  }
+
+  .hero {
+    text-align: center;
+    margin-bottom: 56px;
+  }
+
+  .hero-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface-clay);
+    border: 2px solid var(--border);
+    padding: 8px 18px;
+    border-radius: 999px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9rem;
+    color: var(--pop-yellow);
+    font-weight: 700;
+    box-shadow: 0 4px 0 var(--border);
+    margin-bottom: 24px;
+  }
+
+  h1 {
+    font-size: 3.2rem;
+    font-weight: 800;
+    line-height: 1.15;
+    margin-bottom: 20px;
     color: #ffffff;
-    padding: 10px 20px;
-    border-radius: 6px;
-    font-weight: 600;
+    letter-spacing: -1px;
+  }
+
+  .gradient-text {
+    background: linear-gradient(135deg, var(--pop-pink), var(--pop-yellow), var(--pop-cyan));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .tagline {
+    font-size: 1.3rem;
+    color: var(--muted);
+    max-width: 680px;
+    margin: 0 auto 36px;
+    font-weight: 500;
+  }
+
+  /* Clay Buttons */
+  .btn-group {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .clay-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--pop-pink);
+    color: #ffffff;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 800;
+    font-size: 1.05rem;
+    padding: 14px 28px;
+    border-radius: 16px;
     text-decoration: none;
-    transition: background 0.2s;
+    border: 2px solid #ff5ba2;
+    box-shadow: 0 6px 0 #b3004b, 0 12px 20px rgba(255, 42, 133, 0.35);
+    transition: all 0.15s ease;
+    cursor: pointer;
   }
-  .btn:hover { background: #2ea043; }
-  .btn-outline {
-    background: transparent;
-    border: 1px solid var(--border);
+
+  .clay-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 0 #b3004b, 0 16px 25px rgba(255, 42, 133, 0.45);
+  }
+
+  .clay-btn:active {
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 #b3004b;
+  }
+
+  .clay-btn-secondary {
+    background: var(--surface-clay);
     color: var(--text-heading);
-    margin-left: 12px;
+    border: 2px solid var(--border);
+    box-shadow: 0 6px 0 var(--border), 0 12px 20px rgba(0,0,0,0.3);
   }
-  .btn-outline:hover { background: var(--surface); border-color: var(--muted); }
+
+  .clay-btn-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 0 var(--border), 0 16px 25px rgba(0,0,0,0.4);
+    border-color: var(--pop-cyan);
+  }
+
+  /* Terminal Window */
+  .terminal-box {
+    background: #090714;
+    border: 2px solid var(--border);
+    border-radius: 20px;
+    box-shadow: 0 8px 0 var(--border), 0 20px 40px rgba(0,0,0,0.6);
+    overflow: hidden;
+    margin: 40px 0;
+    text-align: left;
+  }
+
+  .terminal-header {
+    background: #151128;
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 2px solid var(--border);
+  }
+
+  .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+  .dot-red { background: #ef4444; }
+  .dot-yellow { background: #f59e0b; }
+  .dot-green { background: #10b981; }
+  .terminal-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-left: 8px;
+    font-weight: 700;
+  }
+
+  .terminal-body {
+    padding: 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: #e2e8f0;
+  }
+
+  .prompt { color: var(--pop-pink); font-weight: 800; }
+  .cmd { color: var(--pop-cyan); font-weight: 700; }
+  .arg { color: var(--pop-yellow); }
+  .out-success { color: var(--pop-green); }
+  .out-comment { color: var(--muted); font-style: italic; }
+
+  /* Feature Clay Cards */
   .grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 20px;
-    margin: 28px 0;
+    gap: 24px;
+    margin: 48px 0;
   }
-  .card {
+
+  .clay-card {
     background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 24px;
+    border: 2px solid var(--border);
+    border-radius: 20px;
+    padding: 28px;
+    box-shadow: 0 6px 0 var(--border), 0 12px 24px rgba(0,0,0,0.3);
+    transition: transform 0.2s ease, border-color 0.2s ease;
   }
-  .card h3 { margin-top: 0; color: var(--primary); }
+
+  .clay-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--primary);
+  }
+
+  .card-icon {
+    font-size: 2.2rem;
+    margin-bottom: 16px;
+    display: inline-block;
+    background: var(--surface-clay);
+    padding: 12px;
+    border-radius: 16px;
+    border: 2px solid var(--border);
+    box-shadow: 0 4px 0 var(--border);
+  }
+
+  .clay-card h3 {
+    font-size: 1.35rem;
+    color: var(--text-heading);
+    margin-bottom: 12px;
+    font-weight: 800;
+  }
+
+  .clay-card p {
+    color: var(--muted);
+    font-size: 0.98rem;
+  }
+
+  /* Policy / Legal Pages */
+  .doc-container {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 24px;
+    padding: 40px;
+    box-shadow: 0 8px 0 var(--border), 0 20px 40px rgba(0,0,0,0.4);
+    margin: 32px 0;
+  }
+
+  .doc-container h1 { font-size: 2.4rem; margin-bottom: 12px; }
+  .doc-container h2 { font-size: 1.5rem; color: var(--pop-cyan); margin: 32px 0 12px; font-weight: 800; }
+  .doc-container p { margin-bottom: 16px; font-size: 1.05rem; }
+  .doc-container ul { margin-left: 24px; margin-bottom: 20px; }
+  .doc-container li { margin-bottom: 10px; font-size: 1rem; color: var(--text); }
+  .doc-container code {
+    background: var(--surface-clay);
+    color: var(--pop-yellow);
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9rem;
+    border: 1px solid var(--border);
+  }
+
   footer {
-    margin-top: 60px;
-    padding-top: 24px;
-    border-top: 1px solid var(--border);
+    margin-top: 64px;
+    padding-top: 28px;
+    border-top: 2px solid var(--border);
+    font-family: 'JetBrains Mono', monospace;
     font-size: 0.9rem;
     color: var(--muted);
     display: flex;
@@ -132,8 +312,9 @@ const baseStyles = `
     flex-wrap: wrap;
     gap: 16px;
   }
-  footer a { color: var(--muted); text-decoration: none; }
-  footer a:hover { color: var(--primary); }
+
+  footer a { color: var(--text); text-decoration: none; font-weight: 700; transition: color 0.2s; }
+  footer a:hover { color: var(--pop-pink); }
 `;
 
 function renderLayout(title: string, content: string): string {
@@ -142,32 +323,33 @@ function renderLayout(title: string, content: string): string {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${title} — Mỹ Lích</title>
-  <style>${baseStyles}</style>
+  <title>${title} — Mỹ Lích (Lich)</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🗓️</text></svg>">
+  <style>${popStyles}</style>
 </head>
 <body>
   <div class="container">
     <header>
       <a href="/" class="logo">
         <span class="logo-badge">MỸ LÍCH</span>
-        <span>Lich</span>
+        <span>lich</span>
       </a>
       <nav>
         <a href="/">Trang chủ</a>
-        <a href="/privacy">Chính sách bảo mật</a>
-        <a href="/terms">Điều khoản dịch vụ</a>
-        <a href="https://github.com/spiderdev-vn/mylich" target="_blank" rel="noopener">GitHub</a>
+        <a href="/privacy">Bảo mật</a>
+        <a href="/terms">Điều khoản</a>
+        <a href="https://github.com/spiderdev-vn/mylich" target="_blank" rel="noopener">★ GitHub</a>
       </nav>
     </header>
     <main>
       ${content}
     </main>
     <footer>
-      <div>© 2026 Mỹ Lích (Lich). All rights reserved.</div>
+      <div>© 2026 <strong>Mỹ Lích (Lich)</strong>. Lịch của mình, mình tính! 🚀</div>
       <div>
         <a href="/privacy">Privacy Policy</a> · 
         <a href="/terms">Terms of Service</a> · 
-        <a href="https://github.com/spiderdev-vn/mylich" target="_blank" rel="noopener">GitHub Repository</a>
+        <a href="https://github.com/spiderdev-vn/mylich" target="_blank" rel="noopener">GitHub</a>
       </div>
     </footer>
   </div>
@@ -176,88 +358,113 @@ function renderLayout(title: string, content: string): string {
 }
 
 export const publicRoutes: FastifyPluginAsync = async (app) => {
-  // 1. Home / Landing Page
+  // 1. Home / Landing Page (Fun Pop Claymorphic Terminal)
   app.get('/', async (_request, reply) => {
     reply.type('text/html; charset=utf-8');
     const content = `
-      <h1>Mỹ Lích — Lịch của mình, mình tính</h1>
-      <p class="tagline">Hệ thống lịch cá nhân Local-first cho Terminal (CLI/TUI) và tự host backend riêng tư.</p>
-
-      <div class="hero-card">
-        <h2>Bắt đầu sử dụng chỉ với một lệnh</h2>
-        <p>Thêm sự kiện, kiểm tra lịch trình hôm nay, và đồng bộ tự động 2 chiều với Google Calendar tức thì.</p>
-        <div class="code-block">
-$ lich add "Họp dự án lúc 10h sáng" --at 10:00<br>
-$ lich google sync
+      <section class="hero">
+        <div class="hero-tag">✨ POP & FUN TERMINAL CALENDAR ✨</div>
+        <h1>Lịch của mình, <span class="gradient-text">mình tính.</span></h1>
+        <p class="tagline">Một cái lịch vui vẻ, siêu tốc, local-first cho Terminal (CLI/TUI) và tự host backend riêng tư!</p>
+        
+        <div class="btn-group">
+          <a href="https://github.com/spiderdev-vn/mylich/releases" class="clay-btn" target="_blank" rel="noopener">
+            <span>⚡ Cài đặt CLI Ngay</span>
+          </a>
+          <a href="https://github.com/spiderdev-vn/mylich" class="clay-btn clay-btn-secondary" target="_blank" rel="noopener">
+            <span>📂 Xem Mã Nguồn GitHub</span>
+          </a>
         </div>
-        <div>
-          <a href="https://github.com/spiderdev-vn/mylich/releases" class="btn" target="_blank" rel="noopener">Tải xuống CLI Binary</a>
-          <a href="https://github.com/spiderdev-vn/mylich" class="btn btn-outline" target="_blank" rel="noopener">Xem mã nguồn GitHub</a>
+      </section>
+
+      <!-- Terminal Preview Mockup -->
+      <div class="terminal-box">
+        <div class="terminal-header">
+          <span class="dot dot-red"></span>
+          <span class="dot dot-yellow"></span>
+          <span class="dot dot-green"></span>
+          <span class="terminal-title">kunix@pop-terminal: ~ (lich-cli)</span>
+        </div>
+        <div class="terminal-body">
+          <div class="out-comment"># 1. Thêm sự kiện tức thì (phản hồi trong 1 mili-giây)</div>
+          <div><span class="prompt">$</span> <span class="cmd">lich add</span> <span class="arg">"Ăn tối với người yêu"</span> --at <span class="arg">19:00</span></div>
+          <div class="out-success">✓ Đã tạo sự kiện: Ăn tối với người yêu [19:00 - 20:00 20/08/2026]</div>
+          <br>
+          <div class="out-comment"># 2. Xem lịch trình hôm nay dạng TUI / Agenda siêu đẹp</div>
+          <div><span class="prompt">$</span> <span class="cmd">lich today</span></div>
+          <div class="out-success">╭──────────────── LỊCH HÔM NAY (MỸ LÍCH) ────────────────╮<br>│ • 10:00 - 11:30  Họp kiến trúc hệ thống               │<br>│ • 19:00 - 20:00  Ăn tối với người yêu                  │<br>╰────────────────────────────────────────────────────────╯</div>
+          <br>
+          <div class="out-comment"># 3. Đồng bộ 2 chiều với Google Calendar (Zero-Config)</div>
+          <div><span class="prompt">$</span> <span class="cmd">lich google sync</span></div>
+          <div class="out-success">✓ Đồng bộ 2 chiều thành công: 1 đẩy lên Google, 0 kéo về.</div>
         </div>
       </div>
 
-      <h2>Tính năng nổi bật</h2>
+      <!-- Feature Clay Cards -->
       <div class="grid">
-        <div class="card">
-          <h3>⚡ Local-first & Siêu Nhanh</h3>
-          <p>Dữ liệu lưu trữ trong SQLite cục bộ. Mọi thao tác thêm, sửa, xóa sự kiện phản hồi tức thì mà không cần chờ mạng.</p>
+        <div class="clay-card">
+          <div class="card-icon">⚡</div>
+          <h3>Local-first Siêu Tốc</h3>
+          <p>Mỹ Lích lưu trữ toàn bộ dữ liệu trong SQLite máy bạn. Mất mạng vẫn tạo/sửa lịch vèo vèo, có mạng thì tự động đồng bộ ngầm!</p>
         </div>
-        <div class="card">
-          <h3>🔄 Đồng bộ Google Calendar 2 chiều</h3>
-          <p>Tự động so khớp lịch với Google Calendar theo cơ chế Last-Write-Wins, giữ lịch trình của bạn luôn đồng nhất ở mọi nơi.</p>
+        <div class="clay-card">
+          <div class="card-icon">🔄</div>
+          <h3>Google Sync 2 Chiều</h3>
+          <p>Đồng bộ thông minh với Google Calendar. Áp dụng Last-Write-Wins giúp mọi thay đổi ở điện thoại hay terminal luôn chuẩn xác.</p>
         </div>
-        <div class="card">
-          <h3>🔒 Tự chủ & Riêng tư (Self-hosted)</h3>
-          <p>Mỹ Lích thuộc về bạn. Tự host backend riêng bằng Docker, dữ liệu hoàn toàn do bạn quản lý và kiểm soát.</p>
+        <div class="clay-card">
+          <div class="card-icon">🛡️</div>
+          <h3>Self-hosted & Riêng Tư</h3>
+          <p>Dữ liệu lịch là của bạn, không phải của các cỗ máy quảng cáo. Tự host backend riêng qua Docker chỉ với 1 lệnh compose!</p>
         </div>
       </div>
     `;
     return renderLayout('Trang chủ', content);
   });
 
-  // 2. Privacy Policy
+  // 2. Privacy Policy (Đáp ứng chuẩn Google OAuth Verification)
   app.get('/privacy', async (_request, reply) => {
     reply.type('text/html; charset=utf-8');
     const content = `
-      <h1>Chính Sách Bảo Mật (Privacy Policy)</h1>
-      <p class="tagline">Cập nhật lần cuối: Ngày 19 tháng 08 năm 2026</p>
+      <div class="doc-container">
+        <h1>🔒 Chính Sách Bảo Mật (Privacy Policy)</h1>
+        <p style="color: var(--pop-yellow); font-family: 'JetBrains Mono', monospace; font-size: 0.95rem;">Cập nhật lần cuối: Ngày 19 tháng 08 năm 2026</p>
+        <br>
+        <p><strong>Mỹ Lích (Lich)</strong> cam kết tôn trọng và bảo vệ quyền riêng tư tuyệt đối của bạn. Dữ liệu lịch trình là tài sản cá nhân nhạy cảm và quan trọng nhất của mỗi người dùng.</p>
 
-      <div class="hero-card">
-        <p><strong>Mỹ Lích (Lich)</strong> cam kết tôn trọng và bảo vệ quyền riêng tư của bạn. Chúng tôi coi dữ liệu lịch là thông tin cá nhân nhạy cảm và quan trọng nhất của người dùng.</p>
+        <h2>1. Thông tin chúng tôi truy cập</h2>
+        <p>Khi bạn kích hoạt tính năng tích hợp Google Calendar, ứng dụng sẽ yêu cầu các quyền truy cập được cấp phép bởi bạn:</p>
+        <ul>
+          <li><strong>Địa chỉ Email (Google User Profile)</strong>: Dùng để xác thực và hiển thị tài khoản nào đang được liên kết trên máy chủ.</li>
+          <li><strong>Dữ liệu Lịch (Google Calendar API Scope <code>https://www.googleapis.com/auth/calendar</code>)</strong>: Đọc và ghi danh sách lịch và các sự kiện lịch (tiêu đề, thời gian, mô tả, địa điểm) để phục vụ đồng bộ 2 chiều giữa Mỹ Lích và Google Calendar của bạn.</li>
+        </ul>
+
+        <h2>2. Mục đích sử dụng dữ liệu</h2>
+        <p>Chúng tôi <strong>CHỈ</strong> sử dụng dữ liệu từ Google Calendar cho các mục đích thiết yếu:</p>
+        <ul>
+          <li>Hiển thị lịch trình và sự kiện của bạn trên giao diện CLI/TUI của Mỹ Lích.</li>
+          <li>Đồng bộ hóa 2 chiều: Đẩy sự kiện từ Mỹ Lích lên Google và kéo sự kiện mới từ Google về Mỹ Lích.</li>
+        </ul>
+
+        <h2>3. Lưu trữ và Bảo mật Dữ liệu</h2>
+        <ul>
+          <li><strong>Máy chủ tự quản lý (Self-hosted)</strong>: Dữ liệu lịch và Refresh Token được lưu trữ trên cơ sở dữ liệu SQLite riêng của máy chủ do chính bạn hoặc quản trị viên hệ thống của bạn triển khai.</li>
+          <li><strong>Tuyệt đối không chia sẻ với bên thứ ba</strong>: Chúng tôi không bao giờ bán, cho thuê, chia sẻ hay chuyển giao dữ liệu lịch của bạn cho bất kỳ bên thứ ba, nhà quảng cáo, mạng lưới tiếp thị hoặc mô hình huấn luyện AI nào.</li>
+          <li><strong>Mã hóa bảo mật</strong>: Tất cả các kết nối trao đổi dữ liệu với Google API đều được mã hóa an toàn qua giao thức HTTPS/TLS.</li>
+        </ul>
+
+        <h2>4. Tuân thủ Chính sách Dữ liệu Người dùng của Google</h2>
+        <p>Mỹ Lích hoàn toàn tuân thủ <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener" style="color: var(--pop-cyan); font-weight: 700;">Google API Services User Data Policy</a>, bao gồm các yêu cầu về <em>Limited Use (Sử dụng có giới hạn)</em>.</p>
+
+        <h2>5. Quyền kiểm soát và Xóa dữ liệu</h2>
+        <ul>
+          <li><strong>Hủy liên kết tài khoản Google</strong>: Bạn có thể thu hồi quyền truy cập của Mỹ Lích bất kỳ lúc nào bằng lệnh CLI: <code>lich google disconnect</code> hoặc tại trang <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener" style="color: var(--pop-cyan); font-weight: 700;">Google Account Permissions</a>.</li>
+          <li><strong>Xóa sạch toàn bộ dữ liệu</strong>: Bạn có thể xóa sạch dữ liệu trên máy chủ bằng lệnh: <code>lich nuke-database --remote</code>.</li>
+        </ul>
+
+        <h2>6. Liên hệ</h2>
+        <p>Mọi thắc mắc về Chính sách bảo mật, vui lòng mở Issue tại kho mã nguồn chính thức: <a href="https://github.com/spiderdev-vn/mylich" target="_blank" rel="noopener" style="color: var(--pop-pink); font-weight: 700;">https://github.com/spiderdev-vn/mylich</a>.</p>
       </div>
-
-      <h2>1. Thông tin chúng tôi thu thập</h2>
-      <p>Khi bạn sử dụng Mỹ Lích và kích hoạt tính năng tích hợp Google Calendar, ứng dụng sẽ yêu cầu các quyền truy cập sau:</p>
-      <ul>
-        <li><strong>Địa chỉ Email (Google User Profile)</strong>: Dùng để xác thực và hiển thị tài khoản Google nào đang được liên kết.</li>
-        <li><strong>Dữ liệu Lịch (Google Calendar API Scope <code>https://www.googleapis.com/auth/calendar</code>)</strong>: Đọc và ghi danh sách lịch cũng như các sự kiện lịch (tiêu đề, thời gian, địa điểm, mô tả) nhằm phục vụ chức năng đồng bộ 2 chiều giữa Mỹ Lích và Google Calendar của bạn.</li>
-      </ul>
-
-      <h2>2. Mục đích sử dụng dữ liệu</h2>
-      <p>Chúng tôi <strong>CHỈ</strong> sử dụng dữ liệu được cấp quyền từ Google Calendar cho các mục đích sau:</p>
-      <ul>
-        <li>Hiển thị lịch trình và sự kiện của bạn trên giao diện CLI/TUI của Mỹ Lích.</li>
-        <li>Đồng bộ hóa 2 chiều: Khi bạn tạo/sửa sự kiện trên Mỹ Lích, sự kiện được cập nhật lên Google Calendar; và ngược lại khi có sự kiện mới trên Google Calendar, sự kiện được kéo về ứng dụng Mỹ Lích của bạn.</li>
-      </ul>
-
-      <h2>3. Lưu trữ và Bảo mật Dữ liệu</h2>
-      <ul>
-        <li><strong>Máy chủ tự quản lý (Self-hosted)</strong>: Toàn bộ dữ liệu lịch và Refresh Token được lưu trữ trên cơ sở dữ liệu SQLite riêng của máy chủ do chính bạn hoặc quản trị viên hệ thống của bạn triển khai.</li>
-        <li><strong>Không chia sẻ với bên thứ ba</strong>: Chúng tôi không bao giờ bán, cho thuê, chia sẻ hay chuyển giao dữ liệu lịch của bạn cho bất kỳ bên thứ ba, nhà quảng cáo, mạng lưới tiếp thị hoặc mô hình huấn luyện AI nào.</li>
-        <li><strong>Mã hóa bảo mật</strong>: Tất cả các kết nối trao đổi dữ liệu với Google Calendar API đều được thực hiện qua giao thức mã hóa HTTPS/TLS an toàn.</li>
-      </ul>
-
-      <h2>4. Tuân thủ Chính sách Dữ liệu Người dùng của Google</h2>
-      <p>Mỹ Lích hoàn toàn tuân thủ <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener" style="color: var(--primary);">Google API Services User Data Policy</a>, bao gồm các yêu cầu về <em>Limited Use (Sử dụng có giới hạn)</em>.</p>
-
-      <h2>5. Quyền kiểm soát và Xóa dữ liệu của bạn</h2>
-      <ul>
-        <li><strong>Hủy liên kết tài khoản Google</strong>: Bạn có thể thu hồi quyền truy cập của Mỹ Lích bất kỳ lúc nào bằng lệnh CLI: <code>lich google disconnect</code> hoặc trực tiếp tại trang quản lý tài khoản Google: <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener" style="color: var(--primary);">Google Account Permissions</a>.</li>
-        <li><strong>Xóa toàn bộ dữ liệu</strong>: Bạn có thể xóa sạch toàn bộ dữ liệu trên máy chủ bằng lệnh: <code>lich nuke-database --remote</code>.</li>
-      </ul>
-
-      <h2>6. Liên hệ</h2>
-      <p>Nếu bạn có bất kỳ câu hỏi nào về Chính sách bảo mật này, vui lòng liên hệ hoặc mở Issue tại kho mã nguồn chính thức: <a href="https://github.com/spiderdev-vn/mylich" target="_blank" rel="noopener" style="color: var(--primary);">https://github.com/spiderdev-vn/mylich</a>.</p>
     `;
     return renderLayout('Chính sách bảo mật', content);
   });
@@ -266,29 +473,28 @@ $ lich google sync
   app.get('/terms', async (_request, reply) => {
     reply.type('text/html; charset=utf-8');
     const content = `
-      <h1>Điều Khoản Dịch Vụ (Terms of Service)</h1>
-      <p class="tagline">Cập nhật lần cuối: Ngày 19 tháng 08 năm 2026</p>
+      <div class="doc-container">
+        <h1>📜 Điều Khoản Dịch Vụ (Terms of Service)</h1>
+        <p style="color: var(--pop-yellow); font-family: 'JetBrains Mono', monospace; font-size: 0.95rem;">Cập nhật lần cuối: Ngày 19 tháng 08 năm 2026</p>
+        <br>
+        <h2>1. Giới thiệu</h2>
+        <p>Chào mừng bạn đến với <strong>Mỹ Lích (Lich)</strong> — giải pháp quản lý lịch cá nhân local-first mã nguồn mở. Khi sử dụng phần mềm hoặc dịch vụ máy chủ của chúng tôi, bạn đồng ý tuân thủ các điều khoản sau.</p>
 
-      <h2>1. Giới thiệu</h2>
-      <p>Chào mừng bạn đến với <strong>Mỹ Lích (Lich)</strong> — giải pháp quản lý lịch cá nhân local-first mã nguồn mở. Bằng cách sử dụng phần mềm hoặc dịch vụ máy chủ của chúng tôi, bạn đồng ý tuân thủ các điều khoản sau.</p>
+        <h2>2. Giấy phép & Mã nguồn mở</h2>
+        <p>Mỹ Lích được phát hành theo giấy phép <strong>MIT License</strong>. Bạn có quyền tự do sử dụng, chỉnh sửa, phân phối và triển khai tự host phục vụ mục đích cá nhân hoặc thương mại.</p>
 
-      <h2>2. Giấy phép & Sử dụng mã nguồn</h2>
-      <p>Mỹ Lích là phần mềm mã nguồn mở được phát hành theo giấy phép MIT License. Bạn có quyền tự do sử dụng, chỉnh sửa, phân phối và triển khai tự host phục vụ mục đích cá nhân hoặc thương mại theo các điều khoản của giấy phép MIT.</p>
+        <h2>3. Trách nhiệm người dùng</h2>
+        <ul>
+          <li>Bạn chịu trách nhiệm bảo mật thông tin đăng nhập, JWT Secret và dữ liệu lưu trữ trên máy chủ tự host của mình.</li>
+          <li>Không sử dụng dịch vụ vào các mục đích vi phạm pháp luật hoặc can thiệp trái phép vào hệ thống của bên thứ ba.</li>
+        </ul>
 
-      <h2>3. Trách nhiệm của người dùng</h2>
-      <ul>
-        <li>Bạn chịu trách nhiệm bảo mật thông tin đăng nhập, JWT Secret và dữ liệu lưu trữ trên máy chủ tự host của mình.</li>
-        <li>Không sử dụng dịch vụ để thực hiện các hành vi vi phạm pháp luật hoặc can thiệp trái phép vào hệ thống của bên thứ ba (bao gồm dịch vụ của Google).</li>
-      </ul>
+        <h2>4. Dịch vụ Tích hợp Bên thứ ba</h2>
+        <p>Khi bạn kích hoạt đồng bộ hóa Google Calendar, bạn đồng thời chịu sự ràng buộc bởi Điều khoản dịch vụ của Google.</p>
 
-      <h2>4. Dịch vụ Tích hợp Bên thứ ba (Google Calendar)</h2>
-      <p>Khi bạn kích hoạt tính năng đồng bộ hóa với Google Calendar, bạn đồng thời chịu sự ràng buộc bởi các Điều khoản dịch vụ và Chính sách của Google. Mỹ Lích không chịu trách nhiệm đối với sự gián đoạn dịch vụ xuất phát từ phía nhà cung cấp bên thứ ba.</p>
-
-      <h2>5. Từ chối bảo đảm (Disclaimer)</h2>
-      <p>Phần mềm được cung cấp "nguyên trạng" (AS IS), không có bất kỳ sự bảo đảm rõ ràng hay ngụ ý nào. Các tác giả không chịu trách nhiệm đối với bất kỳ mất mát dữ liệu hoặc thiệt hại phát sinh từ việc sử dụng phần mềm.</p>
-
-      <h2>6. Thay đổi điều khoản</h2>
-      <p>Chúng tôi có thể cập nhật các điều khoản này khi cần thiết. Mọi thay đổi sẽ được công bố trực tiếp tại trang web này và trên kho mã nguồn GitHub.</p>
+        <h2>5. Từ chối bảo đảm (Disclaimer)</h2>
+        <p>Phần mềm được cung cấp "nguyên trạng" (AS IS), không có bảo đảm đi kèm. Các tác giả không chịu trách nhiệm đối với bất kỳ mất mát dữ liệu hoặc thiệt hại phát sinh từ việc sử dụng phần mềm.</p>
+      </div>
     `;
     return renderLayout('Điều khoản dịch vụ', content);
   });

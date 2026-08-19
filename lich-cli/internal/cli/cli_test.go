@@ -298,7 +298,7 @@ func TestCLI_NukeDatabaseRemote(t *testing.T) {
 	remoteNuked := false
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		if r.Method == http.MethodPost && r.URL.Path == "/nuke" {
+		if r.Method == http.MethodPost && r.URL.Path == "/api/v1/nuke" {
 			remoteNuked = true
 			_ = json.NewEncoder(w).Encode(map[string]any{"success": true})
 			return
@@ -350,9 +350,9 @@ func TestCLI_GoogleIntegrationCommands(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		switch {
-		case r.Method == http.MethodGet && r.URL.Path == "/integrations/google/auth-url":
-			_ = json.NewEncoder(w).Encode(api.GoogleAuthURLResponse{AuthURL: "http://127.0.0.1:3000/auth/google/callback?code=mock"})
-		case r.Method == http.MethodGet && r.URL.Path == "/integrations/google/status":
+		case r.Method == http.MethodGet && r.URL.Path == "/api/v1/integrations/google/auth-url":
+			_ = json.NewEncoder(w).Encode(api.GoogleAuthURLResponse{AuthURL: "http://127.0.0.1:3000/api/v1/auth/google/callback?code=mock"})
+		case r.Method == http.MethodGet && r.URL.Path == "/api/v1/integrations/google/status":
 			_ = json.NewEncoder(w).Encode(api.GoogleStatusResponse{
 				Connected: true,
 				Provider:  "google",
@@ -362,15 +362,15 @@ func TestCLI_GoogleIntegrationCommands(t *testing.T) {
 					{CalendarID: "cal-1", CalendarName: "Personal", ExternalCalendarID: "primary", SyncDirection: "bidirectional"},
 				},
 			})
-		case r.Method == http.MethodGet && r.URL.Path == "/integrations/google/calendars":
+		case r.Method == http.MethodGet && r.URL.Path == "/api/v1/integrations/google/calendars":
 			_ = json.NewEncoder(w).Encode(api.GoogleCalendarsResponse{
 				Calendars: []api.GoogleExternalCalendar{
 					{ID: "primary", Name: "Personal", IsPrimary: true, TimeZone: "UTC"},
 				},
 			})
-		case r.Method == http.MethodPost && r.URL.Path == "/integrations/google/sync":
+		case r.Method == http.MethodPost && r.URL.Path == "/api/v1/integrations/google/sync":
 			_ = json.NewEncoder(w).Encode(api.GoogleSyncResponse{Success: true, Pushed: 2, Pulled: 3})
-		case r.Method == http.MethodDelete && r.URL.Path == "/integrations/google":
+		case r.Method == http.MethodDelete && r.URL.Path == "/api/v1/integrations/google":
 			_ = json.NewEncoder(w).Encode(map[string]any{"success": true})
 		default:
 			w.WriteHeader(http.StatusOK)
@@ -424,15 +424,15 @@ func TestCLI_CalendarCommands(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		switch {
-		case r.Method == http.MethodGet && r.URL.Path == "/calendars":
+		case r.Method == http.MethodGet && r.URL.Path == "/api/v1/calendars":
 			_ = json.NewEncoder(w).Encode([]api.Calendar{
 				{ID: "cal-1", Name: "Personal", IsDefault: true, Timezone: "UTC"},
 			})
-		case r.Method == http.MethodPost && r.URL.Path == "/calendars":
+		case r.Method == http.MethodPost && r.URL.Path == "/api/v1/calendars":
 			_ = json.NewEncoder(w).Encode(api.Calendar{
 				ID: "cal-2", Name: "Work", Timezone: "Asia/Ho_Chi_Minh",
 			})
-		case r.Method == http.MethodPost && r.URL.Path == "/integrations/google/create-calendar":
+		case r.Method == http.MethodPost && r.URL.Path == "/api/v1/integrations/google/create-calendar":
 			_ = json.NewEncoder(w).Encode(map[string]any{
 				"success": true,
 				"external_calendar": map[string]any{
@@ -440,7 +440,7 @@ func TestCLI_CalendarCommands(t *testing.T) {
 					"name": "Work",
 				},
 			})
-		case r.Method == http.MethodDelete && strings.HasPrefix(r.URL.Path, "/calendars/"):
+		case r.Method == http.MethodDelete && strings.HasPrefix(r.URL.Path, "/api/v1/calendars/"):
 			w.WriteHeader(http.StatusNoContent)
 		default:
 			w.WriteHeader(http.StatusOK)

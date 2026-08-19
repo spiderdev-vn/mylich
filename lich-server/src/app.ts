@@ -113,50 +113,66 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
     });
   });
 
-  // Health check
+  // Auth decorator plugin
+  await app.register(createAuthPlugin(authService));
+
+  // 1. Public Web Routes (Root)
+  await app.register(publicRoutes);
+
+  // 2. Health check at root
   app.get('/health', async () => {
     return { status: 'ok' };
   });
 
-  // Auth decorator plugin
-  await app.register(createAuthPlugin(authService));
-
-  // Routes
-  await app.register(publicRoutes);
-  await app.register(createAuthRoutes(authService), { prefix: '/auth' });
-  await app.register(createCalendarRoutes(calendarService), { prefix: '/calendars' });
-  await app.register(createEventRoutes(eventService), { prefix: '/events' });
-  await app.register(syncRoutes, { syncService });
-  await app.register(integrationRoutes, { integrationService });
-
-  // Remote nuke endpoint for resetting user data
-  app.post('/nuke', { preHandler: [app.authenticate] }, async (request) => {
-    const user = request.user as { id: string };
-    const userId = user.id;
-
-    db.exec('BEGIN TRANSACTION;');
-    try {
-      db.prepare('DELETE FROM conflicts WHERE user_id = ?').run(userId);
-      db.prepare('DELETE FROM integrations WHERE user_id = ?').run(userId);
-      db.prepare('DELETE FROM change_logs WHERE user_id = ?').run(userId);
-      db.prepare('DELETE FROM calendars WHERE user_id = ?').run(userId);
-
-      // Recreate default Personal calendar
-      calendarRepo.create({
-        id: crypto.randomUUID(),
-        user_id: userId,
-        name: 'Personal',
-        timezone: 'UTC',
-        is_default: true,
-      });
-
-      db.exec('COMMIT;');
-      return { success: true, message: 'Remote user data nuked successfully' };
-    } catch (err) {
-      db.exec('ROLLBACK;');
-      throw err;
-    }
+  // OAuth callback root alias for Google Console compatibility
+  app.get('/auth/google/callback', async (request, reply) => {
+    const query = new URLSearchParams(request.query as Record<string, string>).toString();
+    return reply.redirect(`/api/v1/auth/google/callback${query ? '?' + query : ''}`, 307);
   });
+
+  // 3. Versioned REST API Routes (/api/v1)
+  await app.register(
+    async (v1) => {
+      // Health check in API v1
+      v1.get('/health', async () => ({ status: 'ok' }));
+
+      await v1.register(createAuthRoutes(authService), { prefix: '/auth' });
+      await v1.register(createCalendarRoutes(calendarService), { prefix: '/calendars' });
+      await v1.register(createEventRoutes(eventService), { prefix: '/events' });
+      await v1.register(syncRoutes, { syncService });
+      await v1.register(integrationRoutes, { integrationService });
+
+      // Remote nuke endpoint for resetting user data
+      v1.post('/nuke', { preHandler: [app.authenticate] }, async (request) => {
+        const user = request.user as { id: string };
+        const userId = user.id;
+
+        db.exec('BEGIN TRANSACTION;');
+        try {
+          db.prepare('DELETE FROM conflicts WHERE user_id = ?').run(userId);
+          db.prepare('DELETE FROM integrations WHERE user_id = ?').run(userId);
+          db.prepare('DELETE FROM change_logs WHERE user_id = ?').run(userId);
+          db.prepare('DELETE FROM calendars WHERE user_id = ?').run(userId);
+
+          // Recreate default Personal calendar
+          calendarRepo.create({
+            id: crypto.randomUUID(),
+            user_id: userId,
+            name: 'Personal',
+            timezone: 'UTC',
+            is_default: true,
+          });
+
+          db.exec('COMMIT;');
+          return { success: true, message: 'Remote user data nuked successfully' };
+        } catch (err) {
+          db.exec('ROLLBACK;');
+          throw err;
+        }
+      });
+    },
+    { prefix: '/api/v1' },
+  );
 
   // Store db instance on fastify for test cleanup / closing
   app.decorate('db', db);

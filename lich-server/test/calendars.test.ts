@@ -7,7 +7,7 @@ describe('Calendar Endpoints', () => {
     const app = await createTestApp();
     const regRes = await app.inject({
       method: 'POST',
-      url: '/auth/register',
+      url: '/api/v1/auth/register',
       payload: { username: 'caluser', password: 'password123' },
     });
     const { token } = JSON.parse(regRes.body);
@@ -16,7 +16,7 @@ describe('Calendar Endpoints', () => {
     // 1. Create a work calendar
     const createRes = await app.inject({
       method: 'POST',
-      url: '/calendars',
+      url: '/api/v1/calendars',
       headers: authHeaders,
       payload: {
         name: 'Work',
@@ -32,7 +32,7 @@ describe('Calendar Endpoints', () => {
     // 2. List calendars (should have 2: Personal + Work)
     const listRes = await app.inject({
       method: 'GET',
-      url: '/calendars',
+      url: '/api/v1/calendars',
       headers: authHeaders,
     });
     assert.equal(listRes.statusCode, 200);
@@ -42,7 +42,7 @@ describe('Calendar Endpoints', () => {
     // 3. Get single calendar
     const getRes = await app.inject({
       method: 'GET',
-      url: `/calendars/${createdCal.id}`,
+      url: `/api/v1/calendars/${createdCal.id}`,
       headers: authHeaders,
     });
     assert.equal(getRes.statusCode, 200);
@@ -52,7 +52,7 @@ describe('Calendar Endpoints', () => {
     // 4. Update calendar
     const updateRes = await app.inject({
       method: 'PATCH',
-      url: `/calendars/${createdCal.id}`,
+      url: `/api/v1/calendars/${createdCal.id}`,
       headers: authHeaders,
       payload: {
         name: 'Work Updated',
@@ -67,7 +67,7 @@ describe('Calendar Endpoints', () => {
     // 5. Delete calendar
     const delRes = await app.inject({
       method: 'DELETE',
-      url: `/calendars/${createdCal.id}`,
+      url: `/api/v1/calendars/${createdCal.id}`,
       headers: authHeaders,
     });
     assert.equal(delRes.statusCode, 204);
@@ -75,7 +75,7 @@ describe('Calendar Endpoints', () => {
     // 6. Verify deleted
     const verifyGet = await app.inject({
       method: 'GET',
-      url: `/calendars/${createdCal.id}`,
+      url: `/api/v1/calendars/${createdCal.id}`,
       headers: authHeaders,
     });
     assert.equal(verifyGet.statusCode, 404);
@@ -85,14 +85,14 @@ describe('Calendar Endpoints', () => {
     const app = await createTestApp();
     const regRes = await app.inject({
       method: 'POST',
-      url: '/auth/register',
+      url: '/api/v1/auth/register',
       payload: { username: 'tzuser', password: 'password123' },
     });
     const { token } = JSON.parse(regRes.body);
 
     const res = await app.inject({
       method: 'POST',
-      url: '/calendars',
+      url: '/api/v1/calendars',
       headers: { authorization: `Bearer ${token}` },
       payload: {
         name: 'Bad TZ',

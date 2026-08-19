@@ -10,8 +10,8 @@ import (
 
 func TestClient_Health(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/health" {
-			t.Errorf("expected /health, got %s", r.URL.Path)
+		if r.URL.Path != "/api/v1/health" {
+			t.Errorf("expected /api/v1/health, got %s", r.URL.Path)
 		}
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"status":"ok"}`))
@@ -27,7 +27,7 @@ func TestClient_Health(t *testing.T) {
 
 func TestClient_Login(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost || r.URL.Path != "/auth/login" {
+		if r.Method != http.MethodPost || r.URL.Path != "/api/v1/auth/login" {
 			t.Errorf("unexpected request: %s %s", r.Method, r.URL.Path)
 		}
 
@@ -80,7 +80,7 @@ func TestClient_EventsCRUD(t *testing.T) {
 		}
 
 		switch {
-		case r.Method == http.MethodPost && r.URL.Path == "/events":
+		case r.Method == http.MethodPost && r.URL.Path == "/api/v1/events":
 			var req CreateEventRequest
 			json.NewDecoder(r.Body).Decode(&req)
 			event := Event{
@@ -94,7 +94,7 @@ func TestClient_EventsCRUD(t *testing.T) {
 			w.WriteHeader(http.StatusCreated)
 			json.NewEncoder(w).Encode(event)
 
-		case r.Method == http.MethodGet && r.URL.Path == "/events":
+		case r.Method == http.MethodGet && r.URL.Path == "/api/v1/events":
 			list := make([]Event, 0, len(eventsDB))
 			for _, e := range eventsDB {
 				list = append(list, e)
@@ -102,7 +102,7 @@ func TestClient_EventsCRUD(t *testing.T) {
 			w.WriteHeader(http.StatusOK)
 			json.NewEncoder(w).Encode(list)
 
-		case r.Method == http.MethodDelete && r.URL.Path == "/events/event-123":
+		case r.Method == http.MethodDelete && r.URL.Path == "/api/v1/events/event-123":
 			delete(eventsDB, "event-123")
 			w.WriteHeader(http.StatusNoContent)
 

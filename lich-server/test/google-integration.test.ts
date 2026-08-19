@@ -63,7 +63,7 @@ describe('Google Calendar Integration Tests', () => {
 
       const res = await app.inject({
         method: 'GET',
-        url: '/integrations/google/auth-url',
+        url: '/api/v1/integrations/google/auth-url',
         headers: { Authorization: `Bearer ${auth.token}` },
       });
 
@@ -81,7 +81,7 @@ describe('Google Calendar Integration Tests', () => {
       // 1. Initial status: disconnected
       const initialStatusRes = await app.inject({
         method: 'GET',
-        url: '/integrations/google/status',
+        url: '/api/v1/integrations/google/status',
         headers: { Authorization: `Bearer ${auth.token}` },
       });
       assert.equal(initialStatusRes.statusCode, 200);
@@ -90,7 +90,7 @@ describe('Google Calendar Integration Tests', () => {
       // 2. Fetch auth-url to get state
       const authUrlRes = await app.inject({
         method: 'GET',
-        url: '/integrations/google/auth-url',
+        url: '/api/v1/integrations/google/auth-url',
         headers: { Authorization: `Bearer ${auth.token}` },
       });
       const authUrl = JSON.parse(authUrlRes.payload).auth_url;
@@ -100,7 +100,7 @@ describe('Google Calendar Integration Tests', () => {
       // 3. Callback redirect simulation
       const callbackRes = await app.inject({
         method: 'GET',
-        url: `/auth/google/callback?code=mock-code-123&state=${state}`,
+        url: `/api/v1/auth/google/callback?code=mock-code-123&state=${state}`,
       });
       assert.equal(callbackRes.statusCode, 200);
       assert.ok(callbackRes.headers['content-type']?.includes('text/html'));
@@ -108,7 +108,7 @@ describe('Google Calendar Integration Tests', () => {
       // 4. Status is now connected with auto-mapped default calendar
       const statusRes = await app.inject({
         method: 'GET',
-        url: '/integrations/google/status',
+        url: '/api/v1/integrations/google/status',
         headers: { Authorization: `Bearer ${auth.token}` },
       });
       assert.equal(statusRes.statusCode, 200);
@@ -126,16 +126,16 @@ describe('Google Calendar Integration Tests', () => {
       // Connect first
       const authUrlRes = await app.inject({
         method: 'GET',
-        url: '/integrations/google/auth-url',
+        url: '/api/v1/integrations/google/auth-url',
         headers: { Authorization: `Bearer ${auth.token}` },
       });
       const state = new URL(JSON.parse(authUrlRes.payload).auth_url).searchParams.get('state');
-      await app.inject({ method: 'GET', url: `/auth/google/callback?code=mock-code&state=${state}` });
+      await app.inject({ method: 'GET', url: `/api/v1/auth/google/callback?code=mock-code&state=${state}` });
 
       // List external calendars
       const calListRes = await app.inject({
         method: 'GET',
-        url: '/integrations/google/calendars',
+        url: '/api/v1/integrations/google/calendars',
         headers: { Authorization: `Bearer ${auth.token}` },
       });
       assert.equal(calListRes.statusCode, 200);
@@ -145,7 +145,7 @@ describe('Google Calendar Integration Tests', () => {
       // Get user's default calendar
       const userCalsRes = await app.inject({
         method: 'GET',
-        url: '/calendars',
+        url: '/api/v1/calendars',
         headers: { Authorization: `Bearer ${auth.token}` },
       });
       const userCalId = JSON.parse(userCalsRes.payload)[0].id;
@@ -153,7 +153,7 @@ describe('Google Calendar Integration Tests', () => {
       // Update mapping
       const mapRes = await app.inject({
         method: 'POST',
-        url: '/integrations/google/map',
+        url: '/api/v1/integrations/google/map',
         headers: { Authorization: `Bearer ${auth.token}` },
         payload: {
           calendar_id: userCalId,
@@ -173,23 +173,23 @@ describe('Google Calendar Integration Tests', () => {
       // 1. Connect
       const authUrlRes = await app.inject({
         method: 'GET',
-        url: '/integrations/google/auth-url',
+        url: '/api/v1/integrations/google/auth-url',
         headers: { Authorization: `Bearer ${auth.token}` },
       });
       const state = new URL(JSON.parse(authUrlRes.payload).auth_url).searchParams.get('state');
-      await app.inject({ method: 'GET', url: `/auth/google/callback?code=mock-code&state=${state}` });
+      await app.inject({ method: 'GET', url: `/api/v1/auth/google/callback?code=mock-code&state=${state}` });
 
       // 2. Create a local event in Lich
       const userCalsRes = await app.inject({
         method: 'GET',
-        url: '/calendars',
+        url: '/api/v1/calendars',
         headers: { Authorization: `Bearer ${auth.token}` },
       });
       const userCalId = JSON.parse(userCalsRes.payload)[0].id;
 
       await app.inject({
         method: 'POST',
-        url: '/events',
+        url: '/api/v1/events',
         headers: { Authorization: `Bearer ${auth.token}` },
         payload: {
           calendar_id: userCalId,
@@ -203,7 +203,7 @@ describe('Google Calendar Integration Tests', () => {
       // 3. Trigger Sync
       const syncRes = await app.inject({
         method: 'POST',
-        url: '/integrations/google/sync',
+        url: '/api/v1/integrations/google/sync',
         headers: { Authorization: `Bearer ${auth.token}` },
         payload: { direction: 'both' },
       });
@@ -216,14 +216,14 @@ describe('Google Calendar Integration Tests', () => {
       // 4. Disconnect
       const disconnectRes = await app.inject({
         method: 'DELETE',
-        url: '/integrations/google',
+        url: '/api/v1/integrations/google',
         headers: { Authorization: `Bearer ${auth.token}` },
       });
       assert.equal(disconnectRes.statusCode, 200);
 
       const statusAfter = await app.inject({
         method: 'GET',
-        url: '/integrations/google/status',
+        url: '/api/v1/integrations/google/status',
         headers: { Authorization: `Bearer ${auth.token}` },
       });
       assert.equal(JSON.parse(statusAfter.payload).connected, false);
@@ -237,16 +237,16 @@ describe('Google Calendar Integration Tests', () => {
       // 1. Connect
       const authUrlRes = await app.inject({
         method: 'GET',
-        url: '/integrations/google/auth-url',
+        url: '/api/v1/integrations/google/auth-url',
         headers: { Authorization: `Bearer ${auth.token}` },
       });
       const state = new URL(JSON.parse(authUrlRes.payload).auth_url).searchParams.get('state');
-      await app.inject({ method: 'GET', url: `/auth/google/callback?code=mock-code&state=${state}` });
+      await app.inject({ method: 'GET', url: `/api/v1/auth/google/callback?code=mock-code&state=${state}` });
 
       // 2. Create a secondary Lich calendar
       const calRes = await app.inject({
         method: 'POST',
-        url: '/calendars',
+        url: '/api/v1/calendars',
         headers: { Authorization: `Bearer ${auth.token}` },
         payload: { name: 'Projects & Work', timezone: 'Asia/Ho_Chi_Minh' },
       });
@@ -255,7 +255,7 @@ describe('Google Calendar Integration Tests', () => {
       // 3. Create on Google and map
       const createGoogleRes = await app.inject({
         method: 'POST',
-        url: '/integrations/google/create-calendar',
+        url: '/api/v1/integrations/google/create-calendar',
         headers: { Authorization: `Bearer ${auth.token}` },
         payload: { calendar_id: newCal.id, name: 'Projects & Work (Google)' },
       });
@@ -268,7 +268,7 @@ describe('Google Calendar Integration Tests', () => {
       // 4. Verify in status mapped calendars
       const statusRes = await app.inject({
         method: 'GET',
-        url: '/integrations/google/status',
+        url: '/api/v1/integrations/google/status',
         headers: { Authorization: `Bearer ${auth.token}` },
       });
       const status = JSON.parse(statusRes.payload);

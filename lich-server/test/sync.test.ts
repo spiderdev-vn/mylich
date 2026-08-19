@@ -20,7 +20,7 @@ describe('Sync Endpoints', () => {
     // 1. Initial sync - should have 0 changes
     const initialSyncRes = await app.inject({
       method: 'GET',
-      url: '/sync',
+      url: '/api/v1/sync',
       headers: { authorization: `Bearer ${token}` },
     });
     assert.equal(initialSyncRes.statusCode, 200);
@@ -31,7 +31,7 @@ describe('Sync Endpoints', () => {
     // 2. Create an event
     const createRes = await app.inject({
       method: 'POST',
-      url: '/events',
+      url: '/api/v1/events',
       headers: { authorization: `Bearer ${token}` },
       payload: {
         title: 'Meeting 1',
@@ -46,7 +46,7 @@ describe('Sync Endpoints', () => {
     // 3. Sync since initial cursor - should contain create action
     const sync1Res = await app.inject({
       method: 'GET',
-      url: `/sync?since=${encodeURIComponent(initialCursor)}`,
+      url: `/api/v1/sync?since=${encodeURIComponent(initialCursor)}`,
       headers: { authorization: `Bearer ${token}` },
     });
     assert.equal(sync1Res.statusCode, 200);
@@ -61,7 +61,7 @@ describe('Sync Endpoints', () => {
     // 4. Update the event
     const updateRes = await app.inject({
       method: 'PATCH',
-      url: `/events/${createdEvent.id}`,
+      url: `/api/v1/events/${createdEvent.id}`,
       headers: { authorization: `Bearer ${token}` },
       payload: {
         title: 'Meeting 1 Updated',
@@ -72,15 +72,15 @@ describe('Sync Endpoints', () => {
     // 5. Delete the event (soft delete)
     const deleteRes = await app.inject({
       method: 'DELETE',
-      url: `/events/${createdEvent.id}`,
+      url: `/api/v1/events/${createdEvent.id}`,
       headers: { authorization: `Bearer ${token}` },
     });
     assert.equal(deleteRes.statusCode, 204);
 
-    // 6. Verify deleted event is not returned in standard GET /events
+    // 6. Verify deleted event is not returned in standard GET /api/v1/events
     const listRes = await app.inject({
       method: 'GET',
-      url: '/events',
+      url: '/api/v1/events',
       headers: { authorization: `Bearer ${token}` },
     });
     assert.equal(listRes.statusCode, 200);
@@ -90,7 +90,7 @@ describe('Sync Endpoints', () => {
     // 7. Sync since cursor1 - should contain update and delete changes
     const sync2Res = await app.inject({
       method: 'GET',
-      url: `/sync?since=${encodeURIComponent(cursor1)}`,
+      url: `/api/v1/sync?since=${encodeURIComponent(cursor1)}`,
       headers: { authorization: `Bearer ${token}` },
     });
     assert.equal(sync2Res.statusCode, 200);
@@ -109,7 +109,7 @@ describe('Sync Endpoints', () => {
     // User A creates event
     await app.inject({
       method: 'POST',
-      url: '/events',
+      url: '/api/v1/events',
       headers: { authorization: `Bearer ${tokenA}` },
       payload: {
         title: 'Secret Event A',
@@ -122,7 +122,7 @@ describe('Sync Endpoints', () => {
     // User B syncs - should see 0 changes
     const syncBRes = await app.inject({
       method: 'GET',
-      url: '/sync',
+      url: '/api/v1/sync',
       headers: { authorization: `Bearer ${tokenB}` },
     });
     assert.equal(syncBRes.statusCode, 200);

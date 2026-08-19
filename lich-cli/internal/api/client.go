@@ -20,6 +20,9 @@ type Client struct {
 
 func NewClient(baseURL, token string) *Client {
 	cleanURL := strings.TrimRight(baseURL, "/")
+	if !strings.HasSuffix(cleanURL, "/api/v1") {
+		cleanURL = cleanURL + "/api/v1"
+	}
 	return &Client{
 		BaseURL: cleanURL,
 		Token:   token,

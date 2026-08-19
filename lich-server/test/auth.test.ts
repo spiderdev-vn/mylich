@@ -7,7 +7,7 @@ describe('Auth Endpoints', () => {
     const app = await createTestApp();
     const res = await app.inject({
       method: 'POST',
-      url: '/auth/register',
+      url: '/api/v1/auth/register',
       payload: {
         username: 'alice',
         password: 'password123',
@@ -23,7 +23,7 @@ describe('Auth Endpoints', () => {
     // Verify calendar was auto-created
     const calRes = await app.inject({
       method: 'GET',
-      url: '/calendars',
+      url: '/api/v1/calendars',
       headers: {
         authorization: `Bearer ${body.token}`,
       },
@@ -40,13 +40,13 @@ describe('Auth Endpoints', () => {
     const app = await createTestApp();
     await app.inject({
       method: 'POST',
-      url: '/auth/register',
+      url: '/api/v1/auth/register',
       payload: { username: 'bob', password: 'password123' },
     });
 
     const res = await app.inject({
       method: 'POST',
-      url: '/auth/register',
+      url: '/api/v1/auth/register',
       payload: { username: 'bob', password: 'differentpassword' },
     });
 
@@ -59,13 +59,13 @@ describe('Auth Endpoints', () => {
     const app = await createTestApp();
     await app.inject({
       method: 'POST',
-      url: '/auth/register',
+      url: '/api/v1/auth/register',
       payload: { username: 'charlie', password: 'securepassword' },
     });
 
     const res = await app.inject({
       method: 'POST',
-      url: '/auth/login',
+      url: '/api/v1/auth/login',
       payload: { username: 'charlie', password: 'securepassword' },
     });
 
@@ -79,13 +79,13 @@ describe('Auth Endpoints', () => {
     const app = await createTestApp();
     await app.inject({
       method: 'POST',
-      url: '/auth/register',
+      url: '/api/v1/auth/register',
       payload: { username: 'david', password: 'mypassword' },
     });
 
     const res = await app.inject({
       method: 'POST',
-      url: '/auth/login',
+      url: '/api/v1/auth/login',
       payload: { username: 'david', password: 'wrongpassword' },
     });
 
@@ -98,14 +98,14 @@ describe('Auth Endpoints', () => {
     const app = await createTestApp();
     const regRes = await app.inject({
       method: 'POST',
-      url: '/auth/register',
+      url: '/api/v1/auth/register',
       payload: { username: 'eve', password: 'password123' },
     });
     const { token } = JSON.parse(regRes.body);
 
     const res = await app.inject({
       method: 'GET',
-      url: '/auth/me',
+      url: '/api/v1/auth/me',
       headers: { authorization: `Bearer ${token}` },
     });
 
@@ -118,7 +118,7 @@ describe('Auth Endpoints', () => {
     const app = await createTestApp();
     const res = await app.inject({
       method: 'GET',
-      url: '/auth/me',
+      url: '/api/v1/auth/me',
     });
 
     assert.equal(res.statusCode, 401);

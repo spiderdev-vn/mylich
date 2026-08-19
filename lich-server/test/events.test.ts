@@ -7,7 +7,7 @@ describe('Event Endpoints', () => {
     const app = await createTestApp();
     const regRes = await app.inject({
       method: 'POST',
-      url: '/auth/register',
+      url: '/api/v1/auth/register',
       payload: { username: 'eventuser', password: 'password123' },
     });
     const { token } = JSON.parse(regRes.body);
@@ -16,7 +16,7 @@ describe('Event Endpoints', () => {
     // 1. Create event
     const createRes = await app.inject({
       method: 'POST',
-      url: '/events',
+      url: '/api/v1/events',
       headers: authHeaders,
       payload: {
         title: 'Team Sync',
@@ -37,7 +37,7 @@ describe('Event Endpoints', () => {
     // 2. Get event by id
     const getRes = await app.inject({
       method: 'GET',
-      url: `/events/${event.id}`,
+      url: `/api/v1/events/${event.id}`,
       headers: authHeaders,
     });
     assert.equal(getRes.statusCode, 200);
@@ -47,7 +47,7 @@ describe('Event Endpoints', () => {
     // 3. Update event
     const updateRes = await app.inject({
       method: 'PATCH',
-      url: `/events/${event.id}`,
+      url: `/api/v1/events/${event.id}`,
       headers: authHeaders,
       payload: {
         title: 'Updated Team Sync',
@@ -62,7 +62,7 @@ describe('Event Endpoints', () => {
     // 4. Delete event
     const deleteRes = await app.inject({
       method: 'DELETE',
-      url: `/events/${event.id}`,
+      url: `/api/v1/events/${event.id}`,
       headers: authHeaders,
     });
     assert.equal(deleteRes.statusCode, 204);
@@ -70,7 +70,7 @@ describe('Event Endpoints', () => {
     // 5. Verify deleted
     const verifyGet = await app.inject({
       method: 'GET',
-      url: `/events/${event.id}`,
+      url: `/api/v1/events/${event.id}`,
       headers: authHeaders,
     });
     assert.equal(verifyGet.statusCode, 404);
@@ -80,14 +80,14 @@ describe('Event Endpoints', () => {
     const app = await createTestApp();
     const regRes = await app.inject({
       method: 'POST',
-      url: '/auth/register',
+      url: '/api/v1/auth/register',
       payload: { username: 'datevaluser', password: 'password123' },
     });
     const { token } = JSON.parse(regRes.body);
 
     const res = await app.inject({
       method: 'POST',
-      url: '/events',
+      url: '/api/v1/events',
       headers: { authorization: `Bearer ${token}` },
       payload: {
         title: 'Invalid Time Event',
@@ -105,7 +105,7 @@ describe('Event Endpoints', () => {
     const app = await createTestApp();
     const regRes = await app.inject({
       method: 'POST',
-      url: '/auth/register',
+      url: '/api/v1/auth/register',
       payload: { username: 'rangeuser', password: 'password123' },
     });
     const { token } = JSON.parse(regRes.body);
@@ -114,7 +114,7 @@ describe('Event Endpoints', () => {
     // Create 3 events on different days
     await app.inject({
       method: 'POST',
-      url: '/events',
+      url: '/api/v1/events',
       headers: authHeaders,
       payload: {
         title: 'Event Aug 18 Evening',
@@ -124,7 +124,7 @@ describe('Event Endpoints', () => {
     });
     await app.inject({
       method: 'POST',
-      url: '/events',
+      url: '/api/v1/events',
       headers: authHeaders,
       payload: {
         title: 'Event Aug 18 Morning',
@@ -134,7 +134,7 @@ describe('Event Endpoints', () => {
     });
     await app.inject({
       method: 'POST',
-      url: '/events',
+      url: '/api/v1/events',
       headers: authHeaders,
       payload: {
         title: 'Event Aug 25',
@@ -146,7 +146,7 @@ describe('Event Endpoints', () => {
     // Query only Aug 18
     const queryRes = await app.inject({
       method: 'GET',
-      url: '/events?from=2026-08-18T00:00:00Z&to=2026-08-18T23:59:59Z',
+      url: '/api/v1/events?from=2026-08-18T00:00:00Z&to=2026-08-18T23:59:59Z',
       headers: authHeaders,
     });
 
@@ -162,7 +162,7 @@ describe('Event Endpoints', () => {
     const app = await createTestApp();
     const regRes = await app.inject({
       method: 'POST',
-      url: '/auth/register',
+      url: '/api/v1/auth/register',
       payload: { username: 'nukeuser', password: 'password123' },
     });
     const { token } = JSON.parse(regRes.body);
@@ -171,7 +171,7 @@ describe('Event Endpoints', () => {
     // Create an event
     await app.inject({
       method: 'POST',
-      url: '/events',
+      url: '/api/v1/events',
       headers: authHeaders,
       payload: {
         title: 'To Be Nuked',
@@ -180,10 +180,10 @@ describe('Event Endpoints', () => {
       },
     });
 
-    // Call POST /nuke
+    // Call POST /api/v1/nuke
     const nukeRes = await app.inject({
       method: 'POST',
-      url: '/nuke',
+      url: '/api/v1/nuke',
       headers: authHeaders,
     });
     assert.equal(nukeRes.statusCode, 200);
@@ -192,7 +192,7 @@ describe('Event Endpoints', () => {
     // Verify events are empty
     const listRes = await app.inject({
       method: 'GET',
-      url: '/events',
+      url: '/api/v1/events',
       headers: authHeaders,
     });
     assert.equal(listRes.statusCode, 200);
@@ -201,7 +201,7 @@ describe('Event Endpoints', () => {
     // Verify default calendar is recreated
     const calsRes = await app.inject({
       method: 'GET',
-      url: '/calendars',
+      url: '/api/v1/calendars',
       headers: authHeaders,
     });
     assert.equal(calsRes.statusCode, 200);

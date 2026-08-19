@@ -29,7 +29,7 @@ func TestSyncer_PushAndPull(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 
 		switch {
-		case r.Method == http.MethodPost && r.URL.Path == "/events":
+		case r.Method == http.MethodPost && r.URL.Path == "/api/v1/events":
 			var req api.CreateEventRequest
 			_ = json.NewDecoder(r.Body).Decode(&req)
 			ev := api.Event{
@@ -44,7 +44,7 @@ func TestSyncer_PushAndPull(t *testing.T) {
 			w.WriteHeader(http.StatusCreated)
 			_ = json.NewEncoder(w).Encode(ev)
 
-		case r.Method == http.MethodGet && r.URL.Path == "/sync":
+		case r.Method == http.MethodGet && r.URL.Path == "/api/v1/sync":
 			changes := []api.SyncChangeItem{
 				{
 					ID:         "sync-change-1",

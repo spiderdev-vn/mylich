@@ -11,6 +11,7 @@ export async function createTestApp(): Promise<FastifyInstance> {
     databasePath: ':memory:',
     jwtSecret: 'test-jwt-secret-key-32-characters-minimum-for-hs256',
     logLevel: 'silent',
+    trustProxy: false,
     useFakeGoogleProvider: true,
   };
 
@@ -24,7 +25,7 @@ export async function registerAndLoginUser(
 ): Promise<{ user: any; token: string }> {
   const regRes = await app.inject({
     method: 'POST',
-    url: '/auth/register',
+    url: '/api/v1/auth/register',
     payload: { username, password },
   });
 
