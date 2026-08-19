@@ -67,4 +67,10 @@ export const publicRoutes: FastifyPluginAsync = async (app) => {
   app.get('/hero.jpg', async (_request, reply) => {
     return serveFile(reply, 'hero.jpg', 'image/jpeg', 'public, max-age=86400');
   });
+
+  // 6. Google Site Verification Files
+  app.get('/google:hash.html', async (request, reply) => {
+    const { hash } = request.params as { hash: string };
+    return serveFile(reply, `google${hash}.html`, 'text/html; charset=utf-8', 'no-cache');
+  });
 };
