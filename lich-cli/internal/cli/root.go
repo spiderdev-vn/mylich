@@ -15,7 +15,7 @@ import (
 	"github.com/spiderdev-vn/mylich/lich-cli/internal/ui"
 )
 
-const Version = "v0.2.0"
+const Version = "v0.1.0"
 
 func printHelp(simple bool) {
 	if ui.IsSimpleMode(simple) {
