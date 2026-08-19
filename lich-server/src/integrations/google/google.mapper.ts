@@ -28,7 +28,7 @@ export class GoogleEventMapper {
    */
   public static toLich(
     googleEvent: ExternalEvent,
-    calendarId: string,
+    _calendarId?: string,
   ): {
     title: string;
     description: string;

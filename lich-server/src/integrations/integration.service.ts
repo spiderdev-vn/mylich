@@ -263,7 +263,7 @@ export class IntegrationService {
                   external_updated_at: updatedExt.updated,
                 });
                 totalPushed++;
-              } catch (err: any) {
+              } catch {
                 // Non-fatal per event
               }
             }
@@ -283,7 +283,7 @@ export class IntegrationService {
                 external_updated_at: createdExt.updated,
               });
               totalPushed++;
-            } catch (err: any) {
+            } catch {
               // Non-fatal per event
             }
           }
