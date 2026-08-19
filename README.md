@@ -1,6 +1,10 @@
 # Mỹ Lích — Lịch của mình, mình tính
 
-> Một cái lịch. Nhưng vì không thích mở trình duyệt nên làm luôn CLI.
+<p align="center">
+  <img src="assets/banner.jpg" alt="Mỹ Lích — Pop Claymorphic Terminal Calendar" width="100%" style="border-radius: 12px;" />
+</p>
+
+> **Một cái lịch vui vẻ, siêu tốc, local-first cho Terminal (CLI/TUI) và tự host backend riêng tư.**
 
 **Mỹ Lích** là hệ thống lịch cá nhân **local-first**, cho phép bạn quản lý lịch bằng terminal thông qua CLI/TUI, tự lưu trữ dữ liệu bằng `lich-server`, và đồng bộ với các dịch vụ bên ngoài như Google Calendar.
 
@@ -8,7 +12,7 @@ Tên là **Mỹ Lích**.
 
 Lệnh là **`lich`**.
 
-Không có lý do gì cả. Đừng hỏi.
+Không có lý do gì cả. Đừng hỏi. 🚀
 
 ---
 
