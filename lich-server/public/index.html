@@ -45,15 +45,20 @@
         </div>
       </section>
 
-      <!-- Terminal Preview Mockup -->
+      <!-- Terminal Preview Mockup with Live Typing Effect -->
       <div class="terminal-box">
         <div class="terminal-header">
           <span class="dot dot-red"></span>
           <span class="dot dot-yellow"></span>
           <span class="dot dot-green"></span>
           <span class="terminal-title">kunix@pop-terminal: ~ (lich-cli)</span>
+          <span class="terminal-status-badge">
+            <span class="terminal-status-dot"></span>
+            LIVE DEMO
+          </span>
         </div>
-        <div class="terminal-body">
+        <div class="terminal-body" id="terminal-content">
+          <!-- Initial SSR Content (replaced dynamically by typing animation) -->
           <div class="out-comment"># 1. Thêm sự kiện tức thì (phản hồi trong 1 mili-giây)</div>
           <div><span class="prompt">$</span> <span class="cmd">lich add</span> <span class="arg">"Ăn tối với người yêu"</span> --at <span class="arg">19:00</span></div>
           <div class="out-success">✓ Đã tạo sự kiện: Ăn tối với người yêu [19:00 - 20:00 20/08/2026]</div>
@@ -75,6 +80,7 @@
           <div class="out-comment"># 3. Đồng bộ 2 chiều với Google Calendar (Zero-Config)</div>
           <div><span class="prompt">$</span> <span class="cmd">lich google sync</span></div>
           <div class="out-success">✓ Đồng bộ 2 chiều thành công: 1 đẩy lên Google, 0 kéo về.</div>
+          <div><span class="prompt">$ </span><span class="cursor-blink"></span></div>
         </div>
       </div>
 
@@ -107,5 +113,111 @@
       </div>
     </footer>
   </div>
+
+  <!-- Terminal Typing Simulation Script -->
+  <script>
+    (function() {
+      const terminalBody = document.getElementById('terminal-content');
+      if (!terminalBody) return;
+
+      const steps = [
+        {
+          comment: '# 1. Thêm sự kiện tức thì (phản hồi trong 1 mili-giây)',
+          cmdHtml: '<span class="prompt">$</span> <span class="cmd">lich add</span> <span class="arg">"Ăn tối với người yêu"</span> --at <span class="arg">19:00</span>',
+          rawCmd: 'lich add "Ăn tối với người yêu" --at 19:00',
+          outHtml: '<div class="out-success">✓ Đã tạo sự kiện: Ăn tối với người yêu [19:00 - 20:00 20/08/2026]</div>'
+        },
+        {
+          comment: '# 2. Xem lịch trình hôm nay dạng TUI / Agenda siêu đẹp',
+          cmdHtml: '<span class="prompt">$</span> <span class="cmd">lich today</span>',
+          rawCmd: 'lich today',
+          outHtml: `
+            <div class="tui-agenda-box">
+              <div class="tui-agenda-header">🗓️ LỊCH HÔM NAY</div>
+              <div class="tui-agenda-row">
+                <span class="tui-agenda-time">10:00 - 11:30</span>
+                <span class="tui-agenda-text">Họp kiến trúc hệ thống</span>
+              </div>
+              <div class="tui-agenda-row">
+                <span class="tui-agenda-time">19:00 - 20:00</span>
+                <span class="tui-agenda-text">Ăn tối với người yêu 💕</span>
+              </div>
+            </div>`
+        },
+        {
+          comment: '# 3. Đồng bộ 2 chiều với Google Calendar (Zero-Config)',
+          cmdHtml: '<span class="prompt">$</span> <span class="cmd">lich google sync</span>',
+          rawCmd: 'lich google sync',
+          outHtml: '<div class="out-success">✓ Đồng bộ 2 chiều thành công: 1 đẩy lên Google, 0 kéo về.</div>'
+        }
+      ];
+
+      const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+      async function runTypingDemo() {
+        // Initial gentle delay
+        await sleep(1200);
+
+        while (true) {
+          terminalBody.innerHTML = '';
+          
+          for (let i = 0; i < steps.length; i++) {
+            const step = steps[i];
+            
+            // 1. Comment
+            const commentDiv = document.createElement('div');
+            commentDiv.className = 'out-comment';
+            commentDiv.textContent = step.comment;
+            terminalBody.appendChild(commentDiv);
+            await sleep(280);
+
+            // 2. Command Line with prompt and typing text
+            const lineDiv = document.createElement('div');
+            const promptSpan = document.createElement('span');
+            promptSpan.className = 'prompt';
+            promptSpan.textContent = '$ ';
+            lineDiv.appendChild(promptSpan);
+
+            const typingSpan = document.createElement('span');
+            lineDiv.appendChild(typingSpan);
+
+            const cursor = document.createElement('span');
+            cursor.className = 'cursor-blink';
+            lineDiv.appendChild(cursor);
+
+            terminalBody.appendChild(lineDiv);
+
+            // Type out command with human jitter (30-55ms)
+            for (let charIndex = 0; charIndex < step.rawCmd.length; charIndex++) {
+              typingSpan.textContent += step.rawCmd[charIndex];
+              const jitter = Math.floor(Math.random() * 25) + 30;
+              await sleep(jitter);
+            }
+
+            // Replace plain text with formatted syntax highlighted HTML
+            cursor.remove();
+            lineDiv.innerHTML = step.cmdHtml;
+            await sleep(200);
+
+            // 3. Output
+            const outContainer = document.createElement('div');
+            outContainer.innerHTML = step.outHtml;
+            terminalBody.appendChild(outContainer);
+            await sleep(650);
+          }
+
+          // Trailing prompt with blinking cursor
+          const endPrompt = document.createElement('div');
+          endPrompt.innerHTML = '<span class="prompt">$ </span><span class="cursor-blink"></span>';
+          terminalBody.appendChild(endPrompt);
+
+          // Pause at the end for 6 seconds before loop restart
+          await sleep(6000);
+        }
+      }
+
+      runTypingDemo();
+    })();
+  </script>
 </body>
 </html>
