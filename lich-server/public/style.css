@@ -562,17 +562,19 @@ h1 {
 }
 
 .selfhost-icon {
-  font-size: 2rem;
+  font-size: 1.8rem;
   background: var(--surface);
   border: 2px solid var(--border);
-  width: 52px;
-  height: 52px;
-  border-radius: 14px;
+  width: 54px;
+  height: 54px;
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   box-shadow: 0 3px 0 var(--border);
+  overflow: hidden;
+  line-height: 1;
 }
 
 .selfhost-content h4 {
