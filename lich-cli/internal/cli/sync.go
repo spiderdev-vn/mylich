@@ -113,54 +113,70 @@ func RunSync(args []string) error {
 				pushed, pulled, syncErr = engine.Sync(ctx)
 			}
 		} else {
-			syncTitle := fmt.Sprintf("ĐỒNG BỘ DỮ LIỆU VỚI MÁY CHỦ [%s]", strings.ToUpper(direction))
+			syncTitle := fmt.Sprintf("ĐỒNG BỘ MÁY CHỦ [%s]", strings.ToUpper(direction))
 			stepTitles := []string{
-				"Đẩy các thay đổi cục bộ lên máy chủ",
-				"Kéo dữ liệu mới nhất từ máy chủ",
+				"Đẩy thay đổi lên server",
+				"Kéo dữ liệu từ server",
 			}
 			if direction == "push" {
-				stepTitles = []string{"Đẩy các thay đổi cục bộ lên máy chủ"}
+				stepTitles = []string{"Đẩy thay đổi lên server"}
 			} else if direction == "pull" {
-				stepTitles = []string{"Kéo dữ liệu mới nhất từ máy chủ"}
+				stepTitles = []string{"Kéo dữ liệu từ server"}
 			}
 
 			_ = ui.RunWithTracker(syncTitle, stepTitles, func(reporter *ui.TrackerReporter) error {
 				if direction == "push" {
-					reporter.SetStepRunning(0, "Đang xử lý hàng đợi đẩy...")
+					reporter.SetStepRunning(0, "")
 					pushed, syncErr = engine.Push(ctx)
 					if syncErr != nil {
 						reporter.SetStepFailed(0, syncErr.Error())
 						return syncErr
 					}
-					reporter.SetStepDone(0, fmt.Sprintf("Đã đẩy %d thao tác", pushed))
+					if pushed > 0 {
+						reporter.SetStepDone(0, fmt.Sprintf("↑%d thao tác", pushed))
+					} else {
+						reporter.SetStepDone(0, "đã khớp")
+					}
 					return nil
 				} else if direction == "pull" {
-					reporter.SetStepRunning(0, "Đang tải dữ liệu mới...")
+					reporter.SetStepRunning(0, "")
 					pulled, syncErr = engine.Pull(ctx)
 					if syncErr != nil {
 						reporter.SetStepFailed(0, syncErr.Error())
 						return syncErr
 					}
-					reporter.SetStepDone(0, fmt.Sprintf("Đã nhận %d thay đổi", pulled))
+					if pulled > 0 {
+						reporter.SetStepDone(0, fmt.Sprintf("↓%d thay đổi", pulled))
+					} else {
+						reporter.SetStepDone(0, "đã khớp")
+					}
 					return nil
 				}
 
 				// BOTH
-				reporter.SetStepRunning(0, "Đang xử lý hàng đợi đẩy...")
+				reporter.SetStepRunning(0, "")
 				pushed, syncErr = engine.Push(ctx)
 				if syncErr != nil {
 					reporter.SetStepFailed(0, syncErr.Error())
 					return syncErr
 				}
-				reporter.SetStepDone(0, fmt.Sprintf("Đã đẩy %d thao tác", pushed))
+				if pushed > 0 {
+					reporter.SetStepDone(0, fmt.Sprintf("↑%d thao tác", pushed))
+				} else {
+					reporter.SetStepDone(0, "đã khớp")
+				}
 
-				reporter.SetStepRunning(1, "Đang tải dữ liệu mới...")
+				reporter.SetStepRunning(1, "")
 				pulled, syncErr = engine.Pull(ctx)
 				if syncErr != nil {
 					reporter.SetStepFailed(1, syncErr.Error())
 					return syncErr
 				}
-				reporter.SetStepDone(1, fmt.Sprintf("Đã nhận %d thay đổi", pulled))
+				if pulled > 0 {
+					reporter.SetStepDone(1, fmt.Sprintf("↓%d thay đổi", pulled))
+				} else {
+					reporter.SetStepDone(1, "đã khớp")
+				}
 				return nil
 			})
 		}

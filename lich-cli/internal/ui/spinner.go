@@ -190,35 +190,40 @@ func (m trackerModel) View() string {
 		numTag := fmt.Sprintf("[%d/%d]", i+1, len(m.steps))
 		switch step.Status {
 		case StepCompleted:
+			info := ""
+			if step.Detail != "" {
+				info = fmt.Sprintf(" (%s)", step.Detail)
+			}
 			durStr := ""
 			if step.Duration > 0 {
-				durStr = fmt.Sprintf(" (%0.1fs)", step.Duration.Seconds())
-			}
-			detailStr := ""
-			if step.Detail != "" {
-				detailStr = fmt.Sprintf(" - %s", step.Detail)
+				durStr = fmt.Sprintf(" [%0.1fs]", step.Duration.Seconds())
 			}
 			b.WriteString(fmt.Sprintf("  %s %s %s%s%s\n",
 				doneStyle.Render("✓"),
 				mutedStyle.Render(numTag),
 				doneStyle.Render(step.Title),
-				elapsedStyle.Render(detailStr),
+				elapsedStyle.Render(info),
 				elapsedStyle.Render(durStr),
 			))
 
 		case StepRunning:
 			elapsed := ""
 			if !step.StartTime.IsZero() {
-				elapsed = fmt.Sprintf(" (%0.1fs)", time.Since(step.StartTime).Seconds())
+				elapsed = fmt.Sprintf(" [%0.1fs]", time.Since(step.StartTime).Seconds())
 			}
-			b.WriteString(fmt.Sprintf("  %s %s %s%s\n",
+			info := ""
+			if step.Detail != "" {
+				info = fmt.Sprintf(" (%s)", step.Detail)
+			}
+			b.WriteString(fmt.Sprintf("  %s %s %s%s%s\n",
 				m.spinner.View(),
 				titleStyle.Render(numTag),
 				activeStyle.Render(step.Title),
+				elapsedStyle.Render(info),
 				elapsedStyle.Render(elapsed),
 			))
 			if m.subDetail != "" {
-				b.WriteString(fmt.Sprintf("       %s %s\n",
+				b.WriteString(fmt.Sprintf("      %s %s\n",
 					lipgloss.NewStyle().Foreground(ColorSecondary).Render("↳"),
 					subDetailStyle.Render(m.subDetail),
 				))
@@ -254,7 +259,7 @@ func RunWithTracker(title string, stepTitles []string, action func(reporter *Tra
 
 	prog := progress.New(
 		progress.WithGradient("#FF2A85", "#8075FF"),
-		progress.WithWidth(48),
+		progress.WithWidth(42),
 	)
 	prog.EmptyColor = "#2A2E3F"
 
