@@ -94,6 +94,9 @@ func RunDelete(args []string) error {
 		).WithKeyMap(ui.DefaultFormKeyMap())
 
 		if err := form.Run(); err != nil {
+			if errors.Is(err, huh.ErrUserAborted) {
+				return nil
+			}
 			return err
 		}
 	}
@@ -116,6 +119,9 @@ func RunDelete(args []string) error {
 		).WithKeyMap(ui.DefaultFormKeyMap())
 
 		if err := confirmForm.Run(); err != nil {
+			if errors.Is(err, huh.ErrUserAborted) {
+				return nil
+			}
 			return err
 		}
 

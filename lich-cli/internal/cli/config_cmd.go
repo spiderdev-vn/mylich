@@ -168,9 +168,12 @@ func RunConfig(args []string) error {
 				Title("Địa chỉ Máy chủ Lich (Server URL)").
 				Value(&serverURL),
 		),
-	)
+	).WithKeyMap(ui.DefaultFormKeyMap())
 
 	if err := form.Run(); err != nil {
+		if errors.Is(err, huh.ErrUserAborted) {
+			return nil
+		}
 		return err
 	}
 

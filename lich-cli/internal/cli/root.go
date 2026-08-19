@@ -7,6 +7,7 @@ import (
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/huh"
 	"github.com/spiderdev-vn/mylich/lich-cli/internal/api"
 	"github.com/spiderdev-vn/mylich/lich-cli/internal/cache"
 	"github.com/spiderdev-vn/mylich/lich-cli/internal/config"
@@ -166,7 +167,7 @@ func Execute(args []string) int {
 	}
 
 	if err != nil {
-		if errors.Is(err, flag.ErrHelp) {
+		if errors.Is(err, flag.ErrHelp) || errors.Is(err, huh.ErrUserAborted) || err.Error() == "user aborted" {
 			return 0
 		}
 		if ui.IsSimpleMode(false) {

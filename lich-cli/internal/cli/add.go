@@ -163,6 +163,9 @@ func RunAdd(args []string) error {
 		).WithKeyMap(ui.DefaultFormKeyMap())
 
 		if err := form.Run(); err != nil {
+			if errors.Is(err, huh.ErrUserAborted) {
+				return nil
+			}
 			return err
 		}
 	}
