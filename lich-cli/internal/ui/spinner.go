@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -19,6 +20,8 @@ const (
 	StepCompleted
 	StepFailed
 )
+
+var ErrAborted = errors.New("user aborted")
 
 type StepItem struct {
 	Title     string
@@ -162,8 +165,9 @@ func (m trackerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 
 	case tea.KeyMsg:
-		if msg.String() == "ctrl+c" {
+		if msg.String() == "ctrl+c" || msg.String() == "esc" {
 			m.done = true
+			m.err = ErrAborted
 			return m, tea.Quit
 		}
 	}

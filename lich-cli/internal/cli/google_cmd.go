@@ -631,7 +631,14 @@ func runGoogleSync(ctx context.Context, client *api.Client, args []string) error
 	}
 
 	if err != nil {
+		if errors.Is(err, ui.ErrAborted) || err.Error() == "user aborted" {
+			return nil
+		}
 		return fmt.Errorf("lỗi đồng bộ Google Calendar: %w", err)
+	}
+
+	if res == nil {
+		return nil
 	}
 
 	if *verboseFlag {

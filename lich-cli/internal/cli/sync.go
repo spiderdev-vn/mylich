@@ -181,6 +181,12 @@ func RunSync(args []string) error {
 			})
 		}
 
+		if syncErr != nil {
+			if errors.Is(syncErr, ui.ErrAborted) || syncErr.Error() == "user aborted" {
+				return nil
+			}
+		}
+
 		if ui.IsSimpleMode(*simpleFlag) {
 			if syncErr != nil {
 				fmt.Printf("⚠ Đồng bộ thất bại: %v\n", syncErr)
