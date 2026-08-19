@@ -5,7 +5,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
@@ -104,22 +103,28 @@ func RunSync(args []string) error {
 		var pushed, pulled int
 		var syncErr error
 
-		var stopSpinner func()
-		if !ui.IsSimpleMode(*simpleFlag) {
-			stopSpinner = ui.StartSpinner(os.Stdout, fmt.Sprintf("Đang đồng bộ với máy chủ (hướng: %s)...", strings.ToUpper(direction)))
-		}
-
-		switch direction {
-		case "push":
-			pushed, syncErr = engine.Push(ctx)
-		case "pull":
-			pulled, syncErr = engine.Pull(ctx)
-		default:
-			pushed, pulled, syncErr = engine.Sync(ctx)
-		}
-
-		if stopSpinner != nil {
-			stopSpinner()
+		if ui.IsSimpleMode(*simpleFlag) {
+			switch direction {
+			case "push":
+				pushed, syncErr = engine.Push(ctx)
+			case "pull":
+				pulled, syncErr = engine.Pull(ctx)
+			default:
+				pushed, pulled, syncErr = engine.Sync(ctx)
+			}
+		} else {
+			spinnerTitle := fmt.Sprintf("Đang đồng bộ dữ liệu với máy chủ Lich (hướng: %s)...", strings.ToUpper(direction))
+			_ = ui.RunWithSpinner(spinnerTitle, func() error {
+				switch direction {
+				case "push":
+					pushed, syncErr = engine.Push(ctx)
+				case "pull":
+					pulled, syncErr = engine.Pull(ctx)
+				default:
+					pushed, pulled, syncErr = engine.Sync(ctx)
+				}
+				return syncErr
+			})
 		}
 
 		if ui.IsSimpleMode(*simpleFlag) {

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"os"
 	"os/exec"
 	"runtime"
 	"strings"
@@ -308,25 +307,29 @@ func runGoogleSync(ctx context.Context, client *api.Client, args []string) error
 		return err
 	}
 
-	var stopSpinner func()
-	if !*verboseFlag && !ui.IsSimpleMode(*simpleFlag) {
-		stopSpinner = ui.StartSpinner(os.Stdout, fmt.Sprintf("Đang đồng bộ Google Calendar (hướng: %s)...", strings.ToUpper(*directionFlag)))
-	}
+	var res *api.GoogleSyncResponse
+	var err error
 
-	if *verboseFlag {
-		if ui.IsSimpleMode(*simpleFlag) {
-			fmt.Println("[1/3] Đang kết nối máy chủ và xác thực Google...")
-			fmt.Printf("[2/3] Bắt đầu đồng bộ 2 chiều (hướng: %s, Last-Write-Wins)...\n", *directionFlag)
-		} else {
-			fmt.Println(ui.LabelStyle.Render("↻ [1/3] Đang kết nối máy chủ và xác thực Google..."))
-			fmt.Println(ui.LabelStyle.Render(fmt.Sprintf("↻ [2/3] Bắt đầu đồng bộ 2 chiều (hướng: %s, Last-Write-Wins)...", *directionFlag)))
+	if ui.IsSimpleMode(*simpleFlag) || *verboseFlag {
+		if *verboseFlag {
+			if ui.IsSimpleMode(*simpleFlag) {
+				fmt.Println("[1/3] Đang kết nối máy chủ và xác thực Google...")
+				fmt.Printf("[2/3] Bắt đầu đồng bộ 2 chiều (hướng: %s, Last-Write-Wins)...\n", *directionFlag)
+			} else {
+				fmt.Println(ui.LabelStyle.Render("↻ [1/3] Đang kết nối máy chủ và xác thực Google..."))
+				fmt.Println(ui.LabelStyle.Render(fmt.Sprintf("↻ [2/3] Bắt đầu đồng bộ 2 chiều (hướng: %s, Last-Write-Wins)...", *directionFlag)))
+			}
 		}
+		res, err = client.SyncGoogle(ctx, *calFlag, *directionFlag)
+	} else {
+		spinnerTitle := fmt.Sprintf("Đang đồng bộ hai chiều với Google Calendar (hướng: %s)...", strings.ToUpper(*directionFlag))
+		err = ui.RunWithSpinner(spinnerTitle, func() error {
+			var syncErr error
+			res, syncErr = client.SyncGoogle(ctx, *calFlag, *directionFlag)
+			return syncErr
+		})
 	}
 
-	res, err := client.SyncGoogle(ctx, *calFlag, *directionFlag)
-	if stopSpinner != nil {
-		stopSpinner()
-	}
 	if err != nil {
 		return fmt.Errorf("lỗi đồng bộ Google Calendar: %w", err)
 	}
