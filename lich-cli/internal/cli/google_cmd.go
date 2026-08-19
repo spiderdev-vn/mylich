@@ -11,7 +11,9 @@ import (
 	"time"
 
 	"github.com/spiderdev-vn/mylich/lich-cli/internal/api"
+	"github.com/spiderdev-vn/mylich/lich-cli/internal/cache"
 	"github.com/spiderdev-vn/mylich/lich-cli/internal/config"
+	"github.com/spiderdev-vn/mylich/lich-cli/internal/syncer"
 	"github.com/spiderdev-vn/mylich/lich-cli/internal/ui"
 )
 
@@ -310,24 +312,53 @@ func runGoogleSync(ctx context.Context, client *api.Client, args []string) error
 	var res *api.GoogleSyncResponse
 	var err error
 
+	performSync := func() error {
+		// Step 1: Push pending local mutations from SQLite cache to server
+		if *directionFlag == "push" || *directionFlag == "both" {
+			if cachePath, cErr := cache.GetCachePath(); cErr == nil {
+				if db, dbErr := cache.OpenDatabase(cachePath); dbErr == nil {
+					engine := syncer.NewSyncEngine(db, client)
+					_, _ = engine.Push(ctx)
+					db.Close()
+				}
+			}
+		}
+
+		// Step 2: Server <-> Google Calendar sync
+		var syncErr error
+		res, syncErr = client.SyncGoogle(ctx, *calFlag, *directionFlag)
+		if syncErr != nil {
+			return syncErr
+		}
+
+		// Step 3: Pull fresh events from server back into local SQLite cache
+		if *directionFlag == "pull" || *directionFlag == "both" {
+			if cachePath, cErr := cache.GetCachePath(); cErr == nil {
+				if db, dbErr := cache.OpenDatabase(cachePath); dbErr == nil {
+					engine := syncer.NewSyncEngine(db, client)
+					_, _ = engine.Pull(ctx)
+					db.Close()
+				}
+			}
+		}
+
+		return nil
+	}
+
 	if ui.IsSimpleMode(*simpleFlag) || *verboseFlag {
 		if *verboseFlag {
 			if ui.IsSimpleMode(*simpleFlag) {
-				fmt.Println("[1/3] Đang kết nối máy chủ và xác thực Google...")
-				fmt.Printf("[2/3] Bắt đầu đồng bộ 2 chiều (hướng: %s, Last-Write-Wins)...\n", *directionFlag)
+				fmt.Println("[1/3] Đang đồng bộ thay đổi cục bộ với máy chủ...")
+				fmt.Printf("[2/3] Đang đồng bộ với Google Calendar (hướng: %s, Last-Write-Wins)...\n", *directionFlag)
 			} else {
-				fmt.Println(ui.LabelStyle.Render("↻ [1/3] Đang kết nối máy chủ và xác thực Google..."))
-				fmt.Println(ui.LabelStyle.Render(fmt.Sprintf("↻ [2/3] Bắt đầu đồng bộ 2 chiều (hướng: %s, Last-Write-Wins)...", *directionFlag)))
+				fmt.Println(ui.LabelStyle.Render("↻ [1/3] Đang đồng bộ thay đổi cục bộ với máy chủ..."))
+				fmt.Println(ui.LabelStyle.Render(fmt.Sprintf("↻ [2/3] Đang đồng bộ với Google Calendar (hướng: %s, Last-Write-Wins)...", *directionFlag)))
 			}
 		}
-		res, err = client.SyncGoogle(ctx, *calFlag, *directionFlag)
+		err = performSync()
 	} else {
 		spinnerTitle := fmt.Sprintf("Đang đồng bộ hai chiều với Google Calendar (hướng: %s)...", strings.ToUpper(*directionFlag))
-		err = ui.RunWithSpinner(spinnerTitle, func() error {
-			var syncErr error
-			res, syncErr = client.SyncGoogle(ctx, *calFlag, *directionFlag)
-			return syncErr
-		})
+		err = ui.RunWithSpinner(spinnerTitle, performSync)
 	}
 
 	if err != nil {

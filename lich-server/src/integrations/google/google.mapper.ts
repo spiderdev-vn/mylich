@@ -8,16 +8,25 @@ export class GoogleEventMapper {
   public static toGoogle(event: Event): Partial<ExternalEvent> {
     const tz = event.timezone || 'UTC';
 
+    let startIso = event.start_at;
+    let endIso = event.end_at;
+    try {
+      startIso = new Date(event.start_at).toISOString();
+      endIso = new Date(event.end_at).toISOString();
+    } catch {
+      // fallback
+    }
+
     return {
       summary: event.title,
       description: event.description || '',
       location: event.location || '',
       start: {
-        dateTime: event.start_at,
+        dateTime: startIso,
         timeZone: tz,
       },
       end: {
-        dateTime: event.end_at,
+        dateTime: endIso,
         timeZone: tz,
       },
     };
