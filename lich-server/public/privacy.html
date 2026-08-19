@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chính sách bảo mật — Mỹ Lích (Lich)</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🗓️</text></svg>">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <a href="/" class="logo">
+        <span class="logo-badge">MỸ LÍCH</span>
+        <span>lich</span>
+      </a>
+      <nav>
+        <a href="/">Trang chủ</a>
+        <a href="/privacy">Bảo mật</a>
+        <a href="/terms">Điều khoản</a>
+        <a href="https://github.com/spiderdev-vn/mylich" target="_blank" rel="noopener">★ GitHub</a>
+      </nav>
+    </header>
+
+    <main>
+      <div class="doc-container">
+        <h1>🔒 Chính Sách Bảo Mật (Privacy Policy)</h1>
+        <p style="color: var(--pop-yellow); font-family: 'JetBrains Mono', monospace; font-size: 0.95rem;">Cập nhật lần cuối: Ngày 19 tháng 08 năm 2026</p>
+        <br>
+        <p><strong>Mỹ Lích (Lich)</strong> cam kết tôn trọng và bảo vệ quyền riêng tư tuyệt đối của bạn. Dữ liệu lịch trình là tài sản cá nhân nhạy cảm và quan trọng nhất của mỗi người dùng.</p>
+
+        <h2>1. Thông tin chúng tôi truy cập</h2>
+        <p>Khi bạn kích hoạt tính năng tích hợp Google Calendar, ứng dụng sẽ yêu cầu các quyền truy cập được cấp phép bởi bạn:</p>
+        <ul>
+          <li><strong>Địa chỉ Email (Google User Profile)</strong>: Dùng để xác thực và hiển thị tài khoản nào đang được liên kết trên máy chủ.</li>
+          <li><strong>Dữ liệu Lịch (Google Calendar API Scope <code>https://www.googleapis.com/auth/calendar</code>)</strong>: Đọc và ghi danh sách lịch và các sự kiện lịch (tiêu đề, thời gian, mô tả, địa điểm) để phục vụ đồng bộ 2 chiều giữa Mỹ Lích và Google Calendar của bạn.</li>
+        </ul>
+
+        <h2>2. Mục đích sử dụng dữ liệu</h2>
+        <p>Chúng tôi <strong>CHỈ</strong> sử dụng dữ liệu từ Google Calendar cho các mục đích thiết yếu:</p>
+        <ul>
+          <li>Hiển thị lịch trình và sự kiện của bạn trên giao diện CLI/TUI của Mỹ Lích.</li>
+          <li>Đồng bộ hóa 2 chiều: Đẩy sự kiện từ Mỹ Lích lên Google và kéo sự kiện mới từ Google về Mỹ Lích.</li>
+        </ul>
+
+        <h2>3. Lưu trữ và Bảo mật Dữ liệu</h2>
+        <ul>
+          <li><strong>Máy chủ tự quản lý (Self-hosted)</strong>: Dữ liệu lịch và Refresh Token được lưu trữ trên cơ sở dữ liệu SQLite riêng của máy chủ do chính bạn hoặc quản trị viên hệ thống của bạn triển khai.</li>
+          <li><strong>Tuyệt đối không chia sẻ với bên thứ ba</strong>: Chúng tôi không bao giờ bán, cho thuê, chia sẻ hay chuyển giao dữ liệu lịch của bạn cho bất kỳ bên thứ ba, nhà quảng cáo, mạng lưới tiếp thị hoặc mô hình huấn luyện AI nào.</li>
+          <li><strong>Mã hóa bảo mật</strong>: Tất cả các kết nối trao đổi dữ liệu với Google API đều được mã hóa an toàn qua giao thức HTTPS/TLS.</li>
+        </ul>
+
+        <h2>4. Tuân thủ Chính sách Dữ liệu Người dùng của Google</h2>
+        <p>Mỹ Lích hoàn toàn tuân thủ <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener" style="color: var(--pop-cyan); font-weight: 700;">Google API Services User Data Policy</a>, bao gồm các yêu cầu về <em>Limited Use (Sử dụng có giới hạn)</em>.</p>
+
+        <h2>5. Quyền kiểm soát và Xóa dữ liệu</h2>
+        <ul>
+          <li><strong>Hủy liên kết tài khoản Google</strong>: Bạn có thể thu hồi quyền truy cập của Mỹ Lích bất kỳ lúc nào bằng lệnh CLI: <code>lich google disconnect</code> hoặc tại trang <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener" style="color: var(--pop-cyan); font-weight: 700;">Google Account Permissions</a>.</li>
+          <li><strong>Xóa sạch toàn bộ dữ liệu</strong>: Bạn có thể xóa sạch dữ liệu trên máy chủ bằng lệnh: <code>lich nuke-database --remote</code>.</li>
+        </ul>
+
+        <h2>6. Liên hệ</h2>
+        <p>Mọi thắc mắc về Chính sách bảo mật, vui lòng mở Issue tại kho mã nguồn chính thức: <a href="https://github.com/spiderdev-vn/mylich" target="_blank" rel="noopener" style="color: var(--pop-pink); font-weight: 700;">https://github.com/spiderdev-vn/mylich</a>.</p>
+      </div>
+    </main>
+
+    <footer>
+      <div>© 2026 <strong>Mỹ Lích (Lich)</strong>. Lịch của mình, mình tính! 🚀</div>
+      <div>
+        <a href="/privacy">Privacy Policy</a> · 
+        <a href="/terms">Terms of Service</a> · 
+        <a href="https://github.com/spiderdev-vn/mylich" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>
