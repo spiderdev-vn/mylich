@@ -291,6 +291,73 @@ func runGoogleMap(ctx context.Context, client *api.Client, args []string) error 
 	return nil
 }
 
+func resolveTimeRange(rangeKeyword, dateStr, fromStr, toStr string, now time.Time, loc *time.Location) (string, string, string) {
+	kw := strings.ToLower(strings.TrimSpace(rangeKeyword))
+	if kw == "" {
+		kw = strings.ToLower(strings.TrimSpace(dateStr))
+	}
+
+	switch kw {
+	case "today", "hom-nay", "hn":
+		start := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
+		end := start.Add(24*time.Hour - time.Nanosecond)
+		return start.UTC().Format(time.RFC3339), end.UTC().Format(time.RFC3339), "Hôm nay (Today)"
+	case "tomorrow", "ngay-mai", "mai":
+		start := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, loc)
+		end := start.Add(24*time.Hour - time.Nanosecond)
+		return start.UTC().Format(time.RFC3339), end.UTC().Format(time.RFC3339), "Ngày mai (Tomorrow)"
+	case "yesterday", "hom-qua", "qua":
+		start := time.Date(now.Year(), now.Month(), now.Day()-1, 0, 0, 0, 0, loc)
+		end := start.Add(24*time.Hour - time.Nanosecond)
+		return start.UTC().Format(time.RFC3339), end.UTC().Format(time.RFC3339), "Hôm qua (Yesterday)"
+	case "week", "this-week", "tuan":
+		weekday := int(now.Weekday())
+		if weekday == 0 {
+			weekday = 7
+		}
+		start := time.Date(now.Year(), now.Month(), now.Day()-(weekday-1), 0, 0, 0, 0, loc)
+		end := start.Add(7*24*time.Hour - time.Nanosecond)
+		return start.UTC().Format(time.RFC3339), end.UTC().Format(time.RFC3339), "Tuần này (This Week)"
+	case "month", "this-month", "thang":
+		start := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, loc)
+		end := start.AddDate(0, 1, 0).Add(-time.Nanosecond)
+		return start.UTC().Format(time.RFC3339), end.UTC().Format(time.RFC3339), "Tháng này (This Month)"
+	}
+
+	var fromRFC, toRFC string
+	var label string
+	if fromStr != "" {
+		if t, err := parseFlexibleDate(fromStr, loc); err == nil {
+			fromRFC = t.UTC().Format(time.RFC3339)
+			label = fmt.Sprintf("Từ %s", fromStr)
+		}
+	}
+	if toStr != "" {
+		if t, err := parseFlexibleDate(toStr, loc); err == nil {
+			if t.Hour() == 0 && t.Minute() == 0 {
+				t = t.Add(24*time.Hour - time.Nanosecond)
+			}
+			toRFC = t.UTC().Format(time.RFC3339)
+			if label != "" {
+				label += fmt.Sprintf(" đến %s", toStr)
+			} else {
+				label = fmt.Sprintf("Đến %s", toStr)
+			}
+		}
+	}
+
+	if fromRFC == "" && toRFC == "" && kw != "" {
+		// Thử parse dạng ngày cụ thể như 2026-08-20
+		if t, err := parseFlexibleDate(kw, loc); err == nil {
+			start := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, loc)
+			end := start.Add(24*time.Hour - time.Nanosecond)
+			return start.UTC().Format(time.RFC3339), end.UTC().Format(time.RFC3339), fmt.Sprintf("Ngày %s", kw)
+		}
+	}
+
+	return fromRFC, toRFC, label
+}
+
 func runGoogleSync(ctx context.Context, client *api.Client, args []string) error {
 	var flagArgs []string
 	var positionalArgs []string
@@ -308,6 +375,14 @@ func runGoogleSync(ctx context.Context, client *api.Client, args []string) error
 	eventFlag := fs.String("event", "", "ID sự kiện cụ thể để đồng bộ tức thì")
 	fs.StringVar(eventFlag, "e", "", "ID sự kiện cụ thể (viết tắt)")
 	calFlag := fs.String("calendar", "", "ID lịch cụ thể")
+	dateFlag := fs.String("date", "", "Khoảng thời gian (today, tomorrow, week, month, YYYY-MM-DD)")
+	fromFlag := fs.String("from", "", "Thời gian bắt đầu (VD: 2026-08-19 hoặc 2026-08-19T00:00:00)")
+	toFlag := fs.String("to", "", "Thời gian kết thúc (VD: 2026-08-25)")
+	todayFlag := fs.Bool("today", false, "Chỉ đồng bộ các sự kiện của Hôm nay")
+	tomorrowFlag := fs.Bool("tomorrow", false, "Chỉ đồng bộ các sự kiện của Ngày mai")
+	weekFlag := fs.Bool("week", false, "Chỉ đồng bộ các sự kiện trong Tuần này")
+	monthFlag := fs.Bool("month", false, "Chỉ đồng bộ các sự kiện trong Tháng này")
+
 	verboseFlag := fs.Bool("verbose", false, "Hiển thị chi tiết các bước đồng bộ")
 	fs.BoolVar(verboseFlag, "v", false, "Hiển thị chi tiết các bước đồng bộ (viết tắt)")
 	fs.BoolVar(verboseFlag, "w", false, "Hiển thị chi tiết các bước đồng bộ (viết tắt)")
@@ -321,15 +396,41 @@ func runGoogleSync(ctx context.Context, client *api.Client, args []string) error
 		return err
 	}
 
-	// Xử lý positional args
+	loc := time.Local
+	now := time.Now().In(loc)
+
+	rangeKeyword := *dateFlag
+	if *todayFlag {
+		rangeKeyword = "today"
+	} else if *tomorrowFlag {
+		rangeKeyword = "tomorrow"
+	} else if *weekFlag {
+		rangeKeyword = "week"
+	} else if *monthFlag {
+		rangeKeyword = "month"
+	}
+
+	// Xử lý positional args: "push", "pull", "both", "today", "tomorrow", "week", "month", hoặc <event-id> / <date>
 	for _, p := range positionalArgs {
-		lower := strings.ToLower(p)
+		lower := strings.ToLower(strings.TrimSpace(p))
 		if lower == "push" || lower == "pull" || lower == "both" {
 			*directionFlag = lower
+		} else if lower == "today" || lower == "tomorrow" || lower == "week" || lower == "month" || lower == "yesterday" {
+			rangeKeyword = lower
+		} else if len(p) >= 20 && !strings.Contains(p, "-") {
+			// Hex / UUID event ID
+			if *eventFlag == "" {
+				*eventFlag = p
+			}
+		} else if strings.Count(p, "-") == 2 || strings.Count(p, "/") == 2 {
+			// Date like 2026-08-20 or 20/08/2026
+			rangeKeyword = p
 		} else if *eventFlag == "" {
 			*eventFlag = p
 		}
 	}
+
+	fromRFC, toRFC, rangeLabel := resolveTimeRange(rangeKeyword, *dateFlag, *fromFlag, *toFlag, now, loc)
 
 	var res *api.GoogleSyncResponse
 	var err error
@@ -348,7 +449,7 @@ func runGoogleSync(ctx context.Context, client *api.Client, args []string) error
 
 		// Step 2: Server <-> Google Calendar sync
 		var syncErr error
-		res, syncErr = client.SyncGoogle(ctx, *calFlag, *directionFlag, *eventFlag)
+		res, syncErr = client.SyncGoogle(ctx, *calFlag, *directionFlag, *eventFlag, fromRFC, toRFC)
 		if syncErr != nil {
 			return syncErr
 		}
@@ -370,16 +471,26 @@ func runGoogleSync(ctx context.Context, client *api.Client, args []string) error
 	spinnerTitle := fmt.Sprintf("Đang đồng bộ hai chiều với Google Calendar (hướng: %s)...", strings.ToUpper(*directionFlag))
 	if *eventFlag != "" {
 		spinnerTitle = fmt.Sprintf("Đang đẩy sự kiện [%s] lên Google Calendar...", *eventFlag)
+	} else if rangeLabel != "" {
+		spinnerTitle = fmt.Sprintf("Đang đồng bộ Google Calendar phạm vi [%s]...", rangeLabel)
 	}
 
 	if ui.IsSimpleMode(*simpleFlag) || *verboseFlag {
 		if *verboseFlag {
 			if ui.IsSimpleMode(*simpleFlag) {
 				fmt.Println("[1/3] Đang đồng bộ thay đổi cục bộ với máy chủ...")
-				fmt.Printf("[2/3] Đang đồng bộ với Google Calendar (hướng: %s, Last-Write-Wins)...\n", *directionFlag)
+				if rangeLabel != "" {
+					fmt.Printf("[2/3] Đang đồng bộ với Google Calendar phạm vi %s (hướng: %s)...\n", rangeLabel, *directionFlag)
+				} else {
+					fmt.Printf("[2/3] Đang đồng bộ với Google Calendar (hướng: %s, Last-Write-Wins)...\n", *directionFlag)
+				}
 			} else {
 				fmt.Println(ui.LabelStyle.Render("↻ [1/3] Đang đồng bộ thay đổi cục bộ với máy chủ..."))
-				fmt.Println(ui.LabelStyle.Render(fmt.Sprintf("↻ [2/3] Đang đồng bộ với Google Calendar (hướng: %s, Last-Write-Wins)...", *directionFlag)))
+				if rangeLabel != "" {
+					fmt.Println(ui.LabelStyle.Render(fmt.Sprintf("↻ [2/3] Đang đồng bộ với Google Calendar phạm vi %s (hướng: %s)...", rangeLabel, *directionFlag)))
+				} else {
+					fmt.Println(ui.LabelStyle.Render(fmt.Sprintf("↻ [2/3] Đang đồng bộ với Google Calendar (hướng: %s, Last-Write-Wins)...", *directionFlag)))
+				}
 			}
 		}
 		err = performSync()
@@ -402,6 +513,8 @@ func runGoogleSync(ctx context.Context, client *api.Client, args []string) error
 	if ui.IsSimpleMode(*simpleFlag) {
 		if *eventFlag != "" {
 			fmt.Printf("✓ Đã đồng bộ sự kiện [%s] lên Google Calendar\n", *eventFlag)
+		} else if rangeLabel != "" {
+			fmt.Printf("✓ Đã đồng bộ Google Calendar (%s): %d đẩy lên, %d kéo về\n", rangeLabel, res.Pushed, res.Pulled)
 		} else {
 			fmt.Printf("✓ Đã đồng bộ Google Calendar: %d đẩy lên, %d kéo về\n", res.Pushed, res.Pulled)
 		}
@@ -419,14 +532,28 @@ func runGoogleSync(ctx context.Context, client *api.Client, args []string) error
 		return nil
 	}
 
-	fmt.Println(ui.CardBoxSuccess.Render(fmt.Sprintf(
+	cardContent := fmt.Sprintf(
 		"%s\n\n%s %s\n%s %s\n%s %s\n%s %s",
 		ui.CardTitle.Render("✓ ĐỒNG BỘ GOOGLE CALENDAR THÀNH CÔNG"),
 		ui.LabelStyle.Render("Chế độ:         "), ui.ValueStyle.Render(strings.ToUpper(*directionFlag)),
 		ui.LabelStyle.Render("Đẩy lên Google: "), ui.ValueStyle.Render(fmt.Sprintf("%d sự kiện", res.Pushed)),
 		ui.LabelStyle.Render("Kéo về Lich:    "), ui.ValueStyle.Render(fmt.Sprintf("%d sự kiện", res.Pulled)),
 		ui.LabelStyle.Render("Trạng thái:     "), ui.BadgeSynced,
-	)))
+	)
+
+	if rangeLabel != "" {
+		cardContent = fmt.Sprintf(
+			"%s\n\n%s %s\n%s %s\n%s %s\n%s %s\n%s %s",
+			ui.CardTitle.Render("✓ ĐỒNG BỘ GOOGLE CALENDAR THÀNH CÔNG"),
+			ui.LabelStyle.Render("Phạm vi:        "), ui.TimePill.Render(rangeLabel),
+			ui.LabelStyle.Render("Chế độ:         "), ui.ValueStyle.Render(strings.ToUpper(*directionFlag)),
+			ui.LabelStyle.Render("Đẩy lên Google: "), ui.ValueStyle.Render(fmt.Sprintf("%d sự kiện", res.Pushed)),
+			ui.LabelStyle.Render("Kéo về Lich:    "), ui.ValueStyle.Render(fmt.Sprintf("%d sự kiện", res.Pulled)),
+			ui.LabelStyle.Render("Trạng thái:     "), ui.BadgeSynced,
+		)
+	}
+
+	fmt.Println(ui.CardBoxSuccess.Render(cardContent))
 	return nil
 }
 

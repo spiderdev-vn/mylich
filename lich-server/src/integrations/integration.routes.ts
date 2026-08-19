@@ -182,6 +182,8 @@ export const integrationRoutes: FastifyPluginAsync<IntegrationRoutesOptions> = a
         calendar_id?: string;
         direction?: 'push' | 'pull' | 'both';
         event_id?: string;
+        from?: string;
+        to?: string;
       };
 
       const result = await integrationService.sync(
@@ -189,6 +191,8 @@ export const integrationRoutes: FastifyPluginAsync<IntegrationRoutesOptions> = a
         body.calendar_id,
         body.direction,
         body.event_id,
+        body.from,
+        body.to,
       );
       return {
         success: true,

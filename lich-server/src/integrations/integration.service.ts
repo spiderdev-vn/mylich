@@ -211,6 +211,8 @@ export class IntegrationService {
     calendarId?: string,
     direction: 'push' | 'pull' | 'both' = 'both',
     eventId?: string,
+    from?: string,
+    to?: string,
   ): Promise<{ pushed: number; pulled: number }> {
     const integration = this.integrationRepo.findByUserAndProvider(userId, this.provider.name);
     if (!integration || integration.status !== 'connected') {
@@ -293,7 +295,17 @@ export class IntegrationService {
 
       // 1. PUSH Lich -> Google (Last-Write-Wins with Concurrency Pool)
       if (shouldPush) {
-        const events = this.eventRepo.findByCalendarId(mapping.calendar_id);
+        let events = this.eventRepo.findByCalendarId(mapping.calendar_id);
+        if (from || to) {
+          const fromTime = from ? new Date(from).getTime() : 0;
+          const toTime = to ? new Date(to).getTime() : Infinity;
+          events = events.filter((e) => {
+            const start = new Date(e.start_at).getTime();
+            const end = new Date(e.end_at).getTime();
+            return end >= fromTime && start <= toTime;
+          });
+        }
+
         const toUpdate: { evt: (typeof events)[0]; extMapping: any }[] = [];
         const toCreate: (typeof events)[0][] = [];
 
@@ -373,7 +385,9 @@ export class IntegrationService {
         const eventsRes = await this.provider.listEvents(
           accessToken,
           mapping.external_calendar_id,
-          syncState?.cursor,
+          from || to ? undefined : syncState?.cursor,
+          from,
+          to,
         );
 
         for (const gEvent of eventsRes.items) {

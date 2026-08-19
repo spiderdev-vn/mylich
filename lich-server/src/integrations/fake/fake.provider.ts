@@ -88,6 +88,8 @@ export class FakeGoogleProvider implements CalendarProvider {
     _accessToken: string,
     calendarId: string,
     _syncToken?: string,
+    _timeMin?: string,
+    _timeMax?: string,
   ): Promise<ExternalEventsResult> {
     const list = this.eventsByCalendar.get(calendarId) || [];
     this.syncCounter++;

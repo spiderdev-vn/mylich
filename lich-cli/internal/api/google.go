@@ -49,6 +49,8 @@ type GoogleSyncRequest struct {
 	CalendarID string `json:"calendar_id,omitempty"`
 	Direction  string `json:"direction,omitempty"`
 	EventID    string `json:"event_id,omitempty"`
+	From       string `json:"from,omitempty"`
+	To         string `json:"to,omitempty"`
 }
 
 type GoogleSyncResponse struct {
@@ -115,11 +117,13 @@ func (c *Client) CreateGoogleCalendar(ctx context.Context, calendarID, name, syn
 	return &res.ExternalCalendar, nil
 }
 
-func (c *Client) SyncGoogle(ctx context.Context, calendarID, direction, eventID string) (*GoogleSyncResponse, error) {
+func (c *Client) SyncGoogle(ctx context.Context, calendarID, direction, eventID, from, to string) (*GoogleSyncResponse, error) {
 	req := GoogleSyncRequest{
 		CalendarID: calendarID,
 		Direction:  direction,
 		EventID:    eventID,
+		From:       from,
+		To:         to,
 	}
 	var res GoogleSyncResponse
 	if err := c.doRequest(ctx, http.MethodPost, "/integrations/google/sync", req, &res); err != nil {

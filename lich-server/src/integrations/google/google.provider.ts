@@ -168,13 +168,21 @@ export class GoogleProvider implements CalendarProvider {
     accessToken: string,
     calendarId: string,
     syncToken?: string,
+    timeMin?: string,
+    timeMax?: string,
   ): Promise<ExternalEventsResult> {
     const params = new URLSearchParams();
-    if (syncToken) {
+    if (syncToken && !timeMin && !timeMax) {
       params.set('syncToken', syncToken);
     } else {
       params.set('singleEvents', 'true');
       params.set('maxResults', '250');
+      if (timeMin) {
+        params.set('timeMin', new Date(timeMin).toISOString());
+      }
+      if (timeMax) {
+        params.set('timeMax', new Date(timeMax).toISOString());
+      }
     }
 
     const encodedCalId = encodeURIComponent(calendarId);
