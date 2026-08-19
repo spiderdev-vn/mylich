@@ -74,6 +74,7 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
     logger: {
       level: config.logLevel,
     },
+    trustProxy: config.trustProxy,
   });
 
   // CORS
