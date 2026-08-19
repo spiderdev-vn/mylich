@@ -75,11 +75,11 @@ function validateConfig(config: AppConfig): void {
     const errorMsg = [
       '',
       '===========================================================',
-      ' ❌ LỖI CẤU HÌNH MÁY CHỦ (Lich Server Configuration Guard) ',
+      '                 [!] LỖI CẤU HÌNH MÁY CHỦ [!]',
       '===========================================================',
       ...errors,
       '',
-      '👉 Vui lòng kiểm tra lại file .env hoặc các biến môi trường.',
+      '>> Vui lòng kiểm tra lại file .env hoặc các biến môi trường.',
       '===========================================================',
       '',
     ].join('\n');

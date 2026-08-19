@@ -5,14 +5,22 @@ services:
       dockerfile: Dockerfile
     image: lich-server:latest
     container_name: lich-server
-    restart: unless-stopped
-    ports:
-      - "${PORT:-3000}:3000"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.lich.rule=Host(`${DOMAIN:-lich.codechovui.dev}`)"
+      - "traefik.http.routers.lich.entrypoints=websecure"
+      - "traefik.http.routers.lich.tls.certresolver=myresolver"
+      - "traefik.http.services.lich.loadbalancer.server.port=3000"
+    volumes:
+      - ./data:/data
     env_file:
       - .env
-    volumes:
-      - lich-data:/data
+    environment:
+      TZ: "Asia/Ho_Chi_Minh"
+    networks:
+      - traefik_default
+    restart: unless-stopped
 
-volumes:
-  lich-data:
-    driver: local
+networks:
+  traefik_default:
+    external: true
