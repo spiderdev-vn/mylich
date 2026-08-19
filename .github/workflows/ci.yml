@@ -7,27 +7,21 @@ on:
     branches: [ main, master ]
 
 jobs:
-  # 1. Kiểm thử và kiểm tra Server (Node.js + Fastify + SQLite)
+  # 1. Kiểm thử và lint Server (Node.js 22 LTS)
   server-test:
-    name: Lich Server (${{ matrix.os }} - Node ${{ matrix.node-version }})
-    runs-on: ${{ matrix.os }}
+    name: Lich Server (Ubuntu - Node 22.x)
+    runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./lich-server
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ ubuntu-latest, windows-latest, macos-latest ]
-        node-version: [ 22.x, 24.x ]
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js ${{ matrix.node-version }}
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: 22.x
           cache: 'npm'
           cache-dependency-path: ./lich-server/package.json
 
@@ -40,9 +34,9 @@ jobs:
       - name: Run automated tests
         run: npm test
 
-  # 2. Kiểm thử và biên dịch Go Client / TUI (lich-cli)
-  cli-matrix:
-    name: Lich CLI (${{ matrix.os }} - Go ${{ matrix.go-version }})
+  # 2. Kiểm thử và biên dịch Go Client / TUI (lich-cli) trên 3 OS chính
+  cli-test:
+    name: Lich CLI (${{ matrix.os }} - Go 1.24)
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -51,16 +45,15 @@ jobs:
       fail-fast: false
       matrix:
         os: [ ubuntu-latest, windows-latest, macos-latest ]
-        go-version: [ '1.22', '1.23', '1.24' ]
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Go ${{ matrix.go-version }}
+      - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: ${{ matrix.go-version }}
+          go-version: '1.24'
           cache-dependency-path: ./lich-cli/go.sum
 
       - name: Download Go dependencies
@@ -68,7 +61,6 @@ jobs:
 
       - name: Run Go tests
         run: go test -v -race ./...
-        # Windows & macOS supported; -race is active on amd64/arm64
         if: matrix.os != 'windows-latest'
 
       - name: Run Go tests (Windows)
