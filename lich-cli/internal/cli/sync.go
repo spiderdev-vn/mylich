@@ -5,6 +5,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -97,11 +98,16 @@ func RunSync(args []string) error {
 
 	// Chế độ chạy nhanh (không -w)
 	if !*waitFlag {
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 
 		var pushed, pulled int
 		var syncErr error
+
+		var stopSpinner func()
+		if !ui.IsSimpleMode(*simpleFlag) {
+			stopSpinner = ui.StartSpinner(os.Stdout, fmt.Sprintf("Đang đồng bộ với máy chủ (hướng: %s)...", strings.ToUpper(direction)))
+		}
 
 		switch direction {
 		case "push":
@@ -110,6 +116,10 @@ func RunSync(args []string) error {
 			pulled, syncErr = engine.Pull(ctx)
 		default:
 			pushed, pulled, syncErr = engine.Sync(ctx)
+		}
+
+		if stopSpinner != nil {
+			stopSpinner()
 		}
 
 		if ui.IsSimpleMode(*simpleFlag) {

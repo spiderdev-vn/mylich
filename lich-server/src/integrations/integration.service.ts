@@ -238,37 +238,58 @@ export class IntegrationService {
         (direction === 'pull' || direction === 'both') &&
         (mapping.sync_direction === 'pull' || mapping.sync_direction === 'bidirectional');
 
-      // 1. PUSH Lich -> Google (Last-Write-Wins)
+      // 1. PUSH Lich -> Google (Last-Write-Wins with Concurrency Pool)
       if (shouldPush) {
         const events = this.eventRepo.findByCalendarId(mapping.calendar_id);
+        const toUpdate: { evt: (typeof events)[0]; extMapping: any }[] = [];
+        const toCreate: (typeof events)[0][] = [];
+
         for (const evt of events) {
           const extMapping = this.eventIntegrationRepo.findByEventAndIntegration(evt.id, integration.id);
           if (extMapping) {
             const localUpdated = new Date(evt.updated_at).getTime();
             const remoteUpdated = extMapping.external_updated_at ? new Date(extMapping.external_updated_at).getTime() : 0;
-
-            if (localUpdated >= remoteUpdated) {
-              try {
-                const updatedExt = await this.provider.updateEvent(
-                  accessToken,
-                  mapping.external_calendar_id,
-                  extMapping.external_id,
-                  evt,
-                );
-                this.eventIntegrationRepo.upsert({
-                  id: extMapping.id,
-                  event_id: evt.id,
-                  integration_id: integration.id,
-                  external_id: updatedExt.id,
-                  external_updated_at: updatedExt.updated,
-                });
-                totalPushed++;
-              } catch {
-                // Non-fatal per event
-              }
+            // Only push if local event has been modified after the last synced remote timestamp
+            if (localUpdated > remoteUpdated) {
+              toUpdate.push({ evt, extMapping });
             }
           } else {
-            // Create on Google
+            toCreate.push(evt);
+          }
+        }
+
+        // Run updates with concurrency pool (max 5 parallel Google API requests)
+        const concurrency = 5;
+        let updateIdx = 0;
+        const updateWorkers = Array.from({ length: Math.min(concurrency, toUpdate.length) }, async () => {
+          while (updateIdx < toUpdate.length) {
+            const { evt, extMapping } = toUpdate[updateIdx++];
+            try {
+              const updatedExt = await this.provider.updateEvent(
+                accessToken,
+                mapping.external_calendar_id,
+                extMapping.external_id,
+                evt,
+              );
+              this.eventIntegrationRepo.upsert({
+                id: extMapping.id,
+                event_id: evt.id,
+                integration_id: integration.id,
+                external_id: updatedExt.id,
+                external_updated_at: updatedExt.updated,
+              });
+              totalPushed++;
+            } catch {
+              // Non-fatal per event
+            }
+          }
+        });
+
+        // Run creates with concurrency pool
+        let createIdx = 0;
+        const createWorkers = Array.from({ length: Math.min(concurrency, toCreate.length) }, async () => {
+          while (createIdx < toCreate.length) {
+            const evt = toCreate[createIdx++];
             try {
               const createdExt = await this.provider.createEvent(
                 accessToken,
@@ -287,7 +308,9 @@ export class IntegrationService {
               // Non-fatal per event
             }
           }
-        }
+        });
+
+        await Promise.all([...updateWorkers, ...createWorkers]);
       }
 
       // 2. PULL Google -> Lich (Last-Write-Wins)

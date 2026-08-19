@@ -5,6 +5,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"os"
 	"os/exec"
 	"runtime"
 	"strings"
@@ -307,6 +308,11 @@ func runGoogleSync(ctx context.Context, client *api.Client, args []string) error
 		return err
 	}
 
+	var stopSpinner func()
+	if !*verboseFlag && !ui.IsSimpleMode(*simpleFlag) {
+		stopSpinner = ui.StartSpinner(os.Stdout, fmt.Sprintf("Đang đồng bộ Google Calendar (hướng: %s)...", strings.ToUpper(*directionFlag)))
+	}
+
 	if *verboseFlag {
 		if ui.IsSimpleMode(*simpleFlag) {
 			fmt.Println("[1/3] Đang kết nối máy chủ và xác thực Google...")
@@ -318,6 +324,9 @@ func runGoogleSync(ctx context.Context, client *api.Client, args []string) error
 	}
 
 	res, err := client.SyncGoogle(ctx, *calFlag, *directionFlag)
+	if stopSpinner != nil {
+		stopSpinner()
+	}
 	if err != nil {
 		return fmt.Errorf("lỗi đồng bộ Google Calendar: %w", err)
 	}
