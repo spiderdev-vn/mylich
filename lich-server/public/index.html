@@ -52,10 +52,6 @@
           <span class="dot dot-yellow"></span>
           <span class="dot dot-green"></span>
           <span class="terminal-title">kunix@pop-terminal: ~ (lich-cli)</span>
-          <span class="terminal-status-badge">
-            <span class="terminal-status-dot"></span>
-            LIVE DEMO
-          </span>
         </div>
         <div class="terminal-body" id="terminal-content">
           <!-- Initial SSR Content (replaced dynamically by typing animation) -->
@@ -102,6 +98,56 @@
           <p>Dữ liệu lịch là của bạn, không phải của các cỗ máy quảng cáo. Tự host backend riêng qua Docker chỉ với 1 lệnh compose!</p>
         </div>
       </div>
+
+      <!-- Section: Why Self-Host lich-server? -->
+      <section class="selfhost-section">
+        <div class="section-badge">🚀 BACKEND SỨC MẠNH CHO CÁ NHÂN & TEAM</div>
+        <h2>Tại sao nên tự host <span class="gradient-text">lich-server</span>?</h2>
+        <p class="section-desc">
+          Mỹ Lích CLI/TUI hoàn toàn có thể hoạt động độc lập offline trên máy tính của bạn. Nhưng khi triển khai một máy chủ <code>lich-server</code> riêng, bạn sẽ sở hữu một hệ sinh thái lịch cá nhân trọn vẹn và an toàn:
+        </p>
+
+        <div class="selfhost-grid">
+          <div class="selfhost-card">
+            <div class="selfhost-icon">🏠</div>
+            <div class="selfhost-content">
+              <h4>Nguồn Chân Lý Dữ Liệu (Source of Truth)</h4>
+              <p>Bạn thực sự làm chủ 100% dữ liệu lịch trong SQLite riêng biệt. Không lo bị khóa tài khoản, không bị theo dõi hay quét dữ liệu cho mục đích quảng cáo.</p>
+            </div>
+          </div>
+
+          <div class="selfhost-card">
+            <div class="selfhost-icon">💻📱</div>
+            <div class="selfhost-content">
+              <h4>Đồng Bộ Đa Thiết Bị Tức Thì</h4>
+              <p>Dùng máy bàn tại nhà, laptop ở công ty, hay điện thoại: mọi thay đổi đều được đồng bộ 2 chiều mượt mà với cơ chế Last-Write-Wins thông minh.</p>
+            </div>
+          </div>
+
+          <div class="selfhost-card">
+            <div class="selfhost-icon">🔄</div>
+            <div class="selfhost-content">
+              <h4>Google Calendar Relay Tự Động</h4>
+              <p>Chỉ cần cấu hình một Google OAuth App duy nhất trên server. Mọi thành viên trong gia đình hoặc nhóm có thể liên kết Google Calendar an toàn chỉ bằng 1 cú click duyệt web.</p>
+            </div>
+          </div>
+
+          <div class="selfhost-card">
+            <div class="selfhost-icon">🔔</div>
+            <div class="selfhost-content">
+              <h4>Hạ Tầng Webhook & Thông Báo</h4>
+              <p>Sẵn sàng cho việc bắn thông báo sự kiện đến Gotify, Telegram hoặc hệ thống nhà thông minh (Home Assistant) mà không phụ thuộc vào ứng dụng ngoài.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Docker deploy snippet -->
+        <div class="deploy-snippet">
+          <div class="deploy-title">⚡ Triển khai siêu nhanh chỉ với Docker Compose</div>
+          <pre class="deploy-code"><code>docker compose up -d</code></pre>
+          <div class="deploy-note">Server nhẹ dưới 50MB RAM, tích hợp sẵn Traefik HTTPS tự động!</div>
+        </div>
+      </section>
     </main>
 
     <footer>
