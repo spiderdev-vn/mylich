@@ -72,6 +72,14 @@ export class EventRepository {
     return row || null;
   }
 
+  public findByIdIncludeDeleted(id: string): Event | null {
+    const stmt = this.db.prepare(`
+      SELECT * FROM events WHERE id = ?
+    `);
+    const row = stmt.get(id) as unknown as Event | undefined;
+    return row || null;
+  }
+
   public findByIdWithCalendar(id: string): (Event & { user_id: string }) | null {
     const stmt = this.db.prepare(`
       SELECT e.*, c.user_id

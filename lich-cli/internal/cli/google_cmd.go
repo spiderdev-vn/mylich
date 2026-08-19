@@ -676,6 +676,10 @@ func runGoogleSync(ctx context.Context, client *api.Client, args []string) error
 		if errors.Is(err, ui.ErrAborted) || err.Error() == "user aborted" {
 			return nil
 		}
+		errMsg := err.Error()
+		if strings.Contains(errMsg, "rateLimitExceeded") || strings.Contains(errMsg, "RATE_LIMIT_EXCEEDED") || strings.Contains(errMsg, "Quota exceeded") {
+			return fmt.Errorf("Google Calendar API tạm thời bị giới hạn tần suất yêu cầu (Rate Limit: 600 req/phút). Vui lòng đợi khoảng 30 giây rồi thử lại")
+		}
 		return fmt.Errorf("lỗi đồng bộ Google Calendar: %w", err)
 	}
 

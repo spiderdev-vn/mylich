@@ -332,8 +332,17 @@ export class IntegrationService {
           }
         }
 
-        // Run updates with concurrency pool (max 10 parallel Google API requests)
-        const concurrency = 10;
+        const toDelete: { eventId: string; externalId: string }[] = [];
+        const allExtMappings = this.eventIntegrationRepo.listByIntegrationId(integration.id);
+        for (const extM of allExtMappings) {
+          const localEvt = this.eventRepo.findByIdIncludeDeleted(extM.event_id);
+          if (!localEvt || (localEvt.deleted_at != null && localEvt.calendar_id === mapping.calendar_id)) {
+            toDelete.push({ eventId: extM.event_id, externalId: extM.external_id });
+          }
+        }
+
+        // Run updates, creates, and deletes with polite concurrency pool (max 4 parallel Google API requests)
+        const concurrency = 4;
         let updateIdx = 0;
         const updateWorkers = Array.from({ length: Math.min(concurrency, toUpdate.length) }, async () => {
           while (updateIdx < toUpdate.length) {
@@ -384,7 +393,27 @@ export class IntegrationService {
           }
         });
 
-        await Promise.all([...updateWorkers, ...createWorkers]);
+        // Run deletes with concurrency pool
+        let deleteIdx = 0;
+        const deleteWorkers = Array.from({ length: Math.min(concurrency, toDelete.length) }, async () => {
+          while (deleteIdx < toDelete.length) {
+            const { eventId, externalId } = toDelete[deleteIdx++];
+            try {
+              await this.provider.deleteEvent(
+                accessToken,
+                mapping.external_calendar_id,
+                externalId,
+              );
+              this.eventIntegrationRepo.deleteByEventAndIntegration(eventId, integration.id);
+              totalPushed++;
+            } catch {
+              // If already removed on remote, clean up local mapping
+              this.eventIntegrationRepo.deleteByEventAndIntegration(eventId, integration.id);
+            }
+          }
+        });
+
+        await Promise.all([...updateWorkers, ...createWorkers, ...deleteWorkers]);
       }
 
       // 2. PULL Google -> Lich (Last-Write-Wins)

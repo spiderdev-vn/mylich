@@ -14,6 +14,59 @@ export interface GoogleOAuthConfig {
   redirectUri: string;
 }
 
+async function fetchGoogleWithRetry(
+  url: string,
+  init?: RequestInit,
+  maxRetries = 3,
+): Promise<Response> {
+  let lastError: Error | null = null;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const res = await fetch(url, {
+        ...init,
+        signal: AbortSignal.timeout(10000),
+      });
+
+      // Handle Rate Limits (429, 503, 500)
+      if (res.status === 429 || res.status === 503 || res.status === 500) {
+        if (attempt < maxRetries) {
+          const delay = Math.pow(2, attempt) * 600 + Math.random() * 400;
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          continue;
+        }
+      }
+
+      // Handle Google's 403 rateLimitExceeded
+      if (res.status === 403) {
+        const text = await res.clone().text();
+        if (
+          text.includes('rateLimitExceeded') ||
+          text.includes('RATE_LIMIT_EXCEEDED') ||
+          text.includes('userRateLimitExceeded') ||
+          text.includes('quota')
+        ) {
+          if (attempt < maxRetries) {
+            const delay = Math.pow(2, attempt) * 1200 + Math.random() * 600;
+            await new Promise((resolve) => setTimeout(resolve, delay));
+            continue;
+          }
+        }
+      }
+
+      return res;
+    } catch (err: any) {
+      lastError = err;
+      if (attempt < maxRetries) {
+        const delay = Math.pow(2, attempt) * 600 + Math.random() * 400;
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        continue;
+      }
+    }
+  }
+
+  throw lastError || new Error(`Google API request to ${url} timed out or failed after retries`);
+}
+
 export class GoogleProvider implements CalendarProvider {
   public readonly name = 'google';
   private config: GoogleOAuthConfig;
@@ -42,7 +95,7 @@ export class GoogleProvider implements CalendarProvider {
   }
 
   public async exchangeCode(code: string): Promise<TokenResult> {
-    const res = await fetch('https://oauth2.googleapis.com/token', {
+    const res = await fetchGoogleWithRetry('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
@@ -63,7 +116,7 @@ export class GoogleProvider implements CalendarProvider {
 
     let email: string | undefined;
     try {
-      const userRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+      const userRes = await fetchGoogleWithRetry('https://www.googleapis.com/oauth2/v2/userinfo', {
         headers: { Authorization: `Bearer ${data.access_token}` },
       });
       if (userRes.ok) {
@@ -85,7 +138,7 @@ export class GoogleProvider implements CalendarProvider {
   }
 
   public async refreshToken(refreshToken: string): Promise<TokenResult> {
-    const res = await fetch('https://oauth2.googleapis.com/token', {
+    const res = await fetchGoogleWithRetry('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
@@ -112,7 +165,7 @@ export class GoogleProvider implements CalendarProvider {
   }
 
   public async listCalendars(accessToken: string): Promise<ExternalCalendar[]> {
-    const res = await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList', {
+    const res = await fetchGoogleWithRetry('https://www.googleapis.com/calendar/v3/users/me/calendarList', {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
 
@@ -136,7 +189,7 @@ export class GoogleProvider implements CalendarProvider {
     name: string,
     timeZone?: string,
   ): Promise<ExternalCalendar> {
-    const res = await fetch('https://www.googleapis.com/calendar/v3/calendars', {
+    const res = await fetchGoogleWithRetry('https://www.googleapis.com/calendar/v3/calendars', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -186,11 +239,10 @@ export class GoogleProvider implements CalendarProvider {
     }
 
     const encodedCalId = encodeURIComponent(calendarId);
-    const res = await fetch(
+    const res = await fetchGoogleWithRetry(
       `https://www.googleapis.com/calendar/v3/calendars/${encodedCalId}/events?${params.toString()}`,
       {
         headers: { Authorization: `Bearer ${accessToken}` },
-        signal: AbortSignal.timeout(8000),
       },
     );
 
@@ -218,7 +270,7 @@ export class GoogleProvider implements CalendarProvider {
     const payload = GoogleEventMapper.toGoogle(event);
     const encodedCalId = encodeURIComponent(calendarId);
 
-    const res = await fetch(
+    const res = await fetchGoogleWithRetry(
       `https://www.googleapis.com/calendar/v3/calendars/${encodedCalId}/events`,
       {
         method: 'POST',
@@ -227,7 +279,6 @@ export class GoogleProvider implements CalendarProvider {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(payload),
-        signal: AbortSignal.timeout(8000),
       },
     );
 
@@ -248,7 +299,7 @@ export class GoogleProvider implements CalendarProvider {
     const encodedCalId = encodeURIComponent(calendarId);
     const encodedEventId = encodeURIComponent(externalId);
 
-    const res = await fetch(
+    const res = await fetchGoogleWithRetry(
       `https://www.googleapis.com/calendar/v3/calendars/${encodedCalId}/events/${encodedEventId}`,
       {
         method: 'PATCH',
@@ -257,7 +308,6 @@ export class GoogleProvider implements CalendarProvider {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(payload),
-        signal: AbortSignal.timeout(8000),
       },
     );
 
@@ -276,12 +326,11 @@ export class GoogleProvider implements CalendarProvider {
     const encodedCalId = encodeURIComponent(calendarId);
     const encodedEventId = encodeURIComponent(externalId);
 
-    const res = await fetch(
+    const res = await fetchGoogleWithRetry(
       `https://www.googleapis.com/calendar/v3/calendars/${encodedCalId}/events/${encodedEventId}`,
       {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${accessToken}` },
-        signal: AbortSignal.timeout(8000),
       },
     );
 

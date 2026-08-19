@@ -47,6 +47,13 @@ export class EventIntegrationRepository {
     return row || null;
   }
 
+  public listByIntegrationId(integrationId: string): EventIntegration[] {
+    const stmt = this.db.prepare(
+      'SELECT * FROM event_integrations WHERE integration_id = ?',
+    );
+    return stmt.all(integrationId) as unknown as EventIntegration[];
+  }
+
   public upsert(mapping: {
     id: string;
     event_id: string;
