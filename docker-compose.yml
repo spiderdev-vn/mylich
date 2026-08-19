@@ -7,20 +7,9 @@ services:
     container_name: lich-server
     restart: unless-stopped
     ports:
-      - "3000:3000"
-    environment:
-      - NODE_ENV=production
-      - HOST=0.0.0.0
-      - PORT=3000
-      - DATABASE_PATH=/data/lich.db
-      - JWT_SECRET=change-this-to-a-secure-random-secret-in-production
-      - LOG_LEVEL=info
-      - TRUST_PROXY=true
-      # Google Calendar OAuth (Optional)
-      # - GOOGLE_CLIENT_ID=your-google-client-id
-      # - GOOGLE_CLIENT_SECRET=your-google-client-secret
-      # - GOOGLE_REDIRECT_URI=http://localhost:3000/auth/google/callback
-      # - USE_FAKE_GOOGLE=false
+      - "${PORT:-3000}:3000"
+    env_file:
+      - .env
     volumes:
       - lich-data:/data
 
