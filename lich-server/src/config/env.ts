@@ -37,6 +37,57 @@ function tryLoadEnvFiles(): void {
   }
 }
 
+function validateConfig(config: AppConfig): void {
+  const errors: string[] = [];
+
+  // 1. Kiểm tra Port
+  if (isNaN(config.port) || config.port < 1 || config.port > 65535) {
+    errors.push(`• PORT không hợp lệ (${config.port}). Phải là một số nguyên từ 1 đến 65535.`);
+  }
+
+  // 2. Kiểm tra JWT_SECRET
+  const devPlaceholders = [
+    'lich-default-dev-secret-key-32chars-min',
+    'change-this-to-a-secure-random-secret-in-production',
+    'supersecret-dev-jwt-key-replace-in-production-32chars',
+  ];
+
+  if (!config.jwtSecret || config.jwtSecret.trim() === '') {
+    errors.push('• JWT_SECRET không được để trống.');
+  } else if (config.jwtSecret.length < 32) {
+    errors.push(`• JWT_SECRET quá ngắn (${config.jwtSecret.length} ký tự). Độ dài tối thiểu phải là 32 ký tự để đảm bảo bảo mật.`);
+  } else if (
+    process.env.NODE_ENV === 'production' &&
+    devPlaceholders.includes(config.jwtSecret)
+  ) {
+    errors.push('• Ở môi trường production (NODE_ENV=production), JWT_SECRET bắt buộc phải là một chuỗi ngẫu nhiên bảo mật, không được dùng giá trị mặc định.');
+  }
+
+  // 3. Kiểm tra cặp biến Google OAuth (nếu có cấu hình)
+  if (
+    (config.googleClientId && !config.googleClientSecret) ||
+    (!config.googleClientId && config.googleClientSecret)
+  ) {
+    errors.push('• Cấu hình Google OAuth chưa đầy đủ: Cần cung cấp đồng thời cả GOOGLE_CLIENT_ID và GOOGLE_CLIENT_SECRET (hoặc để trống cả 2 để dùng FakeGoogleProvider).');
+  }
+
+  if (errors.length > 0) {
+    const errorMsg = [
+      '',
+      '===========================================================',
+      ' ❌ LỖI CẤU HÌNH MÁY CHỦ (Lich Server Configuration Guard) ',
+      '===========================================================',
+      ...errors,
+      '',
+      '👉 Vui lòng kiểm tra lại file .env hoặc các biến môi trường.',
+      '===========================================================',
+      '',
+    ].join('\n');
+
+    throw new Error(errorMsg);
+  }
+}
+
 export function loadConfig(): AppConfig {
   tryLoadEnvFiles();
 
@@ -69,7 +120,7 @@ export function loadConfig(): AppConfig {
   const useFakeGoogleProvider =
     fakeEnv === 'true' || fakeEnv === 't' || fakeEnv === '1' || fakeEnv === 'yes' || !googleClientId || !googleClientSecret;
 
-  return {
+  const config: AppConfig = {
     host,
     port: isNaN(port) ? 3000 : port,
     databasePath: path.resolve(process.cwd(), databasePath),
@@ -81,4 +132,9 @@ export function loadConfig(): AppConfig {
     googleRedirectUri,
     useFakeGoogleProvider,
   };
+
+  // Guard check
+  validateConfig(config);
+
+  return config;
 }
