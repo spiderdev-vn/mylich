@@ -292,9 +292,21 @@ func runGoogleMap(ctx context.Context, client *api.Client, args []string) error 
 }
 
 func runGoogleSync(ctx context.Context, client *api.Client, args []string) error {
+	var flagArgs []string
+	var positionalArgs []string
+	for _, arg := range args {
+		if strings.HasPrefix(arg, "-") {
+			flagArgs = append(flagArgs, arg)
+		} else {
+			positionalArgs = append(positionalArgs, arg)
+		}
+	}
+
 	fs := flag.NewFlagSet("google sync", flag.ContinueOnError)
 	directionFlag := fs.String("direction", "both", "Hướng đồng bộ (push, pull, both)")
 	fs.StringVar(directionFlag, "d", "both", "Hướng đồng bộ (viết tắt)")
+	eventFlag := fs.String("event", "", "ID sự kiện cụ thể để đồng bộ tức thì")
+	fs.StringVar(eventFlag, "e", "", "ID sự kiện cụ thể (viết tắt)")
 	calFlag := fs.String("calendar", "", "ID lịch cụ thể")
 	verboseFlag := fs.Bool("verbose", false, "Hiển thị chi tiết các bước đồng bộ")
 	fs.BoolVar(verboseFlag, "v", false, "Hiển thị chi tiết các bước đồng bộ (viết tắt)")
@@ -302,11 +314,21 @@ func runGoogleSync(ctx context.Context, client *api.Client, args []string) error
 	simpleFlag := fs.Bool("simple", false, "Hiển thị ASCII đơn giản")
 	fs.BoolVar(simpleFlag, "s", false, "Hiển thị ASCII đơn giản (viết tắt)")
 
-	if err := fs.Parse(args); err != nil {
+	if err := fs.Parse(flagArgs); err != nil {
 		if errors.Is(err, flag.ErrHelp) {
 			return nil
 		}
 		return err
+	}
+
+	// Xử lý positional args
+	for _, p := range positionalArgs {
+		lower := strings.ToLower(p)
+		if lower == "push" || lower == "pull" || lower == "both" {
+			*directionFlag = lower
+		} else if *eventFlag == "" {
+			*eventFlag = p
+		}
 	}
 
 	var res *api.GoogleSyncResponse
@@ -326,7 +348,7 @@ func runGoogleSync(ctx context.Context, client *api.Client, args []string) error
 
 		// Step 2: Server <-> Google Calendar sync
 		var syncErr error
-		res, syncErr = client.SyncGoogle(ctx, *calFlag, *directionFlag)
+		res, syncErr = client.SyncGoogle(ctx, *calFlag, *directionFlag, *eventFlag)
 		if syncErr != nil {
 			return syncErr
 		}
@@ -345,6 +367,11 @@ func runGoogleSync(ctx context.Context, client *api.Client, args []string) error
 		return nil
 	}
 
+	spinnerTitle := fmt.Sprintf("Đang đồng bộ hai chiều với Google Calendar (hướng: %s)...", strings.ToUpper(*directionFlag))
+	if *eventFlag != "" {
+		spinnerTitle = fmt.Sprintf("Đang đẩy sự kiện [%s] lên Google Calendar...", *eventFlag)
+	}
+
 	if ui.IsSimpleMode(*simpleFlag) || *verboseFlag {
 		if *verboseFlag {
 			if ui.IsSimpleMode(*simpleFlag) {
@@ -357,7 +384,6 @@ func runGoogleSync(ctx context.Context, client *api.Client, args []string) error
 		}
 		err = performSync()
 	} else {
-		spinnerTitle := fmt.Sprintf("Đang đồng bộ hai chiều với Google Calendar (hướng: %s)...", strings.ToUpper(*directionFlag))
 		err = ui.RunWithSpinner(spinnerTitle, performSync)
 	}
 
@@ -374,7 +400,22 @@ func runGoogleSync(ctx context.Context, client *api.Client, args []string) error
 	}
 
 	if ui.IsSimpleMode(*simpleFlag) {
-		fmt.Printf("✓ Đã đồng bộ Google Calendar: %d đẩy lên, %d kéo về\n", res.Pushed, res.Pulled)
+		if *eventFlag != "" {
+			fmt.Printf("✓ Đã đồng bộ sự kiện [%s] lên Google Calendar\n", *eventFlag)
+		} else {
+			fmt.Printf("✓ Đã đồng bộ Google Calendar: %d đẩy lên, %d kéo về\n", res.Pushed, res.Pulled)
+		}
+		return nil
+	}
+
+	if *eventFlag != "" {
+		fmt.Println(ui.CardBoxSuccess.Render(fmt.Sprintf(
+			"%s\n\n%s %s\n%s %s\n%s %s",
+			ui.CardTitle.Render("✓ ĐỒNG BỘ SỰ KIỆN LÊN GOOGLE THÀNH CÔNG"),
+			ui.LabelStyle.Render("ID Sự kiện:     "), ui.ValueStyle.Render(*eventFlag),
+			ui.LabelStyle.Render("Kết quả:        "), ui.ValueStyle.Render("Đã cập nhật trên Google Calendar"),
+			ui.LabelStyle.Render("Trạng thái:     "), ui.BadgeSynced,
+		)))
 		return nil
 	}
 

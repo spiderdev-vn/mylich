@@ -210,6 +210,7 @@ export class IntegrationService {
     userId: string,
     calendarId?: string,
     direction: 'push' | 'pull' | 'both' = 'both',
+    eventId?: string,
   ): Promise<{ pushed: number; pulled: number }> {
     const integration = this.integrationRepo.findByUserAndProvider(userId, this.provider.name);
     if (!integration || integration.status !== 'connected') {
@@ -218,6 +219,58 @@ export class IntegrationService {
 
     const accessToken = await this.getValidAccessToken(userId);
     const mappings = this.calendarIntegrationRepo.listByIntegrationId(integration.id);
+
+    // 0. Single event direct push by Event ID
+    if (eventId) {
+      const evt = this.eventRepo.findById(eventId);
+      if (!evt) {
+        throw new NotFoundError(`Event '${eventId}' not found`);
+      }
+      const cal = this.calendarRepo.findById(evt.calendar_id);
+      if (!cal || cal.user_id !== userId) {
+        throw new NotFoundError(`Event '${eventId}' not found`);
+      }
+
+      let mapping = mappings.find((m) => m.calendar_id === evt.calendar_id && m.enabled);
+      if (!mapping && mappings.length > 0) {
+        mapping = mappings[0];
+      }
+      if (!mapping) {
+        throw new BadRequestError('No mapped Google calendar found for this event');
+      }
+
+      const extMapping = this.eventIntegrationRepo.findByEventAndIntegration(evt.id, integration.id);
+      if (extMapping) {
+        const updatedExt = await this.provider.updateEvent(
+          accessToken,
+          mapping.external_calendar_id,
+          extMapping.external_id,
+          evt,
+        );
+        this.eventIntegrationRepo.upsert({
+          id: extMapping.id,
+          event_id: evt.id,
+          integration_id: integration.id,
+          external_id: updatedExt.id,
+          external_updated_at: updatedExt.updated,
+        });
+      } else {
+        const createdExt = await this.provider.createEvent(
+          accessToken,
+          mapping.external_calendar_id,
+          evt,
+        );
+        this.eventIntegrationRepo.upsert({
+          id: crypto.randomUUID(),
+          event_id: evt.id,
+          integration_id: integration.id,
+          external_id: createdExt.id,
+          external_updated_at: createdExt.updated,
+        });
+      }
+
+      return { pushed: 1, pulled: 0 };
+    }
 
     let totalPushed = 0;
     let totalPulled = 0;
