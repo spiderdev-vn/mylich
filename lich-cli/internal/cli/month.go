@@ -27,14 +27,42 @@ func RunMonth(args []string) error {
 	fs.BoolVar(simpleFlag, "s", false, "Hiển thị dạng văn bản ASCII đơn giản (viết tắt)")
 
 	fs.Usage = func() {
-		fmt.Println("Sử dụng: lich month [flags]")
-		fmt.Println()
-		fmt.Println("Tùy chọn:")
-		fmt.Println("  --detail, -d     Hiển thị chi tiết bao gồm ID sự kiện")
-		fmt.Println("  --id             Hiển thị ID sự kiện")
-		fmt.Println("  --calendar <id>  Lọc sự kiện theo ID lịch")
-		fmt.Println("  --simple, -s     Hiển thị dạng văn bản ASCII đơn giản")
-		fmt.Println("  --json           Xuất kết quả dưới định dạng JSON")
+		if ui.IsSimpleMode(*simpleFlag) {
+			fmt.Println("Sử dụng: lich month [flags]")
+			fmt.Println()
+			fmt.Println("Tùy chọn:")
+			fmt.Println("  --detail, -d     Hiển thị chi tiết bao gồm ID sự kiện")
+			fmt.Println("  --id             Hiển thị ID sự kiện")
+			fmt.Println("  --calendar <id>  Lọc sự kiện theo ID lịch")
+			fmt.Println("  --simple, -s     Hiển thị dạng văn bản ASCII đơn giản")
+			fmt.Println("  --json           Xuất kết quả dưới định dạng JSON")
+			return
+		}
+
+		banner := ui.TitleBanner.Render(" LỊCH TRÌNH THÁNG (LICH MONTH) ")
+		fmt.Println(banner)
+
+		helpContent := fmt.Sprintf(`%s
+  %s    %s
+  %s %s
+
+%s
+  %s      %s
+  %s            %s
+  %s %s
+  %s          %s
+  %s     %s`,
+			ui.CardTitle.Render("CÚ PHÁP:"),
+			ui.ValueStyle.Render("lich month"), ui.LabelStyle.Render("Xem toàn bộ lịch trình cả tháng"),
+			ui.ValueStyle.Render("lich month -d"), ui.LabelStyle.Render("Hiện chi tiết kèm Event ID từng sự kiện"),
+			ui.CardTitle.Render("TÙY CHỌN & CỜ:"),
+			ui.ValueStyle.Render("--detail, -d"), ui.LabelStyle.Render("Hiển thị chi tiết bao gồm ID sự kiện"),
+			ui.ValueStyle.Render("--id"), ui.LabelStyle.Render("Hiển thị ID sự kiện"),
+			ui.ValueStyle.Render("--calendar <id>"), ui.LabelStyle.Render("Lọc sự kiện theo ID lịch cụ thể"),
+			ui.ValueStyle.Render("--json"), ui.LabelStyle.Render("Xuất kết quả dưới định dạng JSON"),
+			ui.ValueStyle.Render("--simple, -s"), ui.LabelStyle.Render("Hiển thị dạng văn bản ASCII đơn giản"),
+		)
+		fmt.Println(ui.CardBox.Width(78).Render(helpContent))
 	}
 
 	if err := fs.Parse(args); err != nil {

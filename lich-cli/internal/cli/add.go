@@ -77,21 +77,59 @@ func RunAdd(args []string) error {
 	fs.BoolVar(simpleFlag, "s", false, "Hiển thị dạng văn bản ASCII đơn giản (viết tắt)")
 
 	fs.Usage = func() {
-		fmt.Println("Sử dụng: lich add [tiêu đề] [flags]")
-		fmt.Println()
-		fmt.Println("Mô tả:")
-		fmt.Println("  Tạo sự kiện mới. Nếu không truyền tham số, sẽ mở Form tương tác Huh để điền thông tin.")
-		fmt.Println()
-		fmt.Println("Tùy chọn:")
-		fmt.Println("  --date <date>         Ngày sự kiện (YYYY-MM-DD, today, tomorrow)")
-		fmt.Println("  --at <time>           Giờ bắt đầu (10:00, 23:30, 11:30pm, 10am)")
-		fmt.Println("  --to <time>           Giờ kết thúc (22:33, 03:00, 3am)")
-		fmt.Println("  --duration <duration> Thời lượng sự kiện (30m, 1h, 2h30m, mặc định: 1h)")
-		fmt.Println("  --calendar <id>       ID lịch đích")
-		fmt.Println("  --location <text>     Địa điểm")
-		fmt.Println("  --desc <text>         Ghi chú mô tả")
-		fmt.Println("  --timezone <tz>       Múi giờ (ví dụ: Asia/Ho_Chi_Minh)")
-		fmt.Println("  --simple, -s          Hiển thị dạng văn bản ASCII đơn giản")
+		if ui.IsSimpleMode(*simpleFlag) {
+			fmt.Println("Sử dụng: lich add [tiêu đề] [flags]")
+			fmt.Println()
+			fmt.Println("Mô tả:")
+			fmt.Println("  Tạo sự kiện mới. Nếu không truyền tham số, sẽ mở Form tương tác Huh để điền thông tin.")
+			fmt.Println()
+			fmt.Println("Tùy chọn:")
+			fmt.Println("  --date <date>         Ngày sự kiện (YYYY-MM-DD, today, tomorrow)")
+			fmt.Println("  --at <time>           Giờ bắt đầu (10:00, 23:30, 11:30pm, 10am)")
+			fmt.Println("  --to <time>           Giờ kết thúc (22:33, 03:00, 3am)")
+			fmt.Println("  --duration <duration> Thời lượng sự kiện (30m, 1h, 2h30m, mặc định: 1h)")
+			fmt.Println("  --calendar <id>       ID lịch đích")
+			fmt.Println("  --location <text>     Địa điểm")
+			fmt.Println("  --desc <text>         Ghi chú mô tả")
+			fmt.Println("  --timezone <tz>       Múi giờ (ví dụ: Asia/Ho_Chi_Minh)")
+			fmt.Println("  --simple, -s          Hiển thị dạng văn bản ASCII đơn giản")
+			return
+		}
+
+		banner := ui.TitleBanner.Render(" TẠO SỰ KIỆN MỚI (LICH ADD) ")
+		fmt.Println(banner)
+
+		helpContent := fmt.Sprintf(`%s
+  %s    %s
+  %s  %s
+  %s    %s
+
+%s
+  %s     %s
+  %s       %s
+  %s       %s
+  %s %s
+  %s %s
+  %s   %s
+  %s       %s
+  %s   %s
+  %s     %s`,
+			ui.CardTitle.Render("CÚ PHÁP:"),
+			ui.ValueStyle.Render("lich add \"Tiêu đề sự kiện\""), ui.LabelStyle.Render("Tạo nhanh sự kiện với tiêu đề"),
+			ui.ValueStyle.Render("lich add \"Họp\" --at 10:00 --to 11:30"), ui.LabelStyle.Render("Chỉ định giờ bắt đầu & kết thúc"),
+			ui.ValueStyle.Render("lich add"), ui.LabelStyle.Render("Mở Form tương tác trực quan"),
+			ui.CardTitle.Render("TÙY CHỌN & CỜ:"),
+			ui.ValueStyle.Render("--date <date>"), ui.LabelStyle.Render("Ngày sự kiện (YYYY-MM-DD, today, tomorrow)"),
+			ui.ValueStyle.Render("--at <time>"), ui.LabelStyle.Render("Giờ bắt đầu (10:00, 23:30, 11:30pm, 10am)"),
+			ui.ValueStyle.Render("--to <time>"), ui.LabelStyle.Render("Giờ kết thúc (22:33, 03:00, 3am)"),
+			ui.ValueStyle.Render("--duration <d>"), ui.LabelStyle.Render("Thời lượng sự kiện (30m, 1h, 2h30m, mặc định: 1h)"),
+			ui.ValueStyle.Render("--calendar <id>"), ui.LabelStyle.Render("ID lịch đích"),
+			ui.ValueStyle.Render("--location <text>"), ui.LabelStyle.Render("Địa điểm diễn ra"),
+			ui.ValueStyle.Render("--desc <text>"), ui.LabelStyle.Render("Ghi chú mô tả chi tiết"),
+			ui.ValueStyle.Render("--timezone <tz>"), ui.LabelStyle.Render("Múi giờ sự kiện (ví dụ: Asia/Ho_Chi_Minh)"),
+			ui.ValueStyle.Render("--simple, -s"), ui.LabelStyle.Render("Hiển thị dạng văn bản ASCII đơn giản"),
+		)
+		fmt.Println(ui.CardBox.Width(78).Render(helpContent))
 	}
 
 	if err := fs.Parse(flagArgs); err != nil {

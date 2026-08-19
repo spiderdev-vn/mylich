@@ -4,7 +4,6 @@ import (
 	"os"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/mattn/go-isatty"
 )
 
 var (
@@ -21,7 +20,9 @@ var (
 	// Typography & Styles
 	TitleBanner = lipgloss.NewStyle().
 			Bold(true).
-			Foreground(ColorHighlight)
+			Foreground(lipgloss.Color("#FFFFFF")).
+			Background(ColorPrimary).
+			Padding(0, 1)
 
 	SectionHeaderStyle = lipgloss.NewStyle().
 				Bold(true).
@@ -130,7 +131,7 @@ func RenderBadgeFailed(icon string) string {
 	return lipgloss.NewStyle().Foreground(ColorError).Render(icon + " Đồng bộ thất bại")
 }
 
-// IsSimpleMode checks if the user requested plain ASCII output or if terminal doesn't support color/TTY
+// IsSimpleMode checks if the user requested plain ASCII output or if terminal is explicitly dumb
 func IsSimpleMode(simpleFlag bool) bool {
 	if simpleFlag {
 		return true
@@ -139,9 +140,6 @@ func IsSimpleMode(simpleFlag bool) bool {
 		return true
 	}
 	if os.Getenv("TERM") == "dumb" {
-		return true
-	}
-	if !isatty.IsTerminal(os.Stdout.Fd()) && !isatty.IsCygwinTerminal(os.Stdout.Fd()) {
 		return true
 	}
 	return false

@@ -35,11 +35,33 @@ func RunSearch(args []string) error {
 	fs.BoolVar(simpleFlag, "s", false, "Hiển thị dạng văn bản ASCII đơn giản (viết tắt)")
 
 	fs.Usage = func() {
-		fmt.Println("Sử dụng: lich search <từ khóa> [flags]")
-		fmt.Println()
-		fmt.Println("Tùy chọn:")
-		fmt.Println("  --simple, -s   Hiển thị dạng văn bản ASCII đơn giản")
-		fmt.Println("  --json         Xuất kết quả dưới định dạng JSON")
+		if ui.IsSimpleMode(*simpleFlag) {
+			fmt.Println("Sử dụng: lich search <từ khóa> [flags]")
+			fmt.Println()
+			fmt.Println("Tùy chọn:")
+			fmt.Println("  --simple, -s   Hiển thị dạng văn bản ASCII đơn giản")
+			fmt.Println("  --json         Xuất kết quả dưới định dạng JSON")
+			return
+		}
+
+		banner := ui.TitleBanner.Render(" TÌM KIẾM SỰ KIỆN (LICH SEARCH) ")
+		fmt.Println(banner)
+
+		helpContent := fmt.Sprintf(`%s
+  %s       %s
+  %s          %s
+
+%s
+  %s          %s
+  %s     %s`,
+			ui.CardTitle.Render("CÚ PHÁP:"),
+			ui.ValueStyle.Render("lich search <từ khóa>"), ui.LabelStyle.Render("Tìm kiếm sự kiện theo tiêu đề, địa điểm hoặc mô tả"),
+			ui.ValueStyle.Render("lich search"), ui.LabelStyle.Render("Mở ô nhập từ khóa tương tác"),
+			ui.CardTitle.Render("TÙY CHỌN & CỜ:"),
+			ui.ValueStyle.Render("--json"), ui.LabelStyle.Render("Xuất kết quả dưới định dạng JSON"),
+			ui.ValueStyle.Render("--simple, -s"), ui.LabelStyle.Render("Hiển thị dạng văn bản ASCII đơn giản"),
+		)
+		fmt.Println(ui.CardBox.Width(78).Render(helpContent))
 	}
 
 	if err := fs.Parse(flagArgs); err != nil {

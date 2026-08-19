@@ -395,24 +395,60 @@ func runGoogleSync(ctx context.Context, client *api.Client, args []string) error
 	fs.BoolVar(simpleFlag, "s", false, "Hiển thị ASCII đơn giản (viết tắt)")
 
 	fs.Usage = func() {
-		fmt.Println("Sử dụng: lich google sync [push|pull|both] [flags]")
-		fmt.Println()
-		fmt.Println("Mô tả:")
-		fmt.Println("  Đồng bộ hóa dữ liệu với Google Calendar (Source of Truth: Lich).")
-		fmt.Println("  - 'lich google sync' hoặc 'lich google sync both': Đồng bộ 2 chiều (Push & Pull).")
-		fmt.Println("  - 'lich google sync push':                         Chỉ đẩy sự kiện lên Google Calendar.")
-		fmt.Println("  - 'lich google sync pull':                         Chỉ kéo sự kiện từ Google Calendar về.")
-		fmt.Println()
-		fmt.Println("Tùy chọn:")
-		fmt.Println("  --event, -e <id>        Đồng bộ nhanh 1 sự kiện theo ID (<300ms)")
-		fmt.Println("  --today / --tomorrow    Đồng bộ sự kiện Hôm nay / Ngày mai")
-		fmt.Println("  --week / --month        Đồng bộ sự kiện Tuần này / Tháng này")
-		fmt.Println("  --from <date>           Thời gian bắt đầu (VD: 2026-08-19)")
-		fmt.Println("  --to <date>             Thời gian kết thúc (VD: 2026-08-25)")
-		fmt.Println("  --direction, -d <dir>   Hướng đồng bộ: 'push', 'pull', hoặc 'both'")
-		fmt.Println("  --calendar <id>         Lọc theo ID lịch cụ thể")
-		fmt.Println("  --simple, -s            Hiển thị dạng văn bản ASCII đơn giản")
-		fmt.Println("  --verbose, -v           Hiển thị chi tiết các bước đồng bộ")
+		if ui.IsSimpleMode(*simpleFlag) {
+			fmt.Println("Sử dụng: lich google sync [push|pull|both] [flags]")
+			fmt.Println()
+			fmt.Println("Mô tả:")
+			fmt.Println("  Đồng bộ hóa dữ liệu với Google Calendar (Source of Truth: Lich).")
+			fmt.Println("  - 'lich google sync' hoặc 'lich google sync both': Đồng bộ 2 chiều (Push & Pull).")
+			fmt.Println("  - 'lich google sync push':                         Chỉ đẩy sự kiện lên Google Calendar.")
+			fmt.Println("  - 'lich google sync pull':                         Chỉ kéo sự kiện từ Google Calendar về.")
+			fmt.Println()
+			fmt.Println("Tùy chọn:")
+			fmt.Println("  --event, -e <id>        Đồng bộ nhanh 1 sự kiện theo ID (<300ms)")
+			fmt.Println("  --today / --tomorrow    Đồng bộ sự kiện Hôm nay / Ngày mai")
+			fmt.Println("  --week / --month        Đồng bộ sự kiện Tuần này / Tháng này")
+			fmt.Println("  --from <date>           Thời gian bắt đầu (VD: 2026-08-19)")
+			fmt.Println("  --to <date>             Thời gian kết thúc (VD: 2026-08-25)")
+			fmt.Println("  --direction, -d <dir>   Hướng đồng bộ: 'push', 'pull', hoặc 'both'")
+			fmt.Println("  --calendar <id>         Lọc theo ID lịch cụ thể")
+			fmt.Println("  --simple, -s            Hiển thị dạng văn bản ASCII đơn giản")
+			fmt.Println("  --verbose, -v           Hiển thị chi tiết các bước đồng bộ")
+			return
+		}
+
+		banner := ui.TitleBanner.Render(" ĐỒNG BỘ GOOGLE CALENDAR (LICH GOOGLE SYNC) ")
+		fmt.Println(banner)
+
+		helpContent := fmt.Sprintf(`%s
+  %s    %s
+  %s   %s
+  %s   %s
+
+%s
+  %s  %s
+  %s    %s
+  %s  %s
+  %s    %s
+  %s      %s
+  %s   %s
+  %s   %s
+  %s           %s`,
+			ui.CardTitle.Render("CÚ PHÁP ĐỒNG BỘ:"),
+			ui.ValueStyle.Render("lich google sync [push|pull|both]"), ui.LabelStyle.Render("Đồng bộ 2 chiều hoặc 1 chiều (mặc định: both)"),
+			ui.ValueStyle.Render("lich google sync <short_id>"), ui.LabelStyle.Render("Đồng bộ nhanh 1 sự kiện theo ID (<300ms)"),
+			ui.ValueStyle.Render("lich google sync today|week"), ui.LabelStyle.Render("Đồng bộ theo khoảng thời gian (today, tomorrow, week, month)"),
+			ui.CardTitle.Render("TÙY CHỌN & CỜ:"),
+			ui.ValueStyle.Render("--event, -e <id>"), ui.LabelStyle.Render("ID sự kiện cụ thể cần đồng bộ"),
+			ui.ValueStyle.Render("--today / --tomorrow"), ui.LabelStyle.Render("Đồng bộ phạm vi Hôm nay / Ngày mai"),
+			ui.ValueStyle.Render("--week / --month"), ui.LabelStyle.Render("Đồng bộ phạm vi Tuần này / Tháng này"),
+			ui.ValueStyle.Render("--from <d> --to <d>"), ui.LabelStyle.Render("Khoảng ngày tùy chỉnh (VD: --from 2026-08-19 --to 2026-08-25)"),
+			ui.ValueStyle.Render("--direction, -d <dir>"), ui.LabelStyle.Render("Hướng đồng bộ ('push', 'pull', 'both')"),
+			ui.ValueStyle.Render("--calendar <id>"), ui.LabelStyle.Render("Lọc theo ID lịch cụ thể"),
+			ui.ValueStyle.Render("--verbose, -v"), ui.LabelStyle.Render("Hiển thị chi tiết các bước đồng bộ"),
+			ui.ValueStyle.Render("--simple, -s"), ui.LabelStyle.Render("Xuất văn bản ASCII đơn giản"),
+		)
+		fmt.Println(ui.CardBox.Width(78).Render(helpContent))
 	}
 
 	flagsTakingValue := map[string]bool{

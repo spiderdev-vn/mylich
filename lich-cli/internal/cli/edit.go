@@ -71,23 +71,63 @@ func RunEdit(args []string) error {
 	fs.BoolVar(simpleFlag, "s", false, "Hiển thị dạng văn bản ASCII đơn giản (viết tắt)")
 
 	fs.Usage = func() {
-		fmt.Println("Sử dụng: lich edit <id> [flags]")
-		fmt.Println()
-		fmt.Println("Mô tả:")
-		fmt.Println("  Chỉnh sửa sự kiện đã có. Nếu không truyền cờ, sẽ mở Form tương tác Huh với dữ liệu hiện tại.")
-		fmt.Println()
-		fmt.Println("Tùy chọn:")
-		fmt.Println("  --title <text>        Tiêu đề sự kiện mới")
-		fmt.Println("  --date <date>         Ngày diễn ra (YYYY-MM-DD, today, tomorrow)")
-		fmt.Println("  --end-date <date>     Ngày kết thúc (Mặc định: cùng ngày với --date)")
-		fmt.Println("  --at <time>           Giờ bắt đầu (10:00, 23:30, 11:30pm)")
-		fmt.Println("  --to <time>           Giờ kết thúc (22:33, 03:00, 3am)")
-		fmt.Println("  --duration <duration> Thời lượng sự kiện (ví dụ: 30m, 1h, 2h30m)")
-		fmt.Println("  --calendar <id>       ID lịch đích")
-		fmt.Println("  --location <text>     Địa điểm")
-		fmt.Println("  --desc <text>         Ghi chú mô tả")
-		fmt.Println("  --timezone <tz>       Múi giờ (ví dụ: Asia/Ho_Chi_Minh)")
-		fmt.Println("  --simple, -s          Hiển thị dạng văn bản ASCII đơn giản")
+		if ui.IsSimpleMode(*simpleFlag) {
+			fmt.Println("Sử dụng: lich edit <id> [flags]")
+			fmt.Println()
+			fmt.Println("Mô tả:")
+			fmt.Println("  Chỉnh sửa sự kiện đã có (hỗ trợ Short ID). Nếu không truyền cờ, sẽ mở Form tương tác Huh.")
+			fmt.Println()
+			fmt.Println("Tùy chọn:")
+			fmt.Println("  --title <text>        Tiêu đề sự kiện mới")
+			fmt.Println("  --date <date>         Ngày diễn ra (YYYY-MM-DD, today, tomorrow)")
+			fmt.Println("  --end-date <date>     Ngày kết thúc (Mặc định: cùng ngày với --date)")
+			fmt.Println("  --at <time>           Giờ bắt đầu (10:00, 23:30, 11:30pm)")
+			fmt.Println("  --to <time>           Giờ kết thúc (22:33, 03:00, 3am)")
+			fmt.Println("  --duration <duration> Thời lượng sự kiện (ví dụ: 30m, 1h, 2h30m)")
+			fmt.Println("  --calendar <id>       ID lịch đích")
+			fmt.Println("  --location <text>     Địa điểm")
+			fmt.Println("  --desc <text>         Ghi chú mô tả")
+			fmt.Println("  --timezone <tz>       Múi giờ (ví dụ: Asia/Ho_Chi_Minh)")
+			fmt.Println("  --simple, -s          Hiển thị dạng văn bản ASCII đơn giản")
+			return
+		}
+
+		banner := ui.TitleBanner.Render(" CHỈNH SỬA SỰ KIỆN (LICH EDIT) ")
+		fmt.Println(banner)
+
+		helpContent := fmt.Sprintf(`%s
+  %s    %s
+  %s  %s
+  %s   %s
+
+%s
+  %s    %s
+  %s     %s
+  %s       %s
+  %s       %s
+  %s %s
+  %s %s
+  %s   %s
+  %s       %s
+  %s   %s
+  %s     %s`,
+			ui.CardTitle.Render("CÚ PHÁP:"),
+			ui.ValueStyle.Render("lich edit <short_id>"), ui.LabelStyle.Render("Mở Form chỉnh sửa tương tác cho sự kiện"),
+			ui.ValueStyle.Render("lich edit <short_id> --at 14:00"), ui.LabelStyle.Render("Đổi nhanh giờ bắt đầu"),
+			ui.ValueStyle.Render("lich edit <short_id> --title \"Mới\""), ui.LabelStyle.Render("Đổi tiêu đề sự kiện"),
+			ui.CardTitle.Render("TÙY CHỌN & CỜ:"),
+			ui.ValueStyle.Render("--title <text>"), ui.LabelStyle.Render("Tiêu đề sự kiện mới"),
+			ui.ValueStyle.Render("--date <date>"), ui.LabelStyle.Render("Ngày sự kiện (YYYY-MM-DD, today, tomorrow)"),
+			ui.ValueStyle.Render("--at <time>"), ui.LabelStyle.Render("Giờ bắt đầu mới (10:00, 23:30, 11:30pm)"),
+			ui.ValueStyle.Render("--to <time>"), ui.LabelStyle.Render("Giờ kết thúc mới (22:33, 03:00, 3am)"),
+			ui.ValueStyle.Render("--duration <d>"), ui.LabelStyle.Render("Thời lượng sự kiện mới (30m, 1h, 2h30m)"),
+			ui.ValueStyle.Render("--calendar <id>"), ui.LabelStyle.Render("Chuyển sang ID lịch khác"),
+			ui.ValueStyle.Render("--location <text>"), ui.LabelStyle.Render("Địa điểm diễn ra mới"),
+			ui.ValueStyle.Render("--desc <text>"), ui.LabelStyle.Render("Ghi chú mô tả mới"),
+			ui.ValueStyle.Render("--timezone <tz>"), ui.LabelStyle.Render("Múi giờ (ví dụ: Asia/Ho_Chi_Minh)"),
+			ui.ValueStyle.Render("--simple, -s"), ui.LabelStyle.Render("Hiển thị dạng văn bản ASCII đơn giản"),
+		)
+		fmt.Println(ui.CardBox.Width(78).Render(helpContent))
 	}
 
 	if err := fs.Parse(flagArgs); err != nil {

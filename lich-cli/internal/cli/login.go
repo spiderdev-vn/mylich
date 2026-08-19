@@ -25,17 +25,47 @@ func RunLogin(args []string) error {
 	fs.BoolVar(simpleFlag, "s", false, "Hiển thị dạng text ASCII đơn giản (viết tắt)")
 
 	fs.Usage = func() {
-		fmt.Println("Sử dụng: lich login [flags]")
-		fmt.Println()
-		fmt.Println("Mô tả:")
-		fmt.Println("  Đăng nhập hoặc đăng ký tài khoản mới. Nếu để trống cờ, sẽ mở Form tương tác Huh.")
-		fmt.Println()
-		fmt.Println("Tùy chọn:")
-		fmt.Printf("  --server <url>        URL máy chủ (mặc định: %s)\n", config.DefaultServerURL)
-		fmt.Println("  --username, -u <user> Tên đăng nhập")
-		fmt.Println("  --password, -p <pass> Mật khẩu")
-		fmt.Println("  --register            Đăng ký tài khoản mới")
-		fmt.Println("  --simple, -s          Hiển thị dạng text ASCII đơn giản")
+		if ui.IsSimpleMode(*simpleFlag) {
+			fmt.Println("Sử dụng: lich login [flags]")
+			fmt.Println()
+			fmt.Println("Mô tả:")
+			fmt.Println("  Đăng nhập hoặc đăng ký tài khoản mới. Nếu để trống cờ, sẽ mở Form tương tác Huh.")
+			fmt.Println()
+			fmt.Println("Tùy chọn:")
+			fmt.Printf("  --server <url>        URL máy chủ (mặc định: %s)\n", config.DefaultServerURL)
+			fmt.Println("  --username, -u <user> Tên đăng nhập")
+			fmt.Println("  --password, -p <pass> Mật khẩu")
+			fmt.Println("  --register            Đăng ký tài khoản mới")
+			fmt.Println("  --simple, -s          Hiển thị dạng text ASCII đơn giản")
+			return
+		}
+
+		banner := ui.TitleBanner.Render(" ĐĂNG NHẬP / ĐĂNG KÝ (LICH LOGIN) ")
+		fmt.Println(banner)
+
+		helpContent := fmt.Sprintf(`%s
+  %s             %s
+  %s %s
+  %s    %s
+
+%s
+  %s     %s
+  %s       %s
+  %s       %s
+  %s         %s
+  %s        %s`,
+			ui.CardTitle.Render("CÚ PHÁP:"),
+			ui.ValueStyle.Render("lich login"), ui.LabelStyle.Render("Mở Form đăng nhập/đăng ký tương tác trực quan"),
+			ui.ValueStyle.Render("lich login -u alice -p 123"), ui.LabelStyle.Render("Đăng nhập nhanh qua dòng lệnh"),
+			ui.ValueStyle.Render("lich login --register"), ui.LabelStyle.Render("Đăng ký tài khoản người dùng mới"),
+			ui.CardTitle.Render("TÙY CHỌN & CỜ:"),
+			ui.ValueStyle.Render("--server <url>"), ui.LabelStyle.Render("URL máy chủ (mặc định: "+config.DefaultServerURL+")"),
+			ui.ValueStyle.Render("--username, -u"), ui.LabelStyle.Render("Tên tài khoản người dùng"),
+			ui.ValueStyle.Render("--password, -p"), ui.LabelStyle.Render("Mật khẩu tài khoản"),
+			ui.ValueStyle.Render("--register"), ui.LabelStyle.Render("Chế độ đăng ký tài khoản mới"),
+			ui.ValueStyle.Render("--simple, -s"), ui.LabelStyle.Render("Hiển thị dạng text ASCII đơn giản"),
+		)
+		fmt.Println(ui.CardBox.Width(78).Render(helpContent))
 	}
 
 	if err := fs.Parse(args); err != nil {

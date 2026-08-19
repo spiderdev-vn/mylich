@@ -34,14 +34,38 @@ func RunDelete(args []string) error {
 	fs.BoolVar(simpleFlag, "s", false, "Hiển thị dạng văn bản ASCII đơn giản (viết tắt)")
 
 	fs.Usage = func() {
-		fmt.Println("Sử dụng: lich delete [id] [flags]")
-		fmt.Println()
-		fmt.Println("Mô tả:")
-		fmt.Println("  Xóa sự kiện. Nếu không truyền ID, sẽ mở danh sách chọn và hỏi xác nhận.")
-		fmt.Println()
-		fmt.Println("Tùy chọn:")
-		fmt.Println("  --yes, -y      Bỏ qua bước xác nhận xóa")
-		fmt.Println("  --simple, -s   Hiển thị dạng văn bản ASCII đơn giản")
+		if ui.IsSimpleMode(*simpleFlag) {
+			fmt.Println("Sử dụng: lich delete [id] [flags]")
+			fmt.Println()
+			fmt.Println("Mô tả:")
+			fmt.Println("  Xóa sự kiện (hỗ trợ Short ID). Nếu không truyền ID, sẽ mở danh sách chọn và hỏi xác nhận.")
+			fmt.Println()
+			fmt.Println("Tùy chọn:")
+			fmt.Println("  --yes, -y      Bỏ qua bước xác nhận xóa")
+			fmt.Println("  --simple, -s   Hiển thị dạng văn bản ASCII đơn giản")
+			return
+		}
+
+		banner := ui.TitleBanner.Render(" XÓA SỰ KIỆN (LICH DELETE) ")
+		fmt.Println(banner)
+
+		helpContent := fmt.Sprintf(`%s
+  %s    %s
+  %s %s
+  %s   %s
+
+%s
+  %s      %s
+  %s   %s`,
+			ui.CardTitle.Render("CÚ PHÁP:"),
+			ui.ValueStyle.Render("lich delete <short_id>"), ui.LabelStyle.Render("Xóa sự kiện với hộp thoại xác nhận"),
+			ui.ValueStyle.Render("lich delete <short_id> -y"), ui.LabelStyle.Render("Xóa ngay lập tức không cần hỏi lại"),
+			ui.ValueStyle.Render("lich delete"), ui.LabelStyle.Render("Mở danh sách để chọn sự kiện cần xóa"),
+			ui.CardTitle.Render("TÙY CHỌN & CỜ:"),
+			ui.ValueStyle.Render("--yes, -y"), ui.LabelStyle.Render("Tự động xác nhận Có, xóa ngay mà không hỏi"),
+			ui.ValueStyle.Render("--simple, -s"), ui.LabelStyle.Render("Hiển thị dạng văn bản ASCII đơn giản"),
+		)
+		fmt.Println(ui.CardBox.Width(78).Render(helpContent))
 	}
 
 	if err := fs.Parse(flagArgs); err != nil {

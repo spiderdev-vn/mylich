@@ -37,18 +37,44 @@ func RunSync(args []string) error {
 	fs.BoolVar(simpleFlag, "s", false, "Hiển thị dạng văn bản ASCII đơn giản (viết tắt)")
 
 	fs.Usage = func() {
-		fmt.Println("Sử dụng: lich sync [push|pull|both] [flags]")
-		fmt.Println()
-		fmt.Println("Mô tả:")
-		fmt.Println("  Đồng bộ hóa dữ liệu giữa Local SQLite Cache và Máy chủ Lich.")
-		fmt.Println("  - 'lich sync' hoặc 'lich sync both': Đồng bộ 2 chiều (Push & Pull).")
-		fmt.Println("  - 'lich sync push':                  Chỉ đẩy thay đổi cục bộ lên server.")
-		fmt.Println("  - 'lich sync pull':                  Chỉ kéo dữ liệu mới từ server về local.")
-		fmt.Println()
-		fmt.Println("Tùy chọn:")
-		fmt.Println("  --direction, -d <dir>   Hướng đồng bộ: 'push', 'pull', hoặc 'both'")
-		fmt.Println("  --wait, -w              Chờ quá trình đồng bộ hoàn tất và hiển thị chi tiết")
-		fmt.Println("  --simple, -s            Hiển thị dạng văn bản ASCII đơn giản")
+		if ui.IsSimpleMode(*simpleFlag) {
+			fmt.Println("Sử dụng: lich sync [push|pull|both] [flags]")
+			fmt.Println()
+			fmt.Println("Mô tả:")
+			fmt.Println("  Đồng bộ hóa dữ liệu giữa Local SQLite Cache và Máy chủ Lich.")
+			fmt.Println("  - 'lich sync' hoặc 'lich sync both': Đồng bộ 2 chiều (Push & Pull).")
+			fmt.Println("  - 'lich sync push':                  Chỉ đẩy thay đổi cục bộ lên server.")
+			fmt.Println("  - 'lich sync pull':                  Chỉ kéo dữ liệu mới từ server về local.")
+			fmt.Println()
+			fmt.Println("Tùy chọn:")
+			fmt.Println("  --direction, -d <dir>   Hướng đồng bộ: 'push', 'pull', hoặc 'both'")
+			fmt.Println("  --wait, -w              Chờ quá trình đồng bộ hoàn tất và hiển thị chi tiết")
+			fmt.Println("  --simple, -s            Hiển thị dạng văn bản ASCII đơn giản")
+			return
+		}
+
+		banner := ui.TitleBanner.Render(" ĐỒNG BỘ MÁY CHỦ (LICH SYNC) ")
+		fmt.Println(banner)
+
+		helpContent := fmt.Sprintf(`%s
+  %s             %s
+  %s        %s
+  %s        %s
+
+%s
+  %s      %s
+  %s           %s
+  %s        %s`,
+			ui.CardTitle.Render("CÚ PHÁP ĐỒNG BỘ:"),
+			ui.ValueStyle.Render("lich sync"), ui.LabelStyle.Render("Đồng bộ 2 chiều tức thì giữa máy và server"),
+			ui.ValueStyle.Render("lich sync push"), ui.LabelStyle.Render("Chỉ đẩy các thay đổi chưa sync lên server"),
+			ui.ValueStyle.Render("lich sync pull"), ui.LabelStyle.Render("Chỉ kéo các sự kiện mới từ server về máy"),
+			ui.CardTitle.Render("TÙY CHỌN & CỜ:"),
+			ui.ValueStyle.Render("--direction, -d"), ui.LabelStyle.Render("Hướng đồng bộ: 'push', 'pull', hoặc 'both'"),
+			ui.ValueStyle.Render("--wait, -w"), ui.LabelStyle.Render("Chờ tiến trình hoàn tất và hiển thị chi tiết"),
+			ui.ValueStyle.Render("--simple, -s"), ui.LabelStyle.Render("Hiển thị dạng văn bản ASCII đơn giản"),
+		)
+		fmt.Println(ui.CardBox.Width(78).Render(helpContent))
 	}
 
 	if err := fs.Parse(flagArgs); err != nil {
