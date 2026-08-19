@@ -106,13 +106,31 @@ Mất mạng vẫn dùng được. Mạng quay lại thì tự sync.
 
 ## 1. Khởi động `lich-server`
 
+### Cách 1: Chạy bằng Docker / Docker Compose (Khuyên dùng)
+
+Chỉ cần chạy lệnh từ thư mục gốc của dự án:
+
+```bash
+docker compose up -d
+```
+
+Hoặc build image thủ công:
+
+```bash
+cd lich-server
+docker build -t lich-server .
+docker run -d -p 3000:3000 -v lich-data:/data -e JWT_SECRET=your-secret --name lich-server lich-server
+```
+
+### Cách 2: Chạy trực tiếp với Node.js / Yarn
+
 ```bash
 cd lich-server
 yarn install
 yarn dev
 ```
 
-Server mặc định chạy tại `http://127.0.0.1:3000`.
+Server mặc định chạy tại `http://127.0.0.1:3000` (hoặc `0.0.0.0:3000` khi chạy trong Docker).
 
 Kiểm tra trạng thái:
 ```bash
