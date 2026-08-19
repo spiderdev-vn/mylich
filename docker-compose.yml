@@ -6,7 +6,7 @@ services:
     container_name: lich-server
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.lich-server.rule=Host(`${DOMAIN:?DOMAIN is required. Set it in .env}`) || Host(`api.${DOMAIN}`)"
+      - "traefik.http.routers.lich-server.rule=Host(`${DOMAIN:?DOMAIN is required. Set it in .env}`)"
       - "traefik.http.routers.lich-server.entrypoints=websecure"
       - "traefik.http.routers.lich-server.tls.certresolver=myresolver"
       - "traefik.http.services.lich-server.loadbalancer.server.port=3000"
@@ -16,7 +16,7 @@ services:
       - .env.docker # make sure to copy .env.example and named it .env.docker!
     environment:
       TZ: "Asia/Ho_Chi_Minh"
-      TRUST_PROXY: true
+      TRUST_PROXY: "true"
     networks:
       - traefik_default
     restart: unless-stopped
