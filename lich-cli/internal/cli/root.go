@@ -43,9 +43,10 @@ Các cờ chung:
   --json                        Xuất kết quả dưới định dạng JSON
 
 Tùy chọn cho 'google sync':
-  lich google sync [id]         Đồng bộ tức thì theo Event ID
-  lich google sync today|week   Đồng bộ theo khoảng thời gian (today, tomorrow, week, month)
-  --from <date> --to <date>     Đồng bộ theo khoảng thời gian tùy chỉnh
+  lich google sync [push|pull|both]   Hướng đồng bộ (mặc định: both)
+  lich google sync [id]               Đồng bộ tức thì theo Event ID
+  lich google sync today|week         Đồng bộ theo khoảng thời gian (today, tomorrow, week, month)
+  --from <date> --to <date>           Đồng bộ theo khoảng thời gian tùy chỉnh
 
 Tùy chọn cho 'add':
   --date <date>                 Ngày sự kiện (YYYY-MM-DD, today, tomorrow)

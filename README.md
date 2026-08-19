@@ -403,10 +403,17 @@ lich google create-calendar <lich_calendar_id> --name "Tên Lịch Trên Google"
 ```bash
 # Đồng bộ hóa 2 chiều tự động (kèm Charm Multi-Step Live Progress & Timer)
 lich google sync
+lich google sync both
+
+# Chỉ đẩy sự kiện từ Lich lên Google (Push)
+lich google sync push
+
+# Chỉ kéo sự kiện mới từ Google về Lich (Pull)
+lich google sync pull
 
 # Đồng bộ nhanh 1 sự kiện theo Event ID (<300ms)
 lich google sync <event_id>
-lich google sync --event <event_id>
+lich google sync push --event <event_id>
 
 # Đồng bộ theo từ khóa tự nhiên hoặc khoảng thời gian
 lich google sync today       # Chỉ đồng bộ các sự kiện của Hôm nay (--today)
@@ -417,14 +424,8 @@ lich google sync month       # Chỉ đồng bộ các sự kiện Tháng này (
 # Đồng bộ theo khoảng ngày tùy chọn
 lich google sync --from 2026-08-19 --to 2026-08-25
 
-# Chỉ đẩy sự kiện từ Lich lên Google
-lich google sync -d push
-
-# Chỉ kéo sự kiện mới từ Google về Lich
-lich google sync -d pull
-
 # Chỉ định ID lịch cụ thể cần đồng bộ
-lich google sync --calendar cal-default -d both
+lich google sync both --calendar cal-default
 ```
 
 ### 7. Hủy liên kết Google Calendar (`disconnect`)
