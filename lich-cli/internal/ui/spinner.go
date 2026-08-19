@@ -165,7 +165,7 @@ func (m trackerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 
 	case tea.KeyMsg:
-		if msg.String() == "ctrl+c" || msg.String() == "esc" {
+		if msg.String() == "ctrl+c" || msg.String() == "esc" || msg.String() == "q" {
 			m.done = true
 			m.err = ErrAborted
 			return m, tea.Quit
@@ -251,6 +251,7 @@ func (m trackerModel) View() string {
 	}
 
 	b.WriteString("\n  " + m.progress.View() + "\n")
+	b.WriteString("  " + lipgloss.NewStyle().Foreground(ColorMuted).Italic(true).Render("(nhấn q / esc để hủy)") + "\n")
 
 	return ContainerCard.Render(b.String())
 }

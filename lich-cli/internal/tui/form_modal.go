@@ -463,7 +463,7 @@ func (f EventFormModal) Render(width, height int) string {
 			"",
 			fmt.Sprintf("%s    %s",
 				activeBtnStyle.Render("[y] Xóa ngay"),
-				inactiveBtnStyle.Render("[Esc/Ctrl+C] Hủy bỏ"),
+				inactiveBtnStyle.Render("[q / Esc] Hủy bỏ"),
 			),
 		}
 		card := modalStyle.BorderForeground(lipgloss.Color("#FFA8A8")).Render(strings.Join(lines, "\n"))
@@ -522,7 +522,7 @@ func (f EventFormModal) Render(width, height int) string {
 	if f.FocusIndex == len(f.Inputs) {
 		saveBtn = activeBtnStyle.Render("[ Lưu (Enter) ]")
 	}
-	cancelHint := lipgloss.NewStyle().Foreground(lipgloss.Color("#6C7086")).Italic(true).Render("Hủy [Esc] - [Ctrl+C]")
+	cancelHint := lipgloss.NewStyle().Foreground(lipgloss.Color("#6C7086")).Italic(true).Render("Hủy [q / Esc]")
 
 	lines = append(lines, fmt.Sprintf("%s    %s", saveBtn, cancelHint))
 

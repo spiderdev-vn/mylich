@@ -41,5 +41,11 @@ func DefaultFormKeyMap() *huh.KeyMap {
 		key.WithHelp("shift+tab", "trước đó"),
 	)
 
+	// Quit / Abort keybindings
+	km.Quit = key.NewBinding(
+		key.WithKeys("ctrl+c", "esc"),
+		key.WithHelp("esc", "hủy bỏ"),
+	)
+
 	return km
 }
