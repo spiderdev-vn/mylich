@@ -166,29 +166,31 @@ func (f *EventFormModal) Update(msg tea.Msg) (*EventFormModal, bool, error) {
 
 func (f *EventFormModal) nextFocus() {
 	if f.FocusIndex < len(f.Inputs) {
-		if f.FocusIndex < len(f.Inputs) {
-			f.Inputs[f.FocusIndex].Blur()
-			f.Inputs[f.FocusIndex].Prompt = "  "
-		}
-		f.FocusIndex++
-		if f.FocusIndex < len(f.Inputs) {
-			f.Inputs[f.FocusIndex].Focus()
-			f.Inputs[f.FocusIndex].Prompt = "▶ "
-		}
+		f.Inputs[f.FocusIndex].Blur()
+		f.Inputs[f.FocusIndex].Prompt = "  "
+	}
+	f.FocusIndex++
+	if f.FocusIndex > len(f.Inputs) {
+		f.FocusIndex = 0
+	}
+	if f.FocusIndex < len(f.Inputs) {
+		f.Inputs[f.FocusIndex].Focus()
+		f.Inputs[f.FocusIndex].Prompt = "▶ "
 	}
 }
 
 func (f *EventFormModal) prevFocus() {
-	if f.FocusIndex > 0 {
-		if f.FocusIndex < len(f.Inputs) {
-			f.Inputs[f.FocusIndex].Blur()
-			f.Inputs[f.FocusIndex].Prompt = "  "
-		}
-		f.FocusIndex--
-		if f.FocusIndex < len(f.Inputs) {
-			f.Inputs[f.FocusIndex].Focus()
-			f.Inputs[f.FocusIndex].Prompt = "▶ "
-		}
+	if f.FocusIndex < len(f.Inputs) {
+		f.Inputs[f.FocusIndex].Blur()
+		f.Inputs[f.FocusIndex].Prompt = "  "
+	}
+	f.FocusIndex--
+	if f.FocusIndex < 0 {
+		f.FocusIndex = len(f.Inputs)
+	}
+	if f.FocusIndex < len(f.Inputs) {
+		f.Inputs[f.FocusIndex].Focus()
+		f.Inputs[f.FocusIndex].Prompt = "▶ "
 	}
 }
 

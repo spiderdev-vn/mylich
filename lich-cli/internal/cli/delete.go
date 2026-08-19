@@ -91,7 +91,7 @@ func RunDelete(args []string) error {
 					Options(options...).
 					Value(&eventID),
 			),
-		)
+		).WithKeyMap(ui.DefaultFormKeyMap())
 
 		if err := form.Run(); err != nil {
 			return err
@@ -113,7 +113,7 @@ func RunDelete(args []string) error {
 					Negative("Hủy bỏ").
 					Value(&confirm),
 			),
-		)
+		).WithKeyMap(ui.DefaultFormKeyMap())
 
 		if err := confirmForm.Run(); err != nil {
 			return err

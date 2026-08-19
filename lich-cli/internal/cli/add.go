@@ -160,7 +160,7 @@ func RunAdd(args []string) error {
 					Placeholder("Tùy chọn...").
 					Value(&descVal),
 			),
-		)
+		).WithKeyMap(ui.DefaultFormKeyMap())
 
 		if err := form.Run(); err != nil {
 			return err

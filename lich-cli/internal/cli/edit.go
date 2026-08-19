@@ -209,7 +209,7 @@ func RunEdit(args []string) error {
 					Title("Ghi chú (Tùy chọn)").
 					Value(&descVal),
 			),
-		)
+		).WithKeyMap(ui.DefaultFormKeyMap())
 
 		if err := form.Run(); err != nil {
 			return err

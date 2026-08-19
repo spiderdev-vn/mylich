@@ -107,7 +107,7 @@ func RunLogin(args []string) error {
 					}).
 					Value(&password),
 			),
-		)
+		).WithKeyMap(ui.DefaultFormKeyMap())
 
 		if err := form.Run(); err != nil {
 			return err

@@ -66,7 +66,7 @@ func RunSearch(args []string) error {
 					}).
 					Value(&keyword),
 			),
-		)
+		).WithKeyMap(ui.DefaultFormKeyMap())
 
 		if err := form.Run(); err != nil {
 			return err
