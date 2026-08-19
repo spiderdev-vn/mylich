@@ -123,36 +123,36 @@ func Execute(args []string) int {
 	switch command {
 	case "login":
 		err = RunLogin(subArgs)
-	case "status":
+	case "status", "stat", "st":
 		err = RunStatus(subArgs)
-	case "config":
+	case "config", "conf", "cfg":
 		err = RunConfig(subArgs)
-	case "calendar", "calendars", "cal":
+	case "calendar", "calendars", "cal", "cals", "c":
 		err = RunCalendar(subArgs)
-	case "sync":
+	case "sync", "sy":
 		err = RunSync(subArgs)
-	case "today":
+	case "today", "tod", "t":
 		err = RunToday(subArgs)
-	case "week":
+	case "week", "wk", "w":
 		err = RunWeek(subArgs)
-	case "month":
+	case "month", "mon", "mo", "m":
 		err = RunMonth(subArgs)
-	case "search":
+	case "search", "find", "s":
 		err = RunSearch(subArgs)
-	case "add":
+	case "add", "new", "create", "a":
 		err = RunAdd(subArgs)
-	case "edit":
+	case "edit", "update", "ed", "e":
 		err = RunEdit(subArgs)
-	case "delete":
+	case "delete", "del", "remove", "rm", "d":
 		err = RunDelete(subArgs)
-	case "google":
+	case "google", "gg", "g":
 		err = RunGoogle(subArgs)
 	case "nuke-database", "nuke":
 		err = RunNuke(subArgs)
-	case "version", "-v", "--version":
+	case "version", "-v", "--version", "v":
 		fmt.Printf("Lich %s\n", Version)
 		return 0
-	case "help", "-h", "--help":
+	case "help", "-h", "--help", "h":
 		simple := false
 		for _, a := range subArgs {
 			if a == "--simple" || a == "-s" {

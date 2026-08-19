@@ -54,19 +54,19 @@ func RunGoogle(args []string) error {
 	defer cancel()
 
 	switch action {
-	case "connect", "login":
+	case "connect", "conn", "login", "c":
 		return runGoogleConnect(ctx, client, subArgs)
-	case "status":
+	case "status", "stat", "st", "info":
 		return runGoogleStatus(ctx, client, subArgs)
-	case "calendars", "list":
+	case "calendars", "calendar", "list", "cals", "cal", "ls", "l":
 		return runGoogleCalendars(ctx, client, subArgs)
-	case "map":
+	case "map", "m":
 		return runGoogleMap(ctx, client, subArgs)
-	case "create-calendar", "create-cal", "new-calendar":
+	case "create-calendar", "create-cal", "new-calendar", "create", "new":
 		return runGoogleCreateCalendar(ctx, client, subArgs)
-	case "sync":
+	case "sync", "sy", "s":
 		return runGoogleSync(ctx, client, subArgs)
-	case "disconnect", "logout":
+	case "disconnect", "disc", "logout", "dc":
 		return runGoogleDisconnect(ctx, client, subArgs)
 	default:
 		return fmt.Errorf("hành động không hợp lệ '%s'. Gõ 'lich google help' để xem hướng dẫn", action)

@@ -22,13 +22,13 @@ func RunCalendar(args []string) error {
 	subArgs := args[1:]
 
 	switch action {
-	case "list", "ls":
+	case "list", "ls", "l":
 		return runCalendarList(subArgs)
-	case "add", "create", "new":
+	case "add", "create", "new", "a":
 		return runCalendarAdd(subArgs)
-	case "delete", "remove", "rm":
+	case "delete", "del", "remove", "rm", "d":
 		return runCalendarDelete(subArgs)
-	case "help", "-h", "--help":
+	case "help", "-h", "--help", "h":
 		printCalendarHelp(false)
 		return nil
 	default:
