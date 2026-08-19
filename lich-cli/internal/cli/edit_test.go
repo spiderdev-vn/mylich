@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"lich-cli/internal/cache"
-	"lich-cli/internal/config"
+	"github.com/spiderdev-vn/mylich/lich-cli/internal/cache"
+	"github.com/spiderdev-vn/mylich/lich-cli/internal/config"
 )
 
 func TestEdit_Commands(t *testing.T) {

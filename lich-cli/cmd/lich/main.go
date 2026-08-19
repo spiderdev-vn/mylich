@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"lich-cli/internal/cli"
+	"github.com/spiderdev-vn/mylich/lich-cli/internal/cli"
 )
 
 func main() {

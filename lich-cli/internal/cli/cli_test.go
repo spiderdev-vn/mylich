@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"lich-cli/internal/api"
-	"lich-cli/internal/config"
+	"github.com/spiderdev-vn/mylich/lich-cli/internal/api"
+	"github.com/spiderdev-vn/mylich/lich-cli/internal/config"
 )
 
 func TestCLI_FormatTimeRange(t *testing.T) {

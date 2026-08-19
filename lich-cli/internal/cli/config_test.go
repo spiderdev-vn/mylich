@@ -4,7 +4,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"lich-cli/internal/config"
+	"github.com/spiderdev-vn/mylich/lich-cli/internal/config"
 )
 
 func TestConfig_Commands(t *testing.T) {

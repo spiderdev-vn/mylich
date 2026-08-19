@@ -8,8 +8,8 @@ import (
 	"os"
 	"strings"
 
-	"lich-cli/internal/config"
-	"lich-cli/internal/ui"
+	"github.com/spiderdev-vn/mylich/lich-cli/internal/config"
+	"github.com/spiderdev-vn/mylich/lich-cli/internal/ui"
 
 	"github.com/charmbracelet/huh"
 )

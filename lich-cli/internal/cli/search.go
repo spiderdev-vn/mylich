@@ -10,11 +10,11 @@ import (
 	"time"
 
 	"github.com/charmbracelet/huh"
-	"lich-cli/internal/api"
-	"lich-cli/internal/cache"
-	"lich-cli/internal/config"
-	"lich-cli/internal/syncer"
-	"lich-cli/internal/ui"
+	"github.com/spiderdev-vn/mylich/lich-cli/internal/api"
+	"github.com/spiderdev-vn/mylich/lich-cli/internal/cache"
+	"github.com/spiderdev-vn/mylich/lich-cli/internal/config"
+	"github.com/spiderdev-vn/mylich/lich-cli/internal/syncer"
+	"github.com/spiderdev-vn/mylich/lich-cli/internal/ui"
 )
 
 func RunSearch(args []string) error {

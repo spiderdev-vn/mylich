@@ -1,4 +1,4 @@
-module lich-cli
+module github.com/spiderdev-vn/mylich/lich-cli
 
 go 1.26.5
 

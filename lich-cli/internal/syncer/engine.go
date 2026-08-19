@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"time"
 
-	"lich-cli/internal/api"
-	"lich-cli/internal/cache"
+	"github.com/spiderdev-vn/mylich/lich-cli/internal/api"
+	"github.com/spiderdev-vn/mylich/lich-cli/internal/cache"
 )
 
 type SyncEngine struct {

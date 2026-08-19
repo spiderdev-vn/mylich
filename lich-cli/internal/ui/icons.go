@@ -3,7 +3,7 @@ package ui
 import (
 	"strings"
 
-	"lich-cli/internal/config"
+	"github.com/spiderdev-vn/mylich/lich-cli/internal/config"
 )
 
 type IconSet struct {

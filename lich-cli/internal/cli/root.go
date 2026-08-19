@@ -7,11 +7,11 @@ import (
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"lich-cli/internal/api"
-	"lich-cli/internal/cache"
-	"lich-cli/internal/config"
-	"lich-cli/internal/tui"
-	"lich-cli/internal/ui"
+	"github.com/spiderdev-vn/mylich/lich-cli/internal/api"
+	"github.com/spiderdev-vn/mylich/lich-cli/internal/cache"
+	"github.com/spiderdev-vn/mylich/lich-cli/internal/config"
+	"github.com/spiderdev-vn/mylich/lich-cli/internal/tui"
+	"github.com/spiderdev-vn/mylich/lich-cli/internal/ui"
 )
 
 const Version = "v0.2.0"

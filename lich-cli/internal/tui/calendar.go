@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/charmbracelet/lipgloss"
-	"lich-cli/internal/cache"
+	"github.com/spiderdev-vn/mylich/lich-cli/internal/cache"
 )
 
 type DayInfo struct {

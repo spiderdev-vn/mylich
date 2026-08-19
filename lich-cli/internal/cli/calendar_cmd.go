@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"lich-cli/internal/api"
-	"lich-cli/internal/config"
-	"lich-cli/internal/ui"
+	"github.com/spiderdev-vn/mylich/lich-cli/internal/api"
+	"github.com/spiderdev-vn/mylich/lich-cli/internal/config"
+	"github.com/spiderdev-vn/mylich/lich-cli/internal/ui"
 )
 
 func RunCalendar(args []string) error {

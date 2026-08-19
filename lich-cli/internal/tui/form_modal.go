@@ -9,10 +9,10 @@ import (
 	"strings"
 	"time"
 
-	"lich-cli/internal/api"
-	"lich-cli/internal/cache"
-	"lich-cli/internal/config"
-	"lich-cli/internal/syncer"
+	"github.com/spiderdev-vn/mylich/lich-cli/internal/api"
+	"github.com/spiderdev-vn/mylich/lich-cli/internal/cache"
+	"github.com/spiderdev-vn/mylich/lich-cli/internal/config"
+	"github.com/spiderdev-vn/mylich/lich-cli/internal/syncer"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"

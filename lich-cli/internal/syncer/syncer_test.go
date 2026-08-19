@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"lich-cli/internal/api"
-	"lich-cli/internal/cache"
+	"github.com/spiderdev-vn/mylich/lich-cli/internal/api"
+	"github.com/spiderdev-vn/mylich/lich-cli/internal/cache"
 )
 
 func TestSyncer_PushAndPull(t *testing.T) {

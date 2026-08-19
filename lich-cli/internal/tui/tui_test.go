@@ -6,7 +6,7 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"lich-cli/internal/cache"
+	"github.com/spiderdev-vn/mylich/lich-cli/internal/cache"
 )
 
 func TestTUI_Navigation(t *testing.T) {

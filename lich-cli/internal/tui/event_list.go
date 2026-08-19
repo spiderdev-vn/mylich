@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"lich-cli/internal/cache"
+	"github.com/spiderdev-vn/mylich/lich-cli/internal/cache"
 
 	"github.com/charmbracelet/lipgloss"
 )
