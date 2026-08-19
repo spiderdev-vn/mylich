@@ -114,11 +114,12 @@ func RunEdit(args []string) error {
 	}
 	defer db.Close()
 
-	// 2. Lấy sự kiện hiện tại
-	existingEvent, err := cache.GetEvent(db, eventID)
-	if err != nil || existingEvent == nil {
-		return fmt.Errorf("không tìm thấy sự kiện có ID '%s'", eventID)
+	// 2. Lấy sự kiện hiện tại (hỗ trợ short ID prefix và báo conflict nếu trùng)
+	existingEvent, err := cache.ResolveEventByPrefix(db, eventID)
+	if err != nil {
+		return err
 	}
+	eventID = existingEvent.ID
 
 	loc := time.Now().Location()
 	if existingEvent.Timezone != "" && existingEvent.Timezone != "UTC" && existingEvent.Timezone != "Local" {

@@ -476,11 +476,6 @@ func runGoogleSync(ctx context.Context, client *api.Client, args []string) error
 			direction = lower
 		} else if lower == "today" || lower == "tomorrow" || lower == "week" || lower == "month" || lower == "yesterday" {
 			rangeKeyword = lower
-		} else if len(p) >= 20 && !strings.Contains(p, "-") {
-			// Hex / UUID event ID
-			if *eventFlag == "" {
-				*eventFlag = p
-			}
 		} else if strings.Count(p, "-") == 2 || strings.Count(p, "/") == 2 {
 			// Date like 2026-08-20 or 20/08/2026
 			rangeKeyword = p
@@ -493,6 +488,21 @@ func runGoogleSync(ctx context.Context, client *api.Client, args []string) error
 		d := strings.ToLower(strings.TrimSpace(*directionFlag))
 		if d == "push" || d == "pull" || d == "both" {
 			direction = d
+		}
+	}
+
+	// Resolve short ID prefix và báo conflict nếu trùng
+	if *eventFlag != "" {
+		if cachePath, cErr := cache.GetCachePath(); cErr == nil {
+			if db, dbErr := cache.OpenDatabase(cachePath); dbErr == nil {
+				if ev, rErr := cache.ResolveEventByPrefix(db, *eventFlag); rErr == nil && ev != nil {
+					*eventFlag = ev.ID
+				} else if rErr != nil {
+					db.Close()
+					return rErr
+				}
+				db.Close()
+			}
 		}
 	}
 

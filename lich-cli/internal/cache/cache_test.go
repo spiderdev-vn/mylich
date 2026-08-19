@@ -138,3 +138,66 @@ func TestCache_SyncQueueAndMeta(t *testing.T) {
 		t.Errorf("expected sync time %v, got %v", syncTime, gotTime)
 	}
 }
+
+func TestCache_ShortIDAndConflict(t *testing.T) {
+	tempDir := t.TempDir()
+	dbPath := filepath.Join(tempDir, "test_short_id.db")
+
+	db, err := OpenDatabase(dbPath)
+	if err != nil {
+		t.Fatalf("OpenDatabase failed: %v", err)
+	}
+	defer db.Close()
+
+	_ = UpsertEvent(db, LocalEvent{
+		ID:         "af77cc786130e3a530a1fd6584d253db",
+		CalendarID: "cal-1",
+		Title:      "Đi gác đêm",
+		StartAt:    "2026-08-19T18:00:00Z",
+		EndAt:      "2026-08-19T23:59:00Z",
+	})
+	_ = UpsertEvent(db, LocalEvent{
+		ID:         "af77ff999999e3a530a1fd6584d253db",
+		CalendarID: "cal-1",
+		Title:      "Họp dự án",
+		StartAt:    "2026-08-19T09:00:00Z",
+		EndAt:      "2026-08-19T10:00:00Z",
+	})
+	_ = UpsertEvent(db, LocalEvent{
+		ID:         "bb1234567890e3a530a1fd6584d253db",
+		CalendarID: "cal-1",
+		Title:      "Đi bơi",
+		StartAt:    "2026-08-20T06:00:00Z",
+		EndAt:      "2026-08-20T07:00:00Z",
+	})
+
+	// 1. Unique short prefix
+	ev, err := ResolveEventByPrefix(db, "af77cc")
+	if err != nil || ev == nil {
+		t.Fatalf("expected unique match for 'af77cc', got err: %v", err)
+	}
+	if ev.ID != "af77cc786130e3a530a1fd6584d253db" {
+		t.Errorf("unexpected event ID: %s", ev.ID)
+	}
+
+	// 2. Another unique short prefix
+	ev2, err := ResolveEventByPrefix(db, "bb")
+	if err != nil || ev2 == nil {
+		t.Fatalf("expected unique match for 'bb', got err: %v", err)
+	}
+	if ev2.ID != "bb1234567890e3a530a1fd6584d253db" {
+		t.Errorf("unexpected event ID: %s", ev2.ID)
+	}
+
+	// 3. Ambiguous / Conflict prefix
+	_, errConflict := ResolveEventByPrefix(db, "af77")
+	if errConflict == nil {
+		t.Fatalf("expected conflict error for prefix 'af77', but got nil")
+	}
+
+	// 4. Not found
+	_, errNotFound := ResolveEventByPrefix(db, "zz")
+	if errNotFound == nil {
+		t.Fatalf("expected not found error for 'zz', but got nil")
+	}
+}

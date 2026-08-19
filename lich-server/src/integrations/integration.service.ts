@@ -23,6 +23,15 @@ export interface IntegrationStatusResponse {
   unresolvedConflictsCount: number;
 }
 
+function parseEpoch(d: string | undefined): number {
+  if (!d) return 0;
+  const cleaned = d.includes('T') ? d : d.replace(' ', 'T');
+  const t = new Date(cleaned).getTime();
+  if (!isNaN(t)) return t;
+  const tUtc = new Date(cleaned + 'Z').getTime();
+  return !isNaN(tUtc) ? tUtc : 0;
+}
+
 export class IntegrationService {
   private integrationRepo: IntegrationRepository;
   private calendarIntegrationRepo: CalendarIntegrationRepository;
@@ -297,11 +306,11 @@ export class IntegrationService {
       if (shouldPush) {
         let events = this.eventRepo.findByCalendarId(mapping.calendar_id);
         if (from || to) {
-          const fromTime = from ? new Date(from).getTime() : 0;
-          const toTime = to ? new Date(to).getTime() : Infinity;
+          const fromTime = from ? parseEpoch(from) : 0;
+          const toTime = to ? parseEpoch(to) : Infinity;
           events = events.filter((e) => {
-            const start = new Date(e.start_at).getTime();
-            const end = new Date(e.end_at).getTime();
+            const start = parseEpoch(e.start_at);
+            const end = parseEpoch(e.end_at);
             return end >= fromTime && start <= toTime;
           });
         }
@@ -312,8 +321,8 @@ export class IntegrationService {
         for (const evt of events) {
           const extMapping = this.eventIntegrationRepo.findByEventAndIntegration(evt.id, integration.id);
           if (extMapping) {
-            const localUpdated = new Date(evt.updated_at).getTime();
-            const remoteUpdated = extMapping.external_updated_at ? new Date(extMapping.external_updated_at).getTime() : 0;
+            const localUpdated = parseEpoch(evt.updated_at);
+            const remoteUpdated = extMapping.external_updated_at ? parseEpoch(extMapping.external_updated_at) : 0;
             // Only push if local event has been modified after the last synced remote timestamp
             if (localUpdated > remoteUpdated) {
               toUpdate.push({ evt, extMapping });
@@ -323,8 +332,8 @@ export class IntegrationService {
           }
         }
 
-        // Run updates with concurrency pool (max 5 parallel Google API requests)
-        const concurrency = 5;
+        // Run updates with concurrency pool (max 10 parallel Google API requests)
+        const concurrency = 10;
         let updateIdx = 0;
         const updateWorkers = Array.from({ length: Math.min(concurrency, toUpdate.length) }, async () => {
           while (updateIdx < toUpdate.length) {
@@ -409,8 +418,8 @@ export class IntegrationService {
             // Update local event
             const existingLocal = this.eventRepo.findById(extMapping.event_id);
             if (existingLocal) {
-              const localUpdated = new Date(existingLocal.updated_at).getTime();
-              const remoteUpdated = gEvent.updated ? new Date(gEvent.updated).getTime() : 0;
+              const localUpdated = parseEpoch(existingLocal.updated_at);
+              const remoteUpdated = parseEpoch(gEvent.updated);
 
               if (remoteUpdated >= localUpdated) {
                 this.eventRepo.update(existingLocal.id, lichFields);

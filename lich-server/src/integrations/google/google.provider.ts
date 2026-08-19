@@ -190,6 +190,7 @@ export class GoogleProvider implements CalendarProvider {
       `https://www.googleapis.com/calendar/v3/calendars/${encodedCalId}/events?${params.toString()}`,
       {
         headers: { Authorization: `Bearer ${accessToken}` },
+        signal: AbortSignal.timeout(8000),
       },
     );
 
@@ -226,6 +227,7 @@ export class GoogleProvider implements CalendarProvider {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(8000),
       },
     );
 
@@ -255,6 +257,7 @@ export class GoogleProvider implements CalendarProvider {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(8000),
       },
     );
 
@@ -278,6 +281,7 @@ export class GoogleProvider implements CalendarProvider {
       {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${accessToken}` },
+        signal: AbortSignal.timeout(8000),
       },
     );
 

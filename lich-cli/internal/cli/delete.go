@@ -105,13 +105,20 @@ func RunDelete(args []string) error {
 		return fmt.Errorf("cần chỉ định ID sự kiện: lich delete <id>")
 	}
 
+	// Resolve short ID prefix và báo conflict nếu trùng
+	targetEvent, err := cache.ResolveEventByPrefix(db, eventID)
+	if err != nil {
+		return err
+	}
+	eventID = targetEvent.ID
+
 	// Hỏi xác nhận xóa nếu chưa có cờ -y và không ở simple mode
 	if !*yesFlag && !ui.IsSimpleMode(*simpleFlag) {
 		confirm := false
 		confirmForm := huh.NewForm(
 			huh.NewGroup(
 				huh.NewConfirm().
-					Title(fmt.Sprintf("Bạn có chắc chắn muốn xóa sự kiện %s không?", eventID)).
+					Title(fmt.Sprintf("Bạn có chắc chắn muốn xóa sự kiện '%s' [%s] không?", targetEvent.Title, targetEvent.ID[:8])).
 					Affirmative("Có, xóa ngay").
 					Negative("Hủy bỏ").
 					Value(&confirm),

@@ -2,6 +2,7 @@ package cache
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -97,6 +98,101 @@ func GetEvent(db *sql.DB, id string) (*LocalEvent, error) {
 	e.SyncState = SyncState(syncStateStr)
 
 	return &e, nil
+}
+
+// FindEventsByPrefix searches for events whose ID starts with the given prefix.
+func FindEventsByPrefix(db *sql.DB, prefix string) ([]LocalEvent, error) {
+	prefix = strings.TrimSpace(prefix)
+	if prefix == "" {
+		return nil, nil
+	}
+
+	query := `
+	SELECT id, calendar_id, title, description, start_at, end_at, timezone, location, created_at, updated_at, sync_state
+	FROM local_events
+	WHERE id LIKE ? AND sync_state != 'pending_delete'
+	ORDER BY start_at DESC
+	`
+	rows, err := db.Query(query, prefix+"%")
+	if err != nil {
+		return nil, fmt.Errorf("failed to search events by prefix: %w", err)
+	}
+	defer rows.Close()
+
+	var events []LocalEvent
+	for rows.Next() {
+		var e LocalEvent
+		var desc, loc sql.NullString
+		var syncStateStr string
+
+		err := rows.Scan(
+			&e.ID,
+			&e.CalendarID,
+			&e.Title,
+			&desc,
+			&e.StartAt,
+			&e.EndAt,
+			&e.Timezone,
+			&loc,
+			&e.CreatedAt,
+			&e.UpdatedAt,
+			&syncStateStr,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan event: %w", err)
+		}
+
+		if desc.Valid {
+			e.Description = desc.String
+		}
+		if loc.Valid {
+			e.Location = loc.String
+		}
+		e.SyncState = SyncState(syncStateStr)
+		events = append(events, e)
+	}
+
+	return events, nil
+}
+
+// ResolveEventByPrefix finds a single event by exact ID or unique short ID prefix.
+// If multiple events match the prefix, it returns an error with the list of conflicting events.
+func ResolveEventByPrefix(db *sql.DB, prefix string) (*LocalEvent, error) {
+	prefix = strings.TrimSpace(prefix)
+	if prefix == "" {
+		return nil, fmt.Errorf("ID sự kiện không được để trống")
+	}
+
+	// 1. Check exact match first
+	if exact, err := GetEvent(db, prefix); err == nil && exact != nil {
+		return exact, nil
+	}
+
+	// 2. Prefix search
+	matches, err := FindEventsByPrefix(db, prefix)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(matches) == 0 {
+		return nil, fmt.Errorf("không tìm thấy sự kiện nào khớp với ID '%s'", prefix)
+	}
+
+	if len(matches) == 1 {
+		return &matches[0], nil
+	}
+
+	// Conflict / Ambiguous short ID matches
+	var b strings.Builder
+	b.WriteString(fmt.Sprintf("Xung đột tiền tố: Tìm thấy %d sự kiện trùng khớp với '%s':\n", len(matches), prefix))
+	loc := time.Now().Location()
+	for _, m := range matches {
+		tStart, _ := time.Parse(time.RFC3339, m.StartAt)
+		timeStr := tStart.In(loc).Format("02/01 15:04")
+		b.WriteString(fmt.Sprintf("  • [%s] %s (%s)\n", m.ID, m.Title, timeStr))
+	}
+	b.WriteString("\nVui lòng nhập thêm ký tự để phân biệt chính xác.")
+	return nil, errors.New(b.String())
 }
 
 func GetEventsInRange(db *sql.DB, from, to string, calendarID string) ([]LocalEvent, error) {
