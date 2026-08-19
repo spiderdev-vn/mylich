@@ -13,7 +13,7 @@ services:
     volumes:
       - ./data:/data
     env_file:
-      - .env.docker # make sure to copy .env.example and named it .env.docker!
+      - .env # make sure to copy .env.example to .env
     environment:
       TZ: "Asia/Ho_Chi_Minh"
       TRUST_PROXY: "true"

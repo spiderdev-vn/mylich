@@ -214,23 +214,23 @@ lich google disconnect</code></pre>
     image: ghcr.io/spiderdev-vn/mylich-server:latest
     restart: unless-stopped
     env_file:
-      - .env.docker
+      - .env
     volumes:
       - ./data:/data
     networks:
       - traefik_default
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.lich.rule=Host(\`${DOMAIN}\`)"
-      - "traefik.http.routers.lich.entrypoints=websecure"
-      - "traefik.http.routers.lich.tls.certresolver=letsencrypt"
-      - "traefik.http.services.lich.loadbalancer.server.port=3000"
+      - "traefik.http.routers.lich-server.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.lich-server.entrypoints=websecure"
+      - "traefik.http.routers.lich-server.tls.certresolver=myresolver"
+      - "traefik.http.services.lich-server.loadbalancer.server.port=3000"
 
 networks:
   traefik_default:
     external: true</code></pre>
 
-        <p>Tạo file <code>.env.docker</code> với các biến môi trường thiết yếu:</p>
+        <p>Copy và cấu hình file <code>.env</code> (từ <code>.env.example</code>):</p>
         <pre class="code-block"><code>DOMAIN=lich.yourdomain.com
 JWT_SECRET=your-super-strong-32-chars-jwt-secret-key-here
 GOOGLE_CLIENT_ID=your-google-oauth-client-id.apps.googleusercontent.com
