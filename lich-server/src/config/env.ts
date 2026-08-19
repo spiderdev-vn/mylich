@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import path from 'node:path';
 
 export interface AppConfig {
@@ -13,7 +14,32 @@ export interface AppConfig {
   useFakeGoogleProvider?: boolean;
 }
 
+/**
+ * Tự động tìm và nạp file .env nếu có sẵn mà không cần cờ --env-file
+ */
+function tryLoadEnvFiles(): void {
+  const candidatePaths = [
+    path.resolve(process.cwd(), '.env'),
+    path.resolve(process.cwd(), 'lich-server/.env'),
+    path.resolve(process.cwd(), '../.env'),
+  ];
+
+  for (const envPath of candidatePaths) {
+    if (fs.existsSync(envPath)) {
+      try {
+        if (typeof (process as any).loadEnvFile === 'function') {
+          (process as any).loadEnvFile(envPath);
+        }
+      } catch {
+        // Bỏ qua lỗi nếu file không thể đọc
+      }
+    }
+  }
+}
+
 export function loadConfig(): AppConfig {
+  tryLoadEnvFiles();
+
   const host = process.env.HOST || '127.0.0.1';
   const port = parseInt(process.env.PORT || '3000', 10);
   const databasePath = process.env.DATABASE_PATH || './data/lich.db';
