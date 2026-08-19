@@ -359,16 +359,6 @@ func resolveTimeRange(rangeKeyword, dateStr, fromStr, toStr string, now time.Tim
 }
 
 func runGoogleSync(ctx context.Context, client *api.Client, args []string) error {
-	var flagArgs []string
-	var positionalArgs []string
-	for _, arg := range args {
-		if strings.HasPrefix(arg, "-") {
-			flagArgs = append(flagArgs, arg)
-		} else {
-			positionalArgs = append(positionalArgs, arg)
-		}
-	}
-
 	fs := flag.NewFlagSet("google sync", flag.ContinueOnError)
 	directionFlag := fs.String("direction", "both", "Hướng đồng bộ (push, pull, both)")
 	fs.StringVar(directionFlag, "d", "both", "Hướng đồng bộ (viết tắt)")
@@ -389,12 +379,44 @@ func runGoogleSync(ctx context.Context, client *api.Client, args []string) error
 	simpleFlag := fs.Bool("simple", false, "Hiển thị ASCII đơn giản")
 	fs.BoolVar(simpleFlag, "s", false, "Hiển thị ASCII đơn giản (viết tắt)")
 
-	if err := fs.Parse(flagArgs); err != nil {
+	flagsTakingValue := map[string]bool{
+		"-direction": true, "--direction": true, "-d": true,
+		"-event": true, "--event": true, "-e": true,
+		"-calendar": true, "--calendar": true,
+		"-date": true, "--date": true,
+		"-from": true, "--from": true,
+		"-to": true, "--to": true,
+	}
+
+	var cleanArgs []string
+	var positionalTokens []string
+
+	for i := 0; i < len(args); i++ {
+		a := args[i]
+		if strings.HasPrefix(a, "-") {
+			cleanArgs = append(cleanArgs, a)
+			eqIdx := strings.Index(a, "=")
+			flagName := a
+			if eqIdx != -1 {
+				flagName = a[:eqIdx]
+			}
+			if flagsTakingValue[flagName] && eqIdx == -1 && i+1 < len(args) {
+				i++
+				cleanArgs = append(cleanArgs, args[i])
+			}
+		} else {
+			positionalTokens = append(positionalTokens, a)
+		}
+	}
+
+	if err := fs.Parse(cleanArgs); err != nil {
 		if errors.Is(err, flag.ErrHelp) {
 			return nil
 		}
 		return err
 	}
+
+	positionalTokens = append(positionalTokens, fs.Args()...)
 
 	loc := time.Local
 	now := time.Now().In(loc)
@@ -411,7 +433,7 @@ func runGoogleSync(ctx context.Context, client *api.Client, args []string) error
 	}
 
 	// Xử lý positional args: "push", "pull", "both", "today", "tomorrow", "week", "month", hoặc <event-id> / <date>
-	for _, p := range positionalArgs {
+	for _, p := range positionalTokens {
 		lower := strings.ToLower(strings.TrimSpace(p))
 		if lower == "push" || lower == "pull" || lower == "both" {
 			*directionFlag = lower
