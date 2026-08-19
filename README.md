@@ -114,12 +114,15 @@ Chỉ cần chạy lệnh từ thư mục gốc của dự án:
 docker compose up -d
 ```
 
-Hoặc build image thủ công:
+Hoặc kéo trực tiếp pre-built container image từ GitHub Container Registry:
 
 ```bash
-cd lich-server
-docker build -t lich-server .
-docker run -d -p 3000:3000 -v lich-data:/data -e JWT_SECRET=your-secret --name lich-server lich-server
+docker run -d \
+  --name lich-server \
+  -p 3000:3000 \
+  -v lich-data:/data \
+  -e JWT_SECRET=your-secure-secret \
+  ghcr.io/spiderdev-vn/mylich-server:latest
 ```
 
 ### Cách 2: Chạy trực tiếp với Node.js / Yarn
