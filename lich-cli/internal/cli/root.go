@@ -25,9 +25,9 @@ Sử dụng:
   lich login [options]          Đăng nhập hoặc đăng ký tài khoản (Interactive)
   lich status [options]         Kiểm tra máy chủ, cache và sync queue (--simple)
   lich sync [options]           Đồng bộ hóa 2 chiều với máy chủ (--wait)
-  lich today [options]          Xem lịch trình hôm nay
-  lich week [options]           Xem lịch trình cả tuần
-  lich month [options]          Xem lịch trình cả tháng
+  lich today [options]          Xem lịch trình hôm nay (--detail để hiện ID sự kiện)
+  lich week [options]           Xem lịch trình cả tuần (--detail để hiện ID sự kiện)
+  lich month [options]          Xem lịch trình cả tháng (--detail để hiện ID sự kiện)
   lich search <keyword>         Tìm kiếm sự kiện theo từ khóa
   lich add <title> [options]    Tạo sự kiện mới (Form tương tác nếu không truyền tham số)
   lich edit <id> [options]      Chỉnh sửa sự kiện
@@ -38,8 +38,14 @@ Sử dụng:
   lich help                     Hiển thị trợ giúp này
 
 Các cờ chung:
+  --detail, -d                  Hiển thị chi tiết bao gồm Event ID (cho today/week/month)
   --simple, -s                  Xuất văn bản ASCII đơn giản (phù hợp với scripts/CI)
   --json                        Xuất kết quả dưới định dạng JSON
+
+Tùy chọn cho 'google sync':
+  lich google sync [id]         Đồng bộ tức thì theo Event ID
+  lich google sync today|week   Đồng bộ theo khoảng thời gian (today, tomorrow, week, month)
+  --from <date> --to <date>     Đồng bộ theo khoảng thời gian tùy chỉnh
 
 Tùy chọn cho 'add':
   --date <date>                 Ngày sự kiện (YYYY-MM-DD, today, tomorrow)
@@ -66,16 +72,17 @@ Tùy chọn cho 'add':
   %s    %s
   %s     %s
   %s    %s
+  %s     %s
+  %s    %s
   %s   %s
   %s      %s
   %s   %s
   %s %s
   %s  %s
-  %s  %s
-  %s  %s
 
 %s
   %s     %s
+  %s   %s
   %s           %s`,
 		ui.CardTitle.Render("CÁC LỆNH SỬ DỤNG:"),
 		ui.ValueStyle.Render("lich"), ui.LabelStyle.Render("Mở giao diện Terminal tương tác (TUI)"),
@@ -84,16 +91,17 @@ Tùy chọn cho 'add':
 		ui.ValueStyle.Render("lich config"), ui.LabelStyle.Render("Quản lý cấu hình (icon theme: unicode/nerd/ascii/emoji)"),
 		ui.ValueStyle.Render("lich calendar"), ui.LabelStyle.Render("Quản lý danh sách lịch (list, add, delete, --sync-google)"),
 		ui.ValueStyle.Render("lich sync"), ui.LabelStyle.Render("Đồng bộ hóa 2 chiều với máy chủ (--wait)"),
-		ui.ValueStyle.Render("lich today"), ui.LabelStyle.Render("Xem lịch trình hôm nay"),
-		ui.ValueStyle.Render("lich week"), ui.LabelStyle.Render("Xem lịch trình cả tuần"),
-		ui.ValueStyle.Render("lich month"), ui.LabelStyle.Render("Xem lịch trình cả tháng"),
+		ui.ValueStyle.Render("lich today"), ui.LabelStyle.Render("Xem lịch trình hôm nay (--detail để hiện ID sự kiện)"),
+		ui.ValueStyle.Render("lich week"), ui.LabelStyle.Render("Xem lịch trình cả tuần (--detail để hiện ID sự kiện)"),
+		ui.ValueStyle.Render("lich month"), ui.LabelStyle.Render("Xem lịch trình cả tháng (--detail để hiện ID sự kiện)"),
 		ui.ValueStyle.Render("lich search"), ui.LabelStyle.Render("Tìm kiếm sự kiện theo từ khóa"),
 		ui.ValueStyle.Render("lich add"), ui.LabelStyle.Render("Tạo sự kiện mới (Interactive form nếu không truyền cờ)"),
 		ui.ValueStyle.Render("lich edit"), ui.LabelStyle.Render("Chỉnh sửa sự kiện (Interactive form hoặc flags)"),
 		ui.ValueStyle.Render("lich google"), ui.LabelStyle.Render("Tích hợp Google Calendar (connect, status, sync, calendars)"),
 		ui.ValueStyle.Render("lich delete"), ui.LabelStyle.Render("Xóa sự kiện (Interactive select & confirm)"),
 		ui.ValueStyle.Render("lich help"), ui.LabelStyle.Render("Hiển thị bảng hướng dẫn này"),
-		ui.CardTitle.Render("CỜ TOÀN CỤC:"),
+		ui.CardTitle.Render("CỜ TOÀN CỤC & TÙY CHỌN:"),
+		ui.ValueStyle.Render("--detail, -d"), ui.LabelStyle.Render("Hiển thị chi tiết bao gồm ID sự kiện (today/week/month)"),
 		ui.ValueStyle.Render("--simple, -s"), ui.LabelStyle.Render("Xuất văn bản ASCII đơn giản (cho scripts/CI)"),
 		ui.ValueStyle.Render("--json"), ui.LabelStyle.Render("Xuất kết quả dưới định dạng JSON"),
 	)

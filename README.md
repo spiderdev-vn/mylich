@@ -232,9 +232,10 @@ lich add "Gặp đối tác" --at 14:00 --to 15:30 --location "Quận 1" --desc 
 ## Xem lịch trình (`today`, `week`, `month`, `search`)
 
 ```bash
-lich today             # Lịch hôm nay (Gantt chart hoặc List)
-lich week              # Lịch 7 ngày trong tuần
-lich month             # Lịch toàn bộ tháng hiện tại
+lich today             # Lịch hôm nay
+lich today --detail    # Lịch hôm nay (hiển thị kèm ID sự kiện để copy sync/edit)
+lich week              # Lịch 7 ngày trong tuần (--detail để xem ID)
+lich month             # Lịch toàn bộ tháng hiện tại (--detail để xem ID)
 lich search "nha khoa" # Tìm kiếm sự kiện theo từ khóa
 
 # Xuất dữ liệu cho scripts / CI
@@ -400,8 +401,21 @@ lich google create-calendar <lich_calendar_id> --name "Tên Lịch Trên Google"
 
 ### 6. Đồng bộ hóa với Google Calendar (`sync`)
 ```bash
-# Đồng bộ hóa 2 chiều theo thiết lập ánh xạ
+# Đồng bộ hóa 2 chiều tự động (kèm Charm Multi-Step Live Progress & Timer)
 lich google sync
+
+# Đồng bộ nhanh 1 sự kiện theo Event ID (<300ms)
+lich google sync <event_id>
+lich google sync --event <event_id>
+
+# Đồng bộ theo từ khóa tự nhiên hoặc khoảng thời gian
+lich google sync today       # Chỉ đồng bộ các sự kiện của Hôm nay (--today)
+lich google sync tomorrow    # Chỉ đồng bộ các sự kiện của Ngày mai (--tomorrow)
+lich google sync week        # Chỉ đồng bộ các sự kiện Tuần này (--week)
+lich google sync month       # Chỉ đồng bộ các sự kiện Tháng này (--month)
+
+# Đồng bộ theo khoảng ngày tùy chọn
+lich google sync --from 2026-08-19 --to 2026-08-25
 
 # Chỉ đẩy sự kiện từ Lich lên Google
 lich google sync -d push

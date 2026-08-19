@@ -19,6 +19,9 @@ import (
 func RunWeek(args []string) error {
 	fs := flag.NewFlagSet("week", flag.ContinueOnError)
 	calendarFlag := fs.String("calendar", "", "Lọc theo calendar ID")
+	detailFlag := fs.Bool("detail", false, "Hiển thị chi tiết bao gồm ID sự kiện")
+	fs.BoolVar(detailFlag, "d", false, "Hiển thị chi tiết bao gồm ID sự kiện (viết tắt)")
+	idFlag := fs.Bool("id", false, "Hiển thị ID sự kiện")
 	jsonFlag := fs.Bool("json", false, "Xuất kết quả dưới định dạng JSON")
 	simpleFlag := fs.Bool("simple", false, "Hiển thị dạng văn bản ASCII đơn giản")
 	fs.BoolVar(simpleFlag, "s", false, "Hiển thị dạng văn bản ASCII đơn giản (viết tắt)")
@@ -27,6 +30,8 @@ func RunWeek(args []string) error {
 		fmt.Println("Sử dụng: lich week [flags]")
 		fmt.Println()
 		fmt.Println("Tùy chọn:")
+		fmt.Println("  --detail, -d     Hiển thị chi tiết bao gồm ID sự kiện")
+		fmt.Println("  --id             Hiển thị ID sự kiện")
 		fmt.Println("  --calendar <id>  Lọc sự kiện theo ID lịch")
 		fmt.Println("  --simple, -s     Hiển thị dạng văn bản ASCII đơn giản")
 		fmt.Println("  --json           Xuất kết quả dưới định dạng JSON")
@@ -137,7 +142,11 @@ func RunWeek(args []string) error {
 					if event.SyncState != cache.SyncStateSynced {
 						syncBadge = " [↻ pending]"
 					}
-					fmt.Printf("  %s  %s%s%s\n", timeStr, event.Title, locStr, syncBadge)
+					idSuffix := ""
+					if *detailFlag || *idFlag {
+						idSuffix = fmt.Sprintf(" [id: %s]", event.ID)
+					}
+					fmt.Printf("  %s  %s%s%s%s\n", timeStr, event.Title, locStr, syncBadge, idSuffix)
 				}
 			}
 			fmt.Println()
@@ -184,6 +193,9 @@ func RunWeek(args []string) error {
 				)
 				if event.Location != "" {
 					fmt.Printf("             %s %s\n", ui.LabelStyle.Render(icons.Location), ui.EventLocationStyle.Render(event.Location))
+				}
+				if *detailFlag || *idFlag {
+					fmt.Printf("             %s %s\n", ui.LabelStyle.Render("ID:"), ui.EventDescStyle.Render(event.ID))
 				}
 			}
 		}

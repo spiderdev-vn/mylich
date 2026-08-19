@@ -78,22 +78,28 @@ func printGoogleHelp(simple bool) {
 		fmt.Print(`Lich Google Calendar Integration
 ================================
 Sử dụng:
-  lich google connect         Mở trình duyệt để xác thực và liên kết tài khoản Google
-  lich google status          Kiểm tra trạng thái kết nối và các lịch đã ánh xạ
-  lich google calendars       Xem danh sách lịch Google Calendar có thể map
-  lich google map <cal> <ext> Ánh xạ lịch Lich với lịch Google
-  lich google sync [flags]    Đồng bộ hóa 2 chiều hoặc 1 chiều với Google Calendar
-  lich google disconnect      Hủy liên kết và thu hồi quyền truy cập Google
+  lich google connect                 Mở trình duyệt để xác thực và liên kết tài khoản Google
+  lich google status                  Kiểm tra trạng thái kết nối và các lịch đã ánh xạ
+  lich google calendars               Xem danh sách lịch Google Calendar có thể map
+  lich google map <cal> <ext>         Ánh xạ lịch Lich với lịch Google
+  lich google sync [id|range] [flags] Đồng bộ hóa với Google Calendar (toàn bộ, theo ID, hoặc khoảng thời gian)
+  lich google disconnect              Hủy liên kết và thu hồi quyền truy cập Google
 
 Tùy chọn cho 'sync':
-  --direction, -d <push|pull|both>  Hướng đồng bộ (mặc định: both)
-  --calendar <id>                   Chỉ định ID lịch cần đồng bộ
-  --simple, -s                      Xuất văn bản ASCII đơn giản
+  lich google sync <event_id>         Đồng bộ tức thì 1 sự kiện theo ID
+  lich google sync today|tomorrow     Đồng bộ các sự kiện của Hôm nay / Ngày mai
+  lich google sync week|month         Đồng bộ các sự kiện trong Tuần / Tháng
+  --event, -e <id>                    ID sự kiện cụ thể
+  --date <YYYY-MM-DD|keyword>         Ngày cụ thể hoặc từ khóa
+  --from <date> --to <date>           Khoảng thời gian bắt đầu và kết thúc
+  --direction, -d <push|pull|both>    Hướng đồng bộ (mặc định: both)
+  --calendar <id>                     Chỉ định ID lịch cần đồng bộ
+  --simple, -s                        Xuất văn bản ASCII đơn giản
 `)
 		return
 	}
 
-	banner := ui.TitleBanner.Render(" TÍCH HỢP GOOGLE CALENDAR (PHASE 3) ")
+	banner := ui.TitleBanner.Render(" TÍCH HỢP GOOGLE CALENDAR ")
 	fmt.Println(banner)
 
 	helpContent := fmt.Sprintf(`%s
@@ -105,18 +111,26 @@ Tùy chọn cho 'sync':
   %s %s
 
 %s
+  %s    %s
+  %s  %s
+  %s    %s
   %s      %s
+  %s       %s
   %s           %s`,
 		ui.CardTitle.Render("CÁC LỆNH GOOGLE:"),
 		ui.ValueStyle.Render("lich google connect"), ui.LabelStyle.Render("Mở trình duyệt để xác thực OAuth với Google Calendar"),
 		ui.ValueStyle.Render("lich google status"), ui.LabelStyle.Render("Kiểm tra tài khoản, trạng thái sync và ánh xạ lịch"),
 		ui.ValueStyle.Render("lich google calendars"), ui.LabelStyle.Render("Danh sách các lịch Google Calendar của bạn"),
-		ui.ValueStyle.Render("lich google map"), ui.LabelStyle.Render("Ánh xạ lịch Lich -> Google: lich google map <cal_id> <ext_cal_id>"),
-		ui.ValueStyle.Render("lich google sync"), ui.LabelStyle.Render("Đồng bộ tức thì với Google: --direction push|pull|both"),
+		ui.ValueStyle.Render("lich google map"), ui.LabelStyle.Render("Ánh xạ lịch: lich google map <cal_id> <ext_cal_id>"),
+		ui.ValueStyle.Render("lich google sync"), ui.LabelStyle.Render("Đồng bộ tức thì: lich google sync [id|today|week] [flags]"),
 		ui.ValueStyle.Render("lich google disconnect"), ui.LabelStyle.Render("Hủy liên kết và ngắt kết nối Google Calendar"),
-		ui.CardTitle.Render("TÙY CHỌN CHUNG:"),
+		ui.CardTitle.Render("TÙY CHỌN ĐỒNG BỘ (SYNC):"),
+		ui.ValueStyle.Render("<id> / --event, -e"), ui.LabelStyle.Render("Đồng bộ nhanh 1 sự kiện theo Event ID (<300ms)"),
+		ui.ValueStyle.Render("today | tomorrow"), ui.LabelStyle.Render("Đồng bộ sự kiện Hôm nay / Ngày mai (--today / --tomorrow)"),
+		ui.ValueStyle.Render("week | month"), ui.LabelStyle.Render("Đồng bộ sự kiện Tuần này / Tháng này (--week / --month)"),
+		ui.ValueStyle.Render("--from / --to"), ui.LabelStyle.Render("Khoảng thời gian tùy chỉnh (VD: --from 2026-08-19 --to 2026-08-25)"),
+		ui.ValueStyle.Render("--direction, -d"), ui.LabelStyle.Render("Hướng đồng bộ ('push', 'pull', 'both' - mặc định: both)"),
 		ui.ValueStyle.Render("--simple, -s"), ui.LabelStyle.Render("Xuất văn bản ASCII đơn giản"),
-		ui.ValueStyle.Render("--direction, -d"), ui.LabelStyle.Render("Hướng đồng bộ ('push', 'pull', 'both')"),
 	)
 	fmt.Println(ui.CardBox.Width(78).Render(helpContent))
 }
