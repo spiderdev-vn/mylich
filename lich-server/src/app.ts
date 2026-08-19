@@ -23,6 +23,7 @@ import { createCalendarRoutes } from './calendars/calendar.routes.ts';
 import { createEventRoutes } from './events/event.routes.ts';
 import { syncRoutes } from './sync/sync.routes.ts';
 import { integrationRoutes } from './integrations/integration.routes.ts';
+import { publicRoutes } from './web/public.routes.ts';
 import { AppError } from './common/errors.ts';
 
 export interface BuildAppOptions {
@@ -121,6 +122,7 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
   await app.register(createAuthPlugin(authService));
 
   // Routes
+  await app.register(publicRoutes);
   await app.register(createAuthRoutes(authService), { prefix: '/auth' });
   await app.register(createCalendarRoutes(calendarService), { prefix: '/calendars' });
   await app.register(createEventRoutes(eventService), { prefix: '/events' });
