@@ -1,4 +1,6 @@
 import type { FastifyPluginAsync } from 'fastify';
+import fs from 'node:fs';
+import path from 'node:path';
 
 const popStyles = `
   @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,700;0,800;1,400&family=Space+Grotesk:wght@500;700;800&display=swap');
@@ -27,15 +29,15 @@ const popStyles = `
     color: var(--text);
     line-height: 1.6;
     background-image: 
-      radial-gradient(circle at 15% 15%, rgba(255, 42, 133, 0.12) 0%, transparent 40%),
-      radial-gradient(circle at 85% 25%, rgba(6, 182, 212, 0.15) 0%, transparent 45%),
-      radial-gradient(circle at 50% 85%, rgba(168, 85, 247, 0.12) 0%, transparent 50%);
+      radial-gradient(circle at 15% 15%, rgba(255, 42, 133, 0.15) 0%, transparent 40%),
+      radial-gradient(circle at 85% 25%, rgba(6, 182, 212, 0.18) 0%, transparent 45%),
+      radial-gradient(circle at 50% 85%, rgba(168, 85, 247, 0.15) 0%, transparent 50%);
     background-attachment: fixed;
     overflow-x: hidden;
   }
 
   .container {
-    max-width: 920px;
+    max-width: 960px;
     margin: 0 auto;
     padding: 32px 24px 80px;
   }
@@ -92,7 +94,7 @@ const popStyles = `
 
   .hero {
     text-align: center;
-    margin-bottom: 56px;
+    margin-bottom: 40px;
   }
 
   .hero-tag {
@@ -130,8 +132,54 @@ const popStyles = `
     font-size: 1.3rem;
     color: var(--muted);
     max-width: 680px;
-    margin: 0 auto 36px;
+    margin: 0 auto 32px;
     font-weight: 500;
+  }
+
+  /* Mascot Showcase */
+  .mascot-container {
+    display: flex;
+    justify-content: center;
+    margin: 28px 0 44px;
+  }
+
+  .mascot-frame {
+    position: relative;
+    border-radius: 28px;
+    padding: 10px;
+    background: linear-gradient(135deg, var(--pop-pink), var(--primary), var(--pop-cyan));
+    box-shadow: 0 12px 0 var(--border), 0 24px 48px rgba(0, 0, 0, 0.6);
+    max-width: 800px;
+    width: 100%;
+    transition: transform 0.3s ease;
+  }
+
+  .mascot-frame:hover {
+    transform: translateY(-4px) scale(1.01);
+  }
+
+  .mascot-img {
+    width: 100%;
+    height: auto;
+    border-radius: 20px;
+    display: block;
+    object-fit: cover;
+  }
+
+  .mascot-badge {
+    position: absolute;
+    bottom: 24px;
+    right: 24px;
+    background: rgba(13, 11, 24, 0.88);
+    backdrop-filter: blur(10px);
+    border: 2px solid var(--pop-yellow);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 800;
+    font-size: 0.9rem;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.6);
   }
 
   /* Clay Buttons */
@@ -140,6 +188,7 @@ const popStyles = `
     justify-content: center;
     gap: 16px;
     flex-wrap: wrap;
+    margin-bottom: 20px;
   }
 
   .clay-btn {
@@ -357,7 +406,47 @@ function renderLayout(title: string, content: string): string {
 </html>`;
 }
 
+function tryReadImage(filename: string): Buffer | null {
+  const candidates = [
+    path.resolve(process.cwd(), 'public', filename),
+    path.resolve(process.cwd(), 'lich-server', 'public', filename),
+    path.resolve(process.cwd(), '..', 'public', filename),
+  ];
+
+  for (const p of candidates) {
+    if (fs.existsSync(p)) {
+      try {
+        return fs.readFileSync(p);
+      } catch {
+        // continue
+      }
+    }
+  }
+  return null;
+}
+
 export const publicRoutes: FastifyPluginAsync = async (app) => {
+  // Static image routes
+  app.get('/mascot.jpg', async (_request, reply) => {
+    const buf = tryReadImage('mascot.jpg');
+    if (buf) {
+      reply.header('Cache-Control', 'public, max-age=86400');
+      reply.type('image/jpeg');
+      return buf;
+    }
+    return reply.status(404).send('Image not found');
+  });
+
+  app.get('/hero.jpg', async (_request, reply) => {
+    const buf = tryReadImage('hero.jpg');
+    if (buf) {
+      reply.header('Cache-Control', 'public, max-age=86400');
+      reply.type('image/jpeg');
+      return buf;
+    }
+    return reply.status(404).send('Image not found');
+  });
+
   // 1. Home / Landing Page (Fun Pop Claymorphic Terminal)
   app.get('/', async (_request, reply) => {
     reply.type('text/html; charset=utf-8');
@@ -374,6 +463,14 @@ export const publicRoutes: FastifyPluginAsync = async (app) => {
           <a href="https://github.com/spiderdev-vn/mylich" class="clay-btn clay-btn-secondary" target="_blank" rel="noopener">
             <span>📂 Xem Mã Nguồn GitHub</span>
           </a>
+        </div>
+
+        <!-- 3D Clay Mascot Hero Showcase -->
+        <div class="mascot-container">
+          <div class="mascot-frame">
+            <img src="/mascot.jpg" alt="Mỹ Lích 3D Clay Mascot" class="mascot-img">
+            <div class="mascot-badge">Lich v0.2.0 • Local-First Clay Hacker 💻</div>
+          </div>
         </div>
       </section>
 

@@ -19,6 +19,7 @@ RUN npm ci --omit=dev && npm cache clean --force
 # Copy application source code and migrations
 COPY tsconfig.json ./
 COPY src/ ./src/
+COPY public/ ./public/
 
 # Create persistent data directory and set permissions for non-root user
 RUN mkdir -p /data && chown -R node:node /data /app
