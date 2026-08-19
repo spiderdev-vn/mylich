@@ -457,44 +457,100 @@ func runGoogleSync(ctx context.Context, client *api.Client, args []string) error
 	var res *api.GoogleSyncResponse
 	var err error
 
-	performSync := func() error {
+	stepTitles := []string{
+		"Đồng bộ thay đổi cục bộ lên máy chủ",
+		"Đồng bộ hai chiều với Google Calendar API",
+		"Cập nhật dữ liệu mới vào bộ nhớ đệm SQLite",
+	}
+
+	performSyncWithReporter := func(reporter *ui.TrackerReporter) error {
 		// Step 1: Push pending local mutations from SQLite cache to server
+		if reporter != nil {
+			reporter.SetStepRunning(0, "Đang kiểm tra hàng đợi cục bộ...")
+			reporter.SetSubDetail("Đọc SQLite cache tại máy...")
+		}
+
+		var localPushed int
 		if *directionFlag == "push" || *directionFlag == "both" {
 			if cachePath, cErr := cache.GetCachePath(); cErr == nil {
 				if db, dbErr := cache.OpenDatabase(cachePath); dbErr == nil {
 					engine := syncer.NewSyncEngine(db, client)
-					_, _ = engine.Push(ctx)
+					pCount, pErr := engine.Push(ctx)
+					if pErr == nil {
+						localPushed = pCount
+					}
 					db.Close()
 				}
 			}
 		}
 
+		if reporter != nil {
+			if localPushed > 0 {
+				reporter.SetStepDone(0, fmt.Sprintf("Đã đẩy %d sự kiện", localPushed))
+			} else {
+				reporter.SetStepDone(0, "Dữ liệu cục bộ đã khớp")
+			}
+		}
+
 		// Step 2: Server <-> Google Calendar sync
+		if reporter != nil {
+			googleDetail := fmt.Sprintf("Hướng: %s", strings.ToUpper(*directionFlag))
+			if rangeLabel != "" {
+				googleDetail += fmt.Sprintf(" | Phạm vi: %s", rangeLabel)
+			}
+			reporter.SetStepRunning(1, googleDetail)
+			reporter.SetSubDetail("Đang xác thực OAuth & so khớp Last-Write-Wins trên Google...")
+		}
+
 		var syncErr error
 		res, syncErr = client.SyncGoogle(ctx, *calFlag, *directionFlag, *eventFlag, fromRFC, toRFC)
 		if syncErr != nil {
+			if reporter != nil {
+				reporter.SetStepFailed(1, syncErr.Error())
+			}
 			return syncErr
 		}
 
+		if reporter != nil {
+			reporter.SetStepDone(1, fmt.Sprintf("Đẩy lên: %d | Kéo về: %d", res.Pushed, res.Pulled))
+		}
+
 		// Step 3: Pull fresh events from server back into local SQLite cache
+		if reporter != nil {
+			reporter.SetStepRunning(2, "Đang đồng bộ về SQLite máy...")
+			reporter.SetSubDetail("Ghi nhận các sự kiện mới vào bộ nhớ đệm...")
+		}
+
+		var localPulled int
 		if *directionFlag == "pull" || *directionFlag == "both" {
 			if cachePath, cErr := cache.GetCachePath(); cErr == nil {
 				if db, dbErr := cache.OpenDatabase(cachePath); dbErr == nil {
 					engine := syncer.NewSyncEngine(db, client)
-					_, _ = engine.Pull(ctx)
+					pCount, pErr := engine.Pull(ctx)
+					if pErr == nil {
+						localPulled = pCount
+					}
 					db.Close()
 				}
+			}
+		}
+
+		if reporter != nil {
+			if localPulled > 0 {
+				reporter.SetStepDone(2, fmt.Sprintf("Đã nạp %d sự kiện", localPulled))
+			} else {
+				reporter.SetStepDone(2, "Bộ nhớ đệm đã cập nhật")
 			}
 		}
 
 		return nil
 	}
 
-	spinnerTitle := fmt.Sprintf("Đang đồng bộ hai chiều với Google Calendar (hướng: %s)...", strings.ToUpper(*directionFlag))
+	trackerTitle := "ĐỒNG BỘ GOOGLE CALENDAR"
 	if *eventFlag != "" {
-		spinnerTitle = fmt.Sprintf("Đang đẩy sự kiện [%s] lên Google Calendar...", *eventFlag)
+		trackerTitle = fmt.Sprintf("ĐẨY SỰ KIỆN [%s] LÊN GOOGLE", *eventFlag)
 	} else if rangeLabel != "" {
-		spinnerTitle = fmt.Sprintf("Đang đồng bộ Google Calendar phạm vi [%s]...", rangeLabel)
+		trackerTitle = fmt.Sprintf("ĐỒNG BỘ GOOGLE CALENDAR [%s]", strings.ToUpper(rangeLabel))
 	}
 
 	if ui.IsSimpleMode(*simpleFlag) || *verboseFlag {
@@ -515,9 +571,9 @@ func runGoogleSync(ctx context.Context, client *api.Client, args []string) error
 				}
 			}
 		}
-		err = performSync()
+		err = performSyncWithReporter(nil)
 	} else {
-		err = ui.RunWithSpinner(spinnerTitle, performSync)
+		err = ui.RunWithTracker(trackerTitle, stepTitles, performSyncWithReporter)
 	}
 
 	if err != nil {

@@ -113,17 +113,55 @@ func RunSync(args []string) error {
 				pushed, pulled, syncErr = engine.Sync(ctx)
 			}
 		} else {
-			spinnerTitle := fmt.Sprintf("Đang đồng bộ dữ liệu với máy chủ Lich (hướng: %s)...", strings.ToUpper(direction))
-			_ = ui.RunWithSpinner(spinnerTitle, func() error {
-				switch direction {
-				case "push":
+			syncTitle := fmt.Sprintf("ĐỒNG BỘ DỮ LIỆU VỚI MÁY CHỦ [%s]", strings.ToUpper(direction))
+			stepTitles := []string{
+				"Đẩy các thay đổi cục bộ lên máy chủ",
+				"Kéo dữ liệu mới nhất từ máy chủ",
+			}
+			if direction == "push" {
+				stepTitles = []string{"Đẩy các thay đổi cục bộ lên máy chủ"}
+			} else if direction == "pull" {
+				stepTitles = []string{"Kéo dữ liệu mới nhất từ máy chủ"}
+			}
+
+			_ = ui.RunWithTracker(syncTitle, stepTitles, func(reporter *ui.TrackerReporter) error {
+				if direction == "push" {
+					reporter.SetStepRunning(0, "Đang xử lý hàng đợi đẩy...")
 					pushed, syncErr = engine.Push(ctx)
-				case "pull":
+					if syncErr != nil {
+						reporter.SetStepFailed(0, syncErr.Error())
+						return syncErr
+					}
+					reporter.SetStepDone(0, fmt.Sprintf("Đã đẩy %d thao tác", pushed))
+					return nil
+				} else if direction == "pull" {
+					reporter.SetStepRunning(0, "Đang tải dữ liệu mới...")
 					pulled, syncErr = engine.Pull(ctx)
-				default:
-					pushed, pulled, syncErr = engine.Sync(ctx)
+					if syncErr != nil {
+						reporter.SetStepFailed(0, syncErr.Error())
+						return syncErr
+					}
+					reporter.SetStepDone(0, fmt.Sprintf("Đã nhận %d thay đổi", pulled))
+					return nil
 				}
-				return syncErr
+
+				// BOTH
+				reporter.SetStepRunning(0, "Đang xử lý hàng đợi đẩy...")
+				pushed, syncErr = engine.Push(ctx)
+				if syncErr != nil {
+					reporter.SetStepFailed(0, syncErr.Error())
+					return syncErr
+				}
+				reporter.SetStepDone(0, fmt.Sprintf("Đã đẩy %d thao tác", pushed))
+
+				reporter.SetStepRunning(1, "Đang tải dữ liệu mới...")
+				pulled, syncErr = engine.Pull(ctx)
+				if syncErr != nil {
+					reporter.SetStepFailed(1, syncErr.Error())
+					return syncErr
+				}
+				reporter.SetStepDone(1, fmt.Sprintf("Đã nhận %d thay đổi", pulled))
+				return nil
 			})
 		}
 
