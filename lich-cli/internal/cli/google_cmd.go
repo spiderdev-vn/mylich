@@ -194,8 +194,12 @@ func runGoogleStatus(ctx context.Context, client *api.Client, args []string) err
 	}
 
 	if ui.IsSimpleMode(*simpleFlag) {
-		fmt.Printf("Trạng thái Google: %s\n", status.Status)
-		fmt.Printf("Đã kết nối:        %v\n", status.Connected)
+		statusStr := "Chưa kết nối (Disconnected)"
+		if status.Connected {
+			statusStr = "Đã kết nối (Connected)"
+		}
+		fmt.Printf("Trạng thái Google: %s\n", statusStr)
+		fmt.Printf("Provider:          %s\n", status.Provider)
 		fmt.Printf("Số lịch đã map:    %d\n", len(status.MappedCalendars))
 		for _, m := range status.MappedCalendars {
 			fmt.Printf("  - %s -> %s (%s)\n", m.CalendarName, m.ExternalCalendarID, m.SyncDirection)
@@ -203,9 +207,9 @@ func runGoogleStatus(ctx context.Context, client *api.Client, args []string) err
 		return nil
 	}
 
-	statusBadge := ui.BadgeFailed
+	statusBadge := ui.BadgeDisconnected
 	if status.Connected {
-		statusBadge = ui.BadgeSynced
+		statusBadge = ui.BadgeConnected
 	}
 
 	content := fmt.Sprintf(
@@ -226,6 +230,8 @@ func runGoogleStatus(ctx context.Context, client *api.Client, args []string) err
 				ui.TimePill.Render(strings.ToUpper(m.SyncDirection)),
 			)
 		}
+	} else if !status.Connected {
+		content += "\n\n" + ui.LabelStyle.Render("Gợi ý: Gõ 'lich google connect' để liên kết tài khoản Google Calendar.")
 	}
 
 	fmt.Println(ui.CardBox.Render(content))

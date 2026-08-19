@@ -98,6 +98,14 @@ var (
 			Foreground(ColorError).
 			Render("○ Ngoại tuyến (Offline)")
 
+	BadgeConnected = lipgloss.NewStyle().
+			Foreground(ColorSuccess).
+			Render("● Đã kết nối (Connected)")
+
+	BadgeDisconnected = lipgloss.NewStyle().
+			Foreground(ColorMuted).
+			Render("○ Chưa kết nối (Disconnected)")
+
 	BadgeSynced = lipgloss.NewStyle().
 			Foreground(ColorSuccess).
 			Render("✓ Đã đồng bộ")
