@@ -27,7 +27,7 @@ func NewClient(baseURL, token string) *Client {
 		BaseURL: cleanURL,
 		Token:   token,
 		HTTPClient: &http.Client{
-			Timeout: 60 * time.Second,
+			Timeout: 120 * time.Second,
 		},
 	}
 }

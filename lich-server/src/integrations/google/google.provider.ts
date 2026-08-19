@@ -194,6 +194,10 @@ export class GoogleProvider implements CalendarProvider {
     );
 
     if (!res.ok) {
+      if (res.status === 410 && syncToken) {
+        // Sync token is invalid or expired (Google RFC): restart with full sync
+        return this.listEvents(accessToken, calendarId, undefined, timeMin, timeMax);
+      }
       throw new Error(`Failed to fetch Google events: ${res.status} ${await res.text()}`);
     }
 

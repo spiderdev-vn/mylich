@@ -50,7 +50,7 @@ func RunGoogle(args []string) error {
 	}
 
 	client := api.NewClient(cfg.ServerURL, cfg.Token)
-	ctx, cancel := context.WithTimeout(context.Background(), 25*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 	defer cancel()
 
 	switch action {
