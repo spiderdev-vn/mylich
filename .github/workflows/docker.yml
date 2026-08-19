@@ -2,18 +2,18 @@ name: Docker Build & Publish
 
 on:
   push:
-    branches: [ main, master ]
-    tags: [ 'v*' ]
+    branches: [main, master]
+    tags: ["v*"]
     paths:
-      - 'lich-server/**'
-      - 'docker-compose.yml'
-      - '.github/workflows/docker.yml'
+      - "lich-server/**"
+      - "docker-compose.yml"
+      - ".github/workflows/docker.yml"
   pull_request:
-    branches: [ main, master ]
+    branches: [main, master]
     paths:
-      - 'lich-server/**'
-      - 'docker-compose.yml'
-      - '.github/workflows/docker.yml'
+      - "lich-server/**"
+      - "docker-compose.yml"
+      - ".github/workflows/docker.yml"
   workflow_dispatch:
 
 permissions:
@@ -27,7 +27,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up QEMU (Multi-arch support)
         uses: docker/setup-qemu-action@v3
