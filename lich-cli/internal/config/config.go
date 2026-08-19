@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	DefaultServerURL  = "http://127.0.0.1:3000"
+	DefaultServerURL  = "https://lich.products.codechovui.dev"
 	DefaultIcons      = "unicode"
 	DefaultAgendaMode = "list"
 )

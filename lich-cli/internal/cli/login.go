@@ -15,7 +15,7 @@ import (
 
 func RunLogin(args []string) error {
 	fs := flag.NewFlagSet("login", flag.ContinueOnError)
-	serverFlag := fs.String("server", "", "URL máy chủ Lich (mặc định: http://127.0.0.1:3000)")
+	serverFlag := fs.String("server", "", fmt.Sprintf("URL máy chủ Lich (mặc định: %s)", config.DefaultServerURL))
 	userFlag := fs.String("username", "", "Tên đăng nhập")
 	fs.StringVar(userFlag, "u", "", "Tên đăng nhập (viết tắt)")
 	passFlag := fs.String("password", "", "Mật khẩu")
@@ -31,7 +31,7 @@ func RunLogin(args []string) error {
 		fmt.Println("  Đăng nhập hoặc đăng ký tài khoản mới. Nếu để trống cờ, sẽ mở Form tương tác Huh.")
 		fmt.Println()
 		fmt.Println("Tùy chọn:")
-		fmt.Println("  --server <url>        URL máy chủ (mặc định: http://127.0.0.1:3000)")
+		fmt.Printf("  --server <url>        URL máy chủ (mặc định: %s)\n", config.DefaultServerURL)
 		fmt.Println("  --username, -u <user> Tên đăng nhập")
 		fmt.Println("  --password, -p <pass> Mật khẩu")
 		fmt.Println("  --register            Đăng ký tài khoản mới")
