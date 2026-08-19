@@ -66,6 +66,10 @@ func RunGoogle(args []string) error {
 		return runGoogleCreateCalendar(ctx, client, subArgs)
 	case "sync", "sy", "s":
 		return runGoogleSync(ctx, client, subArgs)
+	case "push":
+		return runGoogleSync(ctx, client, append([]string{"push"}, subArgs...))
+	case "pull":
+		return runGoogleSync(ctx, client, append([]string{"pull"}, subArgs...))
 	case "disconnect", "disc", "logout", "dc":
 		return runGoogleDisconnect(ctx, client, subArgs)
 	default:

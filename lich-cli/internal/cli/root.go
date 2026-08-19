@@ -131,6 +131,10 @@ func Execute(args []string) int {
 		err = RunCalendar(subArgs)
 	case "sync", "sy":
 		err = RunSync(subArgs)
+	case "push":
+		err = RunSync(append([]string{"push"}, subArgs...))
+	case "pull":
+		err = RunSync(append([]string{"pull"}, subArgs...))
 	case "today", "tod", "t":
 		err = RunToday(subArgs)
 	case "week", "wk", "w":
