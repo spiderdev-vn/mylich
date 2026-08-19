@@ -11,6 +11,14 @@ export class Database {
       if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
       }
+      try {
+        fs.accessSync(dir, fs.constants.W_OK);
+      } catch {
+        throw new Error(
+          `Permission denied: Thư mục "${dir}" không có quyền ghi. ` +
+          `Nếu dùng Docker, hãy chạy trên host: sudo chown -R 1000:1000 ./data`
+        );
+      }
     }
 
     this.db = new DatabaseSync(dbPath);
