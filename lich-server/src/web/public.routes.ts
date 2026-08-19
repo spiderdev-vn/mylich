@@ -276,7 +276,48 @@ const popStyles = `
   .cmd { color: var(--pop-cyan); font-weight: 700; }
   .arg { color: var(--pop-yellow); }
   .out-success { color: var(--pop-green); }
-  .out-comment { color: var(--muted); font-style: italic; }
+  .out-comment { color: var(--muted); font-style: italic; margin-top: 12px; }
+
+  /* TUI Agenda Box */
+  .tui-agenda-box {
+    background: rgba(34, 197, 94, 0.06);
+    border: 1.5px solid #22c55e;
+    border-radius: 14px;
+    padding: 16px 20px;
+    margin: 12px 0 16px;
+    box-shadow: 0 4px 16px rgba(34, 197, 94, 0.12);
+  }
+  .tui-agenda-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: #4ade80;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed rgba(34, 197, 94, 0.3);
+  }
+  .tui-agenda-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 8px 0;
+    font-size: 0.92rem;
+  }
+  .tui-agenda-time {
+    color: var(--pop-yellow);
+    font-weight: 700;
+    background: rgba(250, 204, 21, 0.1);
+    border: 1px solid rgba(250, 204, 21, 0.25);
+    padding: 2px 10px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+  }
+  .tui-agenda-text {
+    color: #f8fafc;
+    font-weight: 600;
+  }
 
   /* Feature Clay Cards */
   .grid {
@@ -469,7 +510,7 @@ export const publicRoutes: FastifyPluginAsync = async (app) => {
         <div class="mascot-container">
           <div class="mascot-frame">
             <img src="/mascot.jpg" alt="Mỹ Lích 3D Clay Mascot" class="mascot-img">
-            <div class="mascot-badge">Lich v0.2.0 • Local-First Clay Hacker 💻</div>
+            <div class="mascot-badge">Lich v0.2.0 • Local-First 💻</div>
           </div>
         </div>
       </section>
@@ -486,11 +527,21 @@ export const publicRoutes: FastifyPluginAsync = async (app) => {
           <div class="out-comment"># 1. Thêm sự kiện tức thì (phản hồi trong 1 mili-giây)</div>
           <div><span class="prompt">$</span> <span class="cmd">lich add</span> <span class="arg">"Ăn tối với người yêu"</span> --at <span class="arg">19:00</span></div>
           <div class="out-success">✓ Đã tạo sự kiện: Ăn tối với người yêu [19:00 - 20:00 20/08/2026]</div>
-          <br>
+
           <div class="out-comment"># 2. Xem lịch trình hôm nay dạng TUI / Agenda siêu đẹp</div>
           <div><span class="prompt">$</span> <span class="cmd">lich today</span></div>
-          <div class="out-success">╭──────────────── LỊCH HÔM NAY (MỸ LÍCH) ────────────────╮<br>│ • 10:00 - 11:30  Họp kiến trúc hệ thống               │<br>│ • 19:00 - 20:00  Ăn tối với người yêu                  │<br>╰────────────────────────────────────────────────────────╯</div>
-          <br>
+          <div class="tui-agenda-box">
+            <div class="tui-agenda-header">🗓️ LỊCH HÔM NAY (MỸ LÍCH)</div>
+            <div class="tui-agenda-row">
+              <span class="tui-agenda-time">10:00 - 11:30</span>
+              <span class="tui-agenda-text">Họp kiến trúc hệ thống</span>
+            </div>
+            <div class="tui-agenda-row">
+              <span class="tui-agenda-time">19:00 - 20:00</span>
+              <span class="tui-agenda-text">Ăn tối với người yêu 💕</span>
+            </div>
+          </div>
+
           <div class="out-comment"># 3. Đồng bộ 2 chiều với Google Calendar (Zero-Config)</div>
           <div><span class="prompt">$</span> <span class="cmd">lich google sync</span></div>
           <div class="out-success">✓ Đồng bộ 2 chiều thành công: 1 đẩy lên Google, 0 kéo về.</div>
