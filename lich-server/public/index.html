@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Trang chủ — Mỹ Lích (Lich)</title>
+  <title>Mỹ Lích Calendar CLI — Lịch của mình, mình tính</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🗓️</text></svg>">
   <link rel="stylesheet" href="/style.css">
   <meta name="google-site-verification" content="googlecf7177ff489c1370">
@@ -13,9 +13,11 @@
     <header>
       <a href="/" class="logo">
         <span class="logo-badge">MỸ LÍCH</span>
+        <span style="font-size: 1.1rem; font-weight: 800; color: #fff;">Calendar CLI</span>
       </a>
       <nav>
         <a href="/">Trang chủ</a>
+        <a href="#about">Mục đích</a>
         <a href="/docs">Tài liệu</a>
         <a href="/privacy">Bảo mật</a>
         <a href="/terms">Điều khoản</a>
@@ -25,9 +27,9 @@
 
     <main>
       <section class="hero">
-        <div class="hero-tag">✨ POP & FUN TERMINAL CALENDAR ✨</div>
-        <h1>Lịch của mình, <span class="gradient-text">mình tính.</span></h1>
-        <p class="tagline">Một cái lịch vui vẻ, siêu tốc, local-first cho Terminal (CLI/TUI) và tự host backend riêng tư!</p>
+        <div class="hero-tag">✨ MỸ LÍCH CALENDAR CLI — POP & FUN TERMINAL CALENDAR ✨</div>
+        <h1>Mỹ Lích <span class="gradient-text">Calendar CLI</span></h1>
+        <p class="tagline">Lịch của mình, mình tính. Hệ thống quản lý lịch cá nhân local-first trên Terminal (CLI/TUI) và tự host backend riêng tư!</p>
         
         <div class="btn-group">
           <a href="https://github.com/spiderdev-vn/mylich/releases" class="clay-btn" target="_blank" rel="noopener">
@@ -41,8 +43,8 @@
         <!-- 3D Clay Mascot Hero Showcase -->
         <div class="mascot-container">
           <div class="mascot-frame">
-            <img src="/mascot.jpg" alt="Mỹ Lích 3D Clay Mascot" class="mascot-img">
-            <div class="mascot-badge">Lich v0.2.0 • Local-First Clay Hacker 💻</div>
+            <img src="/mascot.jpg" alt="Mỹ Lích Calendar CLI Mascot" class="mascot-img">
+            <div class="mascot-badge">Mỹ Lích Calendar CLI v0.2.0 💻</div>
           </div>
         </div>
       </section>
@@ -81,6 +83,38 @@
           <div><span class="prompt">$ </span><span class="cursor-blink"></span></div>
         </div>
       </div>
+
+      <!-- Section: Purpose of Application & Google Calendar Integration -->
+      <section class="purpose-section" id="about">
+        <div class="section-badge">🎯 MỤC ĐÍCH ỨNG DỤNG / APPLICATION PURPOSE</div>
+        <h2>Mục đích của <span class="gradient-text">Mỹ Lích Calendar CLI</span></h2>
+        <p class="section-desc">
+          <strong>Mỹ Lích Calendar CLI</strong> là ứng dụng mã nguồn mở quản lý lịch trình cá nhân theo kiến trúc <em>local-first</em>, cho phép người dùng xem, tạo và đồng bộ sự kiện lịch trực tiếp từ giao diện dòng lệnh (Terminal CLI/TUI) và máy chủ tự lưu trữ riêng biệt (Self-hosted <code>lich-server</code>).
+        </p>
+
+        <div class="purpose-box">
+          <h3>📅 Mục đích Tích hợp Google Calendar (Google Calendar Integration Purpose)</h3>
+          <p>
+            Mỹ Lích Calendar CLI sử dụng phạm vi quyền <strong>Google Calendar API</strong> (<code>https://www.googleapis.com/auth/calendar</code>) với mục đích duy nhất: <strong>Cho phép người dùng đồng bộ hóa 2 chiều các sự kiện lịch cá nhân</strong> giữa tài khoản Google Calendar và giao diện dòng lệnh terminal của họ.
+          </p>
+          <p>
+            Nhờ tính năng này, các sự kiện bạn tạo trên điện thoại hoặc web Google Calendar sẽ xuất hiện tức thì trong terminal qua lệnh <code>lich today</code>, và các sự kiện thêm từ CLI qua <code>lich add</code> sẽ được đồng bộ ngược lại lên Google Calendar.
+          </p>
+        </div>
+
+        <div class="purpose-box">
+          <h3>🔒 Cam kết Bảo mật & Sử dụng Dữ liệu Hợp lệ (Limited Use Compliance)</h3>
+          <p>
+            • <strong>Chỉ dùng cho tính năng lịch của người dùng</strong>: Dữ liệu Google Calendar (tiêu đề, thời gian, mô tả) chỉ được đọc và ghi khi người dùng thực hiện thao tác đồng bộ lịch.
+          </p>
+          <p>
+            • <strong>Không bán, không chuyển giao dữ liệu</strong>: Chúng tôi tuyệt đối không bao giờ chia sẻ, bán dữ liệu cho bên thứ ba, không dùng cho quảng cáo và không dùng để huấn luyện mô hình AI.
+          </p>
+          <p>
+            • <strong>Tuân thủ chính sách Google</strong>: Ứng dụng tuân thủ nghiêm ngặt chính sách <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener" style="color: var(--pop-cyan); font-weight: 700;">Google API Services User Data Policy</a>, bao gồm các yêu cầu về <em>Limited Use</em>.
+          </p>
+        </div>
+      </section>
 
       <!-- Feature Clay Cards -->
       <div class="grid">

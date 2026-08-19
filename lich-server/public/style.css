@@ -427,6 +427,48 @@ h1 {
   line-height: 1.6;
 }
 
+/* Purpose Section (Google OAuth Verification Requirement) */
+.purpose-section {
+  margin: 48px 0;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 28px;
+  padding: 40px 36px;
+  box-shadow: 0 8px 0 var(--border), 0 20px 40px rgba(0,0,0,0.4);
+}
+
+.purpose-section h2 {
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 16px;
+  color: #ffffff;
+}
+
+.purpose-box {
+  background: var(--surface-clay);
+  border: 1.5px solid var(--border);
+  border-radius: 18px;
+  padding: 24px 28px;
+  margin: 20px 0;
+}
+
+.purpose-box h3 {
+  font-size: 1.25rem;
+  color: var(--pop-cyan);
+  margin-bottom: 10px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.purpose-box p {
+  color: var(--text);
+  font-size: 0.98rem;
+  line-height: 1.65;
+  margin-bottom: 8px;
+}
+
 /* Why Self-Host lich-server Section */
 .selfhost-section {
   margin: 64px 0 32px;
